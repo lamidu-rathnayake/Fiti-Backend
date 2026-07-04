@@ -1,6 +1,6 @@
 <mxfile host="Electron">
   <diagram name="Page-1" id="-AvaaERqsIKgAfBPpmN3">
-    <mxGraphModel dx="3057" dy="2273" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+    <mxGraphModel dx="3014" dy="2533" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -194,7 +194,7 @@
         <mxCell id="ltfs8SpbB-fMYrRuYZ8W-68" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#006EAF;fillColor=#1ba1e2;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;span style=&quot;font-size: 20px;&quot;&gt;SUPERBASE&lt;/span&gt;" vertex="1">
           <mxGeometry height="30" width="150" x="110" y="-10" as="geometry" />
         </mxCell>
-        <mxCell id="ltfs8SpbB-fMYrRuYZ8W-69" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#006EAF;fillColor=#1ba1e2;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;span style=&quot;font-size: 20px;&quot;&gt;free hosting provider&lt;/span&gt;" vertex="1">
+        <mxCell id="ltfs8SpbB-fMYrRuYZ8W-69" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#006EAF;fillColor=#1ba1e2;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;span style=&quot;font-size: 20px;&quot;&gt;localhost or hosting provider&lt;/span&gt;" vertex="1">
           <mxGeometry height="105" width="200" x="-320" y="20" as="geometry" />
         </mxCell>
         <mxCell id="ltfs8SpbB-fMYrRuYZ8W-70" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#006EAF;fillColor=#1ba1e2;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;" value="&lt;span style=&quot;font-size: 20px;&quot;&gt;vercel or any&lt;/span&gt;" vertex="1">
