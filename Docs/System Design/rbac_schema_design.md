@@ -1,110 +1,145 @@
-# Role-Based Access Control (RBAC) Database Schema
+# Hybrid Architecture & Role-Based Access Control (RBAC) Schema Design
 
-This document outlines the normalized and fine-tuned relational database schema for the user model, designed to manage interface visibility and session management efficiently.
+This document outlines the architecture and database schema design for system authentication, user profile storage, and fine-grained Role-Based Access Control (RBAC).
 
-## 1. `users` Table
+---
 
-Stores core account credentials and profile details. Includes flags for soft-deletion and audit timestamps.
+## 1. System Architecture Overview
 
-| Column Name     | Data Type    | Constraints      | Description                                           |
-| :-------------- | :----------- | :--------------- | :---------------------------------------------------- |
-| `id`            | UUID         | PK               | Unique identifier (UUID is safer than INT for users). |
-| `name`          |
-| `age`           |
-| `email`         | VARCHAR(255) | UNIQUE, NOT NULL | User's email address.                                 |
-| `password_hash` | VARCHAR(255) | NOT NULL         | Hashed password.                                      |
-| `is_active`     | BOOLEAN      | DEFAULT TRUE     | Allows disabling a user without deleting their data.  |
-| `created_at`    | TIMESTAMP    | DEFAULT NOW()    | Account creation time.                                |
-| `updated_at`    | TIMESTAMP    | DEFAULT NOW()    | Last time the profile was modified.                   |
+The system uses a **Hybrid Cloud Architecture** separating Authentication, Document/Profile storage, and Relational RBAC logic:
 
-## 1. `sellers` Table
+```
+┌─────────────────────────────────┐       ┌─────────────────────────┐       ┌─────────────────────────┐
+│          Firebase Auth          │       │        Firestore        │       │       PostgreSQL        │
+├─────────────────────────────────┤       ├─────────────────────────┤       ├─────────────────────────┤
+│ • Google Sign-In (OAuth)        │       │ • User Login Profiles   │       │ • Relational Business   │
+│ • Email / Password Auth         │ ───►  │ • Real-time Metadata    │ ───►  │   Logic & Domain Data   │
+│ • Password Hashing (Internal)   │ (UID) │ • Preferences & State   │ (UID) │ • Fine-grained RBAC     │
+│ • JWT Tokens, Sessions & Claims │       │ • Synced User Docs      │       │   (Sections & Grants)   │
+└─────────────────────────────────┘       └─────────────────────────┘       └─────────────────────────┘
+```
 
-Stores core account credentials and profile details. Includes flags for soft-deletion and audit timestamps.
+1. **Firebase Auth:** Handles identity verification supporting both **Google Sign-In (OAuth)** and **Email / Password** login. Manages password hashing internally, issues JWT tokens, and sets Custom User Claims (e.g., `{ "role": "seller" }`).
+2. **Firestore:** Serves as the primary store for user profile documents, real-time user status, and flexible metadata indexed by the Firebase `uid`.
+3. **PostgreSQL:** Stores structured domain entities and relational RBAC mappings (roles, sections, sub-sections, and grants), referencing users via their Firebase `uid` (`VARCHAR(128)`).
 
-| Column Name     | Data Type    | Constraints      | Description                                           |
-| :-------------- | :----------- | :--------------- | :---------------------------------------------------- |
-| `id`            | UUID         | PK               | Unique identifier (UUID is safer than INT for users). |
-| `name`          |
-| `age`           |
-| `email`         | VARCHAR(255) | UNIQUE, NOT NULL | User's email address.                                 |
-| `password_hash` | VARCHAR(255) | NOT NULL         | Hashed password.                                      |
-| `is_active`     | BOOLEAN      | DEFAULT TRUE     | Allows disabling a user without deleting their data.  |
-| `created_at`    | TIMESTAMP    | DEFAULT NOW()    | Account creation time.                                |
-| `updated_at`    | TIMESTAMP    | DEFAULT NOW()    | Last time the profile was modified.                   |
-| `nic_front`     |
-| `nic_rear`      |
+---
 
-## 2. `roles` Table
+## 2. PostgreSQL Relational Database Schema
 
-Defines the types of roles available in the system.
+### 2.1 `users` Table
 
-| Column Name | Data Type   | Constraints        | Description                   |
-| :---------- | :---------- | :----------------- | :---------------------------- |
-| `id`        | INT         | PK, Auto Increment | Unique identifier.            |
-| `name`      | VARCHAR(50) | UNIQUE, NOT NULL   | Role name (`User`, `Tailer`). |
+Stores application-level user records linked to Firebase Auth using `firebase_uid`.
 
-## 3. `user_roles` Table
+| Column Name     | Data Type    | Constraints       | Description                                                  |
+| :-------------- | :----------- | :---------------- | :----------------------------------------------------------- |
+| `id`            | VARCHAR(128) | PK                | Unique Firebase Auth UID.                                    |
+| `name`          | VARCHAR(150) | NOT NULL          | User's full name.                                            |
+| `age`           | INT          | CHECK (`age` >= 0)| User's age.                                                  |
+| `email`         | VARCHAR(255) | UNIQUE, NOT NULL  | Primary email address (synced with Firebase Auth).            |
+| `auth_provider` | VARCHAR(50)  | NOT NULL          | Authentication provider (e.g., `google.com`, `password`).    |
+| `is_active`     | BOOLEAN      | DEFAULT TRUE      | Soft-disable account access without deleting relational data.|
+| `created_at`    | TIMESTAMP    | DEFAULT NOW()     | Account creation timestamp.                                  |
+| `updated_at`    | TIMESTAMP    | DEFAULT NOW()     | Profile last updated timestamp.                              |
 
-A junction table that maps users to their specific roles.
+---
 
-| Column Name | Data Type | Constraints               | Description        |
-| :---------- | :-------- | :------------------------ | :----------------- |
-| `user_id`   | UUID      | FK references `users(id)` | The user.          |
-| `role_id`   | INT       | FK references `roles(id)` | The assigned role. |
+### 2.2 `sellers` Table
+
+Stores specific seller profile attributes and verification details, linked to Firebase Auth via `id`.
+
+| Column Name     | Data Type    | Constraints       | Description                                                  |
+| :-------------- | :----------- | :---------------- | :----------------------------------------------------------- |
+| `id`            | VARCHAR(128) | PK, FK `users(id)`| Unique Firebase Auth UID referencing `users(id)`.            |
+| `name`          | VARCHAR(150) | NOT NULL          | Seller/Business name.                                        |
+| `age`           | INT          | CHECK (`age` >= 0)| Seller owner age.                                            |
+| `email`         | VARCHAR(255) | UNIQUE, NOT NULL  | Seller email address.                                        |
+| `auth_provider` | VARCHAR(50)  | NOT NULL          | Authentication provider (e.g., `google.com`, `password`).    |
+| `nic_front`     | VARCHAR(500) | NULLABLE          | Storage URL/Path for NIC front image verification.           |
+| `nic_rear`      | VARCHAR(500) | NULLABLE          | Storage URL/Path for NIC rear image verification.            |
+| `is_active`     | BOOLEAN      | DEFAULT TRUE      | Seller account status.                                       |
+| `created_at`    | TIMESTAMP    | DEFAULT NOW()     | Account creation timestamp.                                  |
+| `updated_at`    | TIMESTAMP    | DEFAULT NOW()     | Profile last updated timestamp.                              |
+
+---
+
+### 2.3 `roles` Table
+
+Defines available system roles (`User`, `Seller`, `Admin`, `Tailor`).
+
+| Column Name | Data Type   | Constraints        | Description                                    |
+| :---------- | :---------- | :----------------- | :--------------------------------------------- |
+| `id`        | INT         | PK, Auto Increment | Unique role identifier.                        |
+| `name`      | VARCHAR(50) | UNIQUE, NOT NULL   | Name of the role (e.g., `User`, `Seller`).     |
+
+---
+
+### 2.4 `user_roles` Table
+
+Junction table mapping users (or sellers) to one or multiple roles.
+
+| Column Name | Data Type    | Constraints                  | Description                               |
+| :---------- | :----------- | :--------------------------- | :---------------------------------------- |
+| `user_id`   | VARCHAR(128) | FK references `users(id)`    | User ID (Firebase UID).                   |
+| `role_id`   | INT          | FK references `roles(id)`    | Assigned role ID.                         |
 
 > **Primary Key:** `(user_id, role_id)`
 
-## 4. `sections` Table
+---
 
-Defines the main view components or pages in the application.
+### 2.5 `sections` Table
+
+Defines main application pages/views for navigation and interface access control.
 
 | Column Name  | Data Type    | Constraints        | Description                                  |
 | :----------- | :----------- | :----------------- | :------------------------------------------- |
-| `id`         | INT          | PK, Auto Increment | Unique identifier.                           |
-| `name`       | VARCHAR(100) | UNIQUE, NOT NULL   | E.g., `Home`, `user Home`, `tailer Home`.    |
-| `route_name` | VARCHAR(100) | UNIQUE, NOT NULL   | E.g., `/home`, `/user/home`, `/tailer/home`. |
+| `id`         | INT          | PK, Auto Increment | Unique section identifier.                   |
+| `name`       | VARCHAR(100) | UNIQUE, NOT NULL   | Display name (e.g., `Home`, `Seller Home`).  |
+| `route_name` | VARCHAR(100) | UNIQUE, NOT NULL   | Route path (e.g., `/home`, `/seller/home`).  |
 
-## 5. `role_section_grants` Table
+---
 
-Controls authorization by mapping roles directly to the sections they are permitted to see.
+### 2.6 `role_section_grants` Table
 
-| Column Name  | Data Type | Constraints                  | Description                    |
-| :----------- | :-------- | :--------------------------- | :----------------------------- |
-| `role_id`    | INT       | FK references `roles(id)`    | The role being granted access. |
-| `section_id` | INT       | FK references `sections(id)` | The section they can access.   |
+Authorizes roles to access specific sections of the application.
+
+| Column Name  | Data Type | Constraints                  | Description                                  |
+| :----------- | :-------- | :--------------------------- | :------------------------------------------- |
+| `role_id`    | INT       | FK references `roles(id)`    | Target role.                                 |
+| `section_id` | INT       | FK references `sections(id)` | Accessible section.                          |
 
 > **Primary Key:** `(role_id, section_id)`
 
-## 6. `sub_sections` Table
+---
 
-Defines individual UI components or features within sections.
+### 2.7 `sub_sections` Table
 
-| Column Name    | Data Type    | Constraints        | Description                                |
-| :------------- | :----------- | :----------------- | :----------------------------------------- |
-| `id`           | INT          | PK, Auto Increment | Unique identifier.                         |
-| `name`         | VARCHAR(100) | UNIQUE, NOT NULL   | E.g., `search bar`, `Dashboard`.           |
-| `component_id` | VARCHAR(100) | UNIQUE, NOT NULL   | E.g., `widget_search`, `widget_dashboard`. |
+Defines granular UI components/widgets within parent sections.
 
-## 7. `section_sub_sections` Table
+| Column Name    | Data Type    | Constraints        | Description                                   |
+| :------------- | :----------- | :----------------- | :-------------------------------------------- |
+| `id`           | INT          | PK, Auto Increment | Unique sub-section identifier.                |
+| `name`         | VARCHAR(100) | UNIQUE, NOT NULL   | Human-readable name (e.g., `Search Bar`).     |
+| `component_id` | VARCHAR(100) | UNIQUE, NOT NULL   | Component key (e.g., `widget_search`).       |
 
-Maps sub-sections to their parent views, supporting reusability across multiple parent sections.
+---
 
-| Column Name      | Data Type | Constraints                      | Description      |
-| :--------------- | :-------- | :------------------------------- | :--------------- |
-| `section_id`     | INT       | FK references `sections(id)`     | Parent section.  |
-| `sub_section_id` | INT       | FK references `sub_sections(id)` | Child component. |
+### 2.8 `section_sub_sections` Table
+
+Maps reusable sub-sections (UI widgets) to parent sections.
+
+| Column Name      | Data Type | Constraints                      | Description                               |
+| :--------------- | :-------- | :------------------------------- | :---------------------------------------- |
+| `section_id`     | INT       | FK references `sections(id)`     | Parent section.                           |
+| `sub_section_id` | INT       | FK references `sub_sections(id)` | Included child component/widget.          |
 
 > **Primary Key:** `(section_id, sub_section_id)`
 
-## 8. `tokens` Table
+---
 
-Manages authentication states, active sessions, or API tokens for logged-in users. Includes a revocation flag.
+## 3. Offloaded Components & Services
 
-| Column Name  | Data Type    | Constraints               | Description                                             |
-| :----------- | :----------- | :------------------------ | :------------------------------------------------------ |
-| `id`         | UUID         | PK                        | Unique session/token identifier.                        |
-| `user_id`    | UUID         | FK references `users(id)` | The owner of the token.                                 |
-| `token_hash` | VARCHAR(500) | UNIQUE, NOT NULL          | Hashed version of the JWT/Session token (for security). |
-| `is_revoked` | BOOLEAN      | DEFAULT FALSE             | Set to TRUE to instantly kill a session.                |
-| `expires_at` | TIMESTAMP    | NOT NULL                  | Natural expiration time.                                |
-| `created_at` | TIMESTAMP    | DEFAULT NOW()             | When the login occurred.                                |
+- **Authentication Providers:** Handled by **Firebase Auth** for both **Google Sign-In** and **Email / Password**.
+- **Password Storage (`password_hash`):** Managed completely by **Firebase Auth** using scrypt/Bcrypt internally for email/password users. No plaintext or password hashes exist in PostgreSQL.
+- **Session & Token Management (`tokens` table):** Managed by **Firebase Auth**. ID tokens (JWTs) and refresh tokens are issued and revoked through the Firebase Admin SDK.
+- **User Document Sync:** When a user registers or logs in via Firebase Auth (Google or Email/Password), their profile document is saved to Firestore under `users/{uid}`, and a corresponding row is populated in PostgreSQL `users` with `id = uid` and `auth_provider` (`google.com` or `password`).
