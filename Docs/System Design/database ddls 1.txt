@@ -193,7 +193,7 @@ CREATE TABLE bids (
     bid_amount       NUMERIC(10,2) NOT NULL CHECK (bid_amount >= 0),
     message          TEXT,
     created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
+);s
 
 CREATE TABLE orders (
     order_id         SERIAL PRIMARY KEY,
