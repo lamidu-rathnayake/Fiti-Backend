@@ -4,7 +4,7 @@ from typing import Optional
 
 @dataclass
 class Role:
-    id: Optional[int]
+    id: int
     name: str
 
 
@@ -16,7 +16,7 @@ class UserRole:
 
 @dataclass
 class Section:
-    id: Optional[int]
+    id: int
     name: str
     route_name: str
 
@@ -29,12 +29,8 @@ class RoleSectionGrant:
 
 @dataclass
 class SubSection:
-    id: Optional[int]
+    id: int
+    section_id: int
     name: str
     component_id: str
 
-
-@dataclass
-class SectionSubSection:
-    section_id: int
-    sub_section_id: int

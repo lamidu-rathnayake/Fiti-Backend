@@ -44,15 +44,11 @@ class SubSectionModel(Base):
     __tablename__ = "sub_sections"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    section_id: Mapped[int] = mapped_column(Integer, ForeignKey("sections.id", ondelete="CASCADE"), nullable=False)
     component_id: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
     def to_domain(self) -> SubSection:
         return SubSection(id=self.id, name=self.name, component_id=self.component_id)
 
 
-class SectionSubSectionModel(Base):
-    __tablename__ = "section_sub_sections"
-
-    section_id: Mapped[int] = mapped_column(Integer, ForeignKey("sections.id", ondelete="CASCADE"), primary_key=True)
-    sub_section_id: Mapped[int] = mapped_column(Integer, ForeignKey("sub_sections.id", ondelete="CASCADE"), primary_key=True)

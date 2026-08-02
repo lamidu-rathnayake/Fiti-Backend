@@ -17,8 +17,8 @@ class Client:
     The Firebase UID is the primary key — full user identity lives in Firebase Auth.
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
 
 
 @dataclass
@@ -29,11 +29,11 @@ class Seller:
     NIC images are stored as cloud storage URLs.
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
-    nic_front: Optional[str] = None   # Cloud storage URL (Firebase Storage / Azure Blob)
-    nic_rear: Optional[str] = None    # Cloud storage URL
+    nic_front: str = None   # Cloud storage URL (Firebase Storage / Azure Blob)
+    nic_rear: str = None    # Cloud storage URL
     is_verified: bool = False
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
 
 
 @dataclass
@@ -53,5 +53,5 @@ class MeasurementProfile:
     inseam: Optional[float] = None
     length: Optional[float] = None
     notes: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
