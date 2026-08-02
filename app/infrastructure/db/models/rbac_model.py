@@ -17,7 +17,8 @@ class RoleModel(Base):
 class UserRoleModel(Base):
     __tablename__ = "user_roles"
 
-    user_id: Mapped[str] = mapped_column(String(128), ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    # firebase_uid holds the Firebase Auth UID — no FK to a users table
+    firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
 
 

@@ -30,7 +30,8 @@ class NotificationModel(Base):
     __tablename__ = "notifications"
 
     notification_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    user_id: Mapped[str] = mapped_column(String(128), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    # firebase_uid holds the Firebase Auth UID — no FK to a users table
+    firebase_uid: Mapped[str] = mapped_column(String(128), nullable=False)
     title: Mapped[str] = mapped_column(String(150), nullable=False)
     message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
@@ -41,7 +42,7 @@ class NotificationModel(Base):
     def to_domain(self) -> Notification:
         return Notification(
             notification_id=self.notification_id,
-            user_id=self.user_id,
+            user_id=self.firebase_uid,
             title=self.title,
             message=self.message,
             is_read=self.is_read,

@@ -123,6 +123,7 @@ Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent 
   * `health.py`: Microservice health check endpoint (`/api/v1/health`).
   * `users.py`: User registration and profile management (`/api/v1/users`).
   * `shops.py`: Tailor shop registration and discovery (`/api/v1/shops`).
+  * `near_shops.py`: Tailor shop near to discovery (`/api/v1/shops`).
   * `orders.py`: Clothing requests, bids, orders, mock payments, ratings (`/api/v1/orders`).
 * **Router (`app/api/v1/router.py`)**: Central API router combining all v1 endpoints under `/api/v1`.
 

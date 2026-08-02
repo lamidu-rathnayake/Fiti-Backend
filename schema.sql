@@ -68,29 +68,32 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ---------------------------------------------------------
--- 3. IDENTITY (Firebase-backed)
+-- 3. PROFILE EXTENSIONS (Firebase-backed identity)
 -- ---------------------------------------------------------
-CREATE TABLE IF NOT EXISTS users (
-    id               VARCHAR(128) PRIMARY KEY,          -- Firebase Auth UID
-    name             VARCHAR(150) NOT NULL,
-    email            VARCHAR(255) NOT NULL UNIQUE,
-    auth_provider    VARCHAR(50)  NOT NULL,              -- 'google.com' | 'password'
-    whatsapp_number  VARCHAR(20),
-    address          VARCHAR(255),
-    city             VARCHAR(100),
-    postal_code      VARCHAR(20),
-    gender           gender_enum,
-    age              INT CHECK (age >= 0),
-    profile_image    VARCHAR(500),
-    is_active        BOOLEAN NOT NULL DEFAULT TRUE,
-    created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- NOTE: Full user identity (name, email, password, auth provider) lives in
+-- Firebase Auth. PostgreSQL only stores role-specific profile extensions.
+-- The `id` column in clients/sellers holds the Firebase Auth UID directly
+-- with NO foreign key to a users table (there is no users table).
+
+CREATE TABLE IF NOT EXISTS clients (
+    id          VARCHAR(128) PRIMARY KEY,               -- Firebase Auth UID
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- FIXED: user_id is VARCHAR(128) referencing users(id) — matches PK type
+CREATE TABLE IF NOT EXISTS sellers (
+    id           VARCHAR(128) PRIMARY KEY,              -- Firebase Auth UID
+    nic_front    VARCHAR(500),                          -- Cloud storage URL
+    nic_rear     VARCHAR(500),                          -- Cloud storage URL
+    is_verified  BOOLEAN NOT NULL DEFAULT FALSE,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- References clients.id (Firebase UID) — no dependency on a users table
 CREATE TABLE IF NOT EXISTS measurement_profile (
     measurement_id  SERIAL PRIMARY KEY,
-    user_id         VARCHAR(128) NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    client_id       VARCHAR(128) NOT NULL UNIQUE REFERENCES clients(id) ON DELETE CASCADE,
     chest           NUMERIC(5,2),
     waist           NUMERIC(5,2),
     shoulder        NUMERIC(5,2),
@@ -104,21 +107,6 @@ CREATE TABLE IF NOT EXISTS measurement_profile (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS clients (
-    id          VARCHAR(128) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS sellers (
-    id           VARCHAR(128) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    nic_front    VARCHAR(500),
-    nic_rear     VARCHAR(500),
-    is_verified  BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
 -- ---------------------------------------------------------
 -- 4. RBAC (roles, sections, sub-sections, grants)
 -- ---------------------------------------------------------
@@ -128,9 +116,10 @@ CREATE TABLE IF NOT EXISTS roles (
 );
 
 CREATE TABLE IF NOT EXISTS user_roles (
-    user_id  VARCHAR(128) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    role_id  INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, role_id)
+    -- firebase_uid stores the Firebase Auth UID — no FK since users table does not exist in PostgreSQL
+    firebase_uid  VARCHAR(128) NOT NULL,
+    role_id       INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (firebase_uid, role_id)
 );
 
 CREATE TABLE IF NOT EXISTS sections (
@@ -296,7 +285,8 @@ CREATE TABLE IF NOT EXISTS favorite_shops (
 
 CREATE TABLE IF NOT EXISTS notifications (
     notification_id  SERIAL PRIMARY KEY,
-    user_id          VARCHAR(128) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    -- firebase_uid stores the Firebase Auth UID — no FK since users table does not exist in PostgreSQL
+    firebase_uid     VARCHAR(128) NOT NULL,
     title            VARCHAR(150) NOT NULL,
     message          TEXT,
     is_read          BOOLEAN NOT NULL DEFAULT FALSE,
@@ -322,9 +312,6 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_role_id             ON user_roles(role
 -- ---------------------------------------------------------
 -- 9. TRIGGERS: keep updated_at current
 -- ---------------------------------------------------------
-DROP TRIGGER IF EXISTS trg_users_updated_at ON users;
-CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
 DROP TRIGGER IF EXISTS trg_clients_updated_at ON clients;
 CREATE TRIGGER trg_clients_updated_at BEFORE UPDATE ON clients FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 

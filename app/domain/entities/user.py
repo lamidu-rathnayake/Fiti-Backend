@@ -11,41 +11,26 @@ class GenderEnum(str, Enum):
 
 
 @dataclass
-class User:
-    """Pure Domain Entity representing a User mapped to Firebase Auth UID."""
-    id: str  # Firebase Auth UID
-    name: str
-    email: str
-    auth_provider: str  # e.g., 'google.com', 'password'
-    whatsapp_number: Optional[str] = None
-    address: Optional[str] = None
-    city: Optional[str] = None
-    postal_code: Optional[str] = None
-    gender: Optional[GenderEnum] = None
-    age: Optional[int] = None
-    profile_image: Optional[str] = None
-    is_active: bool = True
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
-
-    def deactivate(self) -> None:
-        self.is_active = False
-
-
-@dataclass
 class Client:
-    """Pure Domain Entity representing a Client profile."""
-    id: str  # Foreign Key -> User.id
+    """
+    Firebase-backed client profile extension.
+    The Firebase UID is the primary key — full user identity lives in Firebase Auth.
+    """
+    id: str  # Firebase Auth UID (PK — no FK to users table)
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
 
 @dataclass
 class Seller:
-    """Pure Domain Entity representing a Seller/Tailor business profile."""
-    id: str  # Foreign Key -> User.id
-    nic_front: Optional[str] = None
-    nic_rear: Optional[str] = None
+    """
+    Firebase-backed seller/tailor profile extension.
+    The Firebase UID is the primary key — full user identity lives in Firebase Auth.
+    NIC images are stored as cloud storage URLs.
+    """
+    id: str  # Firebase Auth UID (PK — no FK to users table)
+    nic_front: Optional[str] = None   # Cloud storage URL (Firebase Storage / Azure Blob)
+    nic_rear: Optional[str] = None    # Cloud storage URL
     is_verified: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
@@ -53,9 +38,12 @@ class Seller:
 
 @dataclass
 class MeasurementProfile:
-    """Pure Domain Entity for client standard measurement profile."""
-    measurement_id: Optional[int]
-    user_id: str  # Foreign Key -> User.id
+    """
+    Reusable standard body measurements saved for a client.
+    References the client's Firebase UID directly.
+    """
+    client_id: str               # Firebase Auth UID referencing clients.id
+    measurement_id: Optional[int] = None
     chest: Optional[float] = None
     waist: Optional[float] = None
     shoulder: Optional[float] = None

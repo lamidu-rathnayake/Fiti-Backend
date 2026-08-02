@@ -2,8 +2,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.domain.repositories.user_repository import (
-    AbstractUserRepository,
+from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
     AbstractSellerRepository,
     AbstractMeasurementProfileRepository,
@@ -11,13 +10,8 @@ from app.domain.repositories.user_repository import (
 from app.domain.repositories.rbac_repository import AbstractRBACRepository
 from app.domain.repositories.shop_repository import AbstractShopRepository
 from app.domain.repositories.order_repository import AbstractOrderRepository
-from app.domain.repositories.notification_repository import (
-    AbstractNotificationRepository,
-    AbstractFavoriteShopRepository,
-)
 
-from app.infrastructure.db.repositories.sqlalchemy_user_repository import (
-    SQLAlchemyUserRepository,
+from app.infrastructure.db.repositories.sqlalchemy_profile_repository import (
     SQLAlchemyClientRepository,
     SQLAlchemySellerRepository,
     SQLAlchemyMeasurementProfileRepository,
@@ -25,24 +19,14 @@ from app.infrastructure.db.repositories.sqlalchemy_user_repository import (
 from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import SQLAlchemyRBACRepository
 from app.infrastructure.db.repositories.sqlalchemy_shop_repository import SQLAlchemyShopRepository
 from app.infrastructure.db.repositories.sqlalchemy_order_repository import SQLAlchemyOrderRepository
-from app.infrastructure.db.repositories.sqlalchemy_support_repository import (
-    SQLAlchemyNotificationRepository,
-    SQLAlchemyFavoriteShopRepository,
-)
 
-from app.use_cases.user.create_user import CreateUserUseCase
-from app.use_cases.user.get_user import GetUserUseCase
-from app.use_cases.user.list_users import ListUsersUseCase
-from app.use_cases.user.manage_measurement import ManageMeasurementProfileUseCase
+from app.use_cases.user.manage_profile import ManageProfileUseCase
 from app.use_cases.rbac.manage_rbac import ManageRBACUseCase
 from app.use_cases.shop.manage_shop import ManageShopUseCase
 from app.use_cases.order.manage_order import ManageOrderUseCase
 
 
-# Repositories
-def get_user_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractUserRepository:
-    return SQLAlchemyUserRepository(session=session)
-
+# ── Repository Factories ──────────────────────────────────────────────────────
 
 def get_client_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractClientRepository:
     return SQLAlchemyClientRepository(session=session)
@@ -70,37 +54,18 @@ def get_order_repository(session: AsyncSession = Depends(get_db_session)) -> Abs
     return SQLAlchemyOrderRepository(session=session)
 
 
-# Use Cases
-def get_create_user_use_case(
-    user_repo: AbstractUserRepository = Depends(get_user_repository),
+# ── Use Case Factories ────────────────────────────────────────────────────────
+
+def get_manage_profile_use_case(
     client_repo: AbstractClientRepository = Depends(get_client_repository),
     seller_repo: AbstractSellerRepository = Depends(get_seller_repository),
-    rbac_repo: AbstractRBACRepository = Depends(get_rbac_repository),
-) -> CreateUserUseCase:
-    return CreateUserUseCase(
-        user_repository=user_repo,
+    meas_repo: AbstractMeasurementProfileRepository = Depends(get_measurement_repository),
+) -> ManageProfileUseCase:
+    return ManageProfileUseCase(
         client_repository=client_repo,
         seller_repository=seller_repo,
-        rbac_repository=rbac_repo,
+        measurement_repository=meas_repo,
     )
-
-
-def get_user_by_id_use_case(
-    user_repo: AbstractUserRepository = Depends(get_user_repository),
-) -> GetUserUseCase:
-    return GetUserUseCase(user_repository=user_repo)
-
-
-def get_list_users_use_case(
-    user_repo: AbstractUserRepository = Depends(get_user_repository),
-) -> ListUsersUseCase:
-    return ListUsersUseCase(user_repository=user_repo)
-
-
-def get_manage_measurement_use_case(
-    meas_repo: AbstractMeasurementProfileRepository = Depends(get_measurement_repository),
-) -> ManageMeasurementProfileUseCase:
-    return ManageMeasurementProfileUseCase(profile_repository=meas_repo)
 
 
 def get_manage_rbac_use_case(

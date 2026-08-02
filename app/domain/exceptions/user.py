@@ -1,29 +1,28 @@
-class UserDomainException(Exception):
-    """Base exception for user domain errors."""
+class ProfileDomainException(Exception):
+    """Base exception for profile domain errors."""
     pass
 
 
-class UserNotFoundError(UserDomainException):
-    def __init__(self, user_id: str = None, identifier: str = None):
-        uid = user_id or identifier
-        super().__init__(f"User with ID '{uid}' not found.")
+class ProfileNotFoundError(ProfileDomainException):
+    def __init__(self, profile_id: str, role: str = "client"):
+        super().__init__(f"{role.capitalize()} profile with Firebase UID '{profile_id}' not found.")
 
 
-class UserAlreadyExistsError(UserDomainException):
-    def __init__(self, email: str):
-        super().__init__(f"User with email '{email}' already exists.")
+class ProfileAlreadyExistsError(ProfileDomainException):
+    def __init__(self, profile_id: str, role: str = "client"):
+        super().__init__(f"{role.capitalize()} profile for Firebase UID '{profile_id}' already exists.")
 
 
-class ClientNotFoundError(UserDomainException):
+class ClientNotFoundError(ProfileDomainException):
     def __init__(self, client_id: str):
-        super().__init__(f"Client profile with ID '{client_id}' not found.")
+        super().__init__(f"Client profile with Firebase UID '{client_id}' not found.")
 
 
-class SellerNotFoundError(UserDomainException):
+class SellerNotFoundError(ProfileDomainException):
     def __init__(self, seller_id: str):
-        super().__init__(f"Seller profile with ID '{seller_id}' not found.")
+        super().__init__(f"Seller profile with Firebase UID '{seller_id}' not found.")
 
 
-class MeasurementProfileNotFoundError(UserDomainException):
-    def __init__(self, user_id: str):
-        super().__init__(f"Measurement profile for user '{user_id}' not found.")
+class MeasurementProfileNotFoundError(ProfileDomainException):
+    def __init__(self, client_id: str):
+        super().__init__(f"Measurement profile for client '{client_id}' not found.")
