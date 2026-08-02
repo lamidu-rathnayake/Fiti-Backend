@@ -1,0 +1,62 @@
+from typing import List, Optional
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.api.dependencies import get_manage_shop_use_case
+from app.api.schemas.shop_schema import ShopCreateRequest, ShopResponse, ShopImageSchema
+from app.domain.exceptions.shop import ShopNotFoundError
+from app.use_cases.dtos.shop_dto import ShopCreateDTO
+from app.use_cases.shop.manage_shop import ManageShopUseCase
+
+router = APIRouter(prefix="/shops", tags=["Shops"])
+
+
+@router.post("/", response_model=ShopResponse, status_code=status.HTTP_201_CREATED)
+async def create_shop(
+    request: ShopCreateRequest,
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    dto = ShopCreateDTO(
+        seller_id=request.seller_id,
+        shop_name=request.shop_name,
+        shop_bio=request.shop_bio,
+        shop_address=request.shop_address,
+        city=request.city,
+        contact_number=request.contact_number,
+        registration_number=request.registration_number,
+        latitude=request.latitude,
+        longitude=request.longitude,
+    )
+    return await use_case.create_shop(dto)
+
+
+@router.get("/{shop_id}", response_model=ShopResponse)
+async def get_shop(
+    shop_id: int,
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    try:
+        return await use_case.get_shop_by_id(shop_id)
+    except ShopNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/", response_model=List[ShopResponse])
+async def list_shops(
+    skip: int = 0,
+    limit: int = 100,
+    city: Optional[str] = None,
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    return await use_case.list_shops(skip=skip, limit=limit, city=city)
+
+
+@router.post("/{shop_id}/images", response_model=ShopImageSchema, status_code=status.HTTP_201_CREATED)
+async def add_shop_image(
+    shop_id: int,
+    image_url: str,
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    try:
+        return await use_case.add_shop_image(shop_id=shop_id, image_url=image_url)
+    except ShopNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))

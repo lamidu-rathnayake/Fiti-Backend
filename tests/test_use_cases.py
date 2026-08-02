@@ -1,70 +1,108 @@
 import pytest
-from app.domain.entities.user import User
+from typing import Optional, List
+from app.domain.entities.user import User, Client, Seller
 from app.domain.exceptions.user import UserAlreadyExistsError, UserNotFoundError
-from app.domain.repositories.user_repository import AbstractUserRepository
+from app.domain.repositories.user_repository import (
+    AbstractUserRepository,
+    AbstractClientRepository,
+    AbstractSellerRepository,
+)
 from app.use_cases.dtos.user_dto import UserCreateInputDTO
 from app.use_cases.user.create_user import CreateUserUseCase
 from app.use_cases.user.get_user import GetUserUseCase
 
 
 class InMemoryUserRepository(AbstractUserRepository):
-    """In-memory mock repository for domain unit testing without DB."""
-
     def __init__(self):
         self.users = {}
-        self._id_counter = 1
 
     async def create(self, user: User) -> User:
-        user.id = self._id_counter
-        self._id_counter += 1
         self.users[user.id] = user
         return user
 
-    async def get_by_id(self, user_id: int):
+    async def get_by_id(self, user_id: str) -> Optional[User]:
         return self.users.get(user_id)
 
-    async def get_by_email(self, email: str):
+    async def get_by_email(self, email: str) -> Optional[User]:
         for user in self.users.values():
             if user.email == email:
                 return user
         return None
 
-    async def list_all(self, skip: int = 0, limit: int = 100):
+    async def update(self, user: User) -> User:
+        self.users[user.id] = user
+        return user
+
+    async def list_all(self, skip: int = 0, limit: int = 100) -> List[User]:
         return list(self.users.values())[skip : skip + limit]
 
-    async def delete(self, user_id: int) -> bool:
+    async def delete(self, user_id: str) -> bool:
         if user_id in self.users:
             del self.users[user_id]
             return True
         return False
 
 
-class DummyHasher:
-    def hash_password(self, pwd: str) -> str:
-        return f"hashed_{pwd}"
+class InMemoryClientRepository(AbstractClientRepository):
+    def __init__(self):
+        self.clients = {}
+
+    async def create(self, client: Client) -> Client:
+        self.clients[client.id] = client
+        return client
+
+    async def get_by_id(self, client_id: str) -> Optional[Client]:
+        return self.clients.get(client_id)
+
+
+class InMemorySellerRepository(AbstractSellerRepository):
+    def __init__(self):
+        self.sellers = {}
+
+    async def create(self, seller: Seller) -> Seller:
+        self.sellers[seller.id] = seller
+        return seller
+
+    async def get_by_id(self, seller_id: str) -> Optional[Seller]:
+        return self.sellers.get(seller_id)
+
+    async def update(self, seller: Seller) -> Seller:
+        self.sellers[seller.id] = seller
+        return seller
 
 
 @pytest.mark.asyncio
 async def test_create_user_use_case():
     repo = InMemoryUserRepository()
-    hasher = DummyHasher()
-    use_case = CreateUserUseCase(user_repository=repo, password_hasher=hasher)
+    client_repo = InMemoryClientRepository()
+    seller_repo = InMemorySellerRepository()
+    use_case = CreateUserUseCase(
+        user_repository=repo, client_repository=client_repo, seller_repository=seller_repo
+    )
 
-    dto = UserCreateInputDTO(email="test@example.com", username="testuser", password="password123")
+    dto = UserCreateInputDTO(
+        id="fb_uid_123", name="John Doe", email="test@example.com", auth_provider="email", role="client"
+    )
     result = await use_case.execute(dto)
 
-    assert result.id == 1
+    assert result.id == "fb_uid_123"
     assert result.email == "test@example.com"
-    assert result.username == "testuser"
+    assert result.name == "John Doe"
+    assert "fb_uid_123" in client_repo.clients
 
 
 @pytest.mark.asyncio
-async def test_create_user_duplicate_email():
+async def test_create_user_duplicate_id():
     repo = InMemoryUserRepository()
-    hasher = DummyHasher()
-    use_case = CreateUserUseCase(user_repository=repo, password_hasher=hasher)
+    client_repo = InMemoryClientRepository()
+    seller_repo = InMemorySellerRepository()
+    use_case = CreateUserUseCase(
+        user_repository=repo, client_repository=client_repo, seller_repository=seller_repo
+    )
 
-    dto = UserCreateInputDTO(email="test@example.com", username="testuser", password="password123")
+    dto = UserCreateInputDTO(
+        id="fb_uid_123", name="John Doe", email="test@example.com", auth_provider="email", role="client"
+    )
     await use_case.execute(dto)
 
     with pytest.raises(UserAlreadyExistsError):
@@ -77,4 +115,4 @@ async def test_get_user_not_found():
     use_case = GetUserUseCase(user_repository=repo)
 
     with pytest.raises(UserNotFoundError):
-        await use_case.execute(999)
+        await use_case.execute("non_existent_uid")
