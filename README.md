@@ -1,6 +1,6 @@
-# FastAPI Microservice with Clean Architecture & SQLAlchemy
+# FastAPI Backend Application with Clean Architecture & SQLAlchemy
 
-Production-ready microservice architecture built with **FastAPI**, **SQLAlchemy 2.0 (Async)**, and **Clean Architecture** principles.
+Production-ready backend application built with **FastAPI**, **SQLAlchemy 2.0 (Async)**, and **Clean Architecture** principles.
 
 ---
 

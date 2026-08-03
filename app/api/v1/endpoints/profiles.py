@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.dependencies import get_manage_profile_use_case
+from app.api.dependencies import get_manage_profile_use_case, get_current_user_uid
 from app.api.schemas.user_schema import (
     ClientRegisterRequest,
     ClientResponse,
@@ -24,14 +24,17 @@ router = APIRouter(prefix="/profiles", tags=["Profiles"])
 @router.post("/client", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
 async def register_client(
     request: ClientRegisterRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """
     Register a client profile for an already authenticated Firebase user.
-    Call this immediately after Firebase Auth sign-up on the frontend.
+    Option 2 Flow: The Firebase UID is extracted automatically from the verified Bearer Token,
+    or read from request.id.
     """
+    profile_id = request.id or authenticated_uid
     try:
-        dto = ClientRegisterDTO(id=request.id)
+        dto = ClientRegisterDTO(id=profile_id)
         result = await use_case.register_client(dto)
         return result
     except ProfileAlreadyExistsError as exc:
@@ -41,15 +44,18 @@ async def register_client(
 @router.post("/seller", response_model=SellerResponse, status_code=status.HTTP_201_CREATED)
 async def register_seller(
     request: SellerRegisterRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """
     Register a seller/tailor profile for an already authenticated Firebase user.
-    NIC images must be uploaded to cloud storage first; pass the resulting URLs here.
+    Option 2 Flow: The Firebase UID is extracted automatically from the verified Bearer Token,
+    or read from request.id. NIC images must be uploaded to cloud storage first.
     """
+    profile_id = request.id or authenticated_uid
     try:
         dto = SellerRegisterDTO(
-            id=request.id,
+            id=profile_id,
             nic_front=request.nic_front,
             nic_rear=request.nic_rear,
         )

@@ -1,3 +1,3 @@
 """
-FastAPI Microservice with Clean Architecture.
+FastAPI Application with Clean Architecture.
 """

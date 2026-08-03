@@ -28,6 +28,22 @@ async def test_health_check_endpoint():
 
 
 @pytest.mark.asyncio
+async def test_option2_client_registration_without_body_id():
+    """
+    Tests Option 2 direct registration flow where the frontend omits 'id' in the JSON body,
+    and FastAPI extracts the authenticated Firebase UID from the security context.
+    """
+    async with AsyncClient(
+        transport=ASGITransport(app=app), base_url="http://test"
+    ) as ac:
+        # 1. Register Client Profile without supplying 'id' in body
+        client_resp = await ac.post("/api/v1/profiles/client", json={})
+        assert client_resp.status_code == 201
+        # In mock mode, defaults to 'mock_firebase_uid'
+        assert client_resp.json()["id"] == "mock_firebase_uid"
+
+
+@pytest.mark.asyncio
 async def test_full_marketplace_workflow_api():
     """
     End-to-end marketplace workflow test.

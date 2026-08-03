@@ -5,10 +5,10 @@ from pydantic import BaseModel, Field, ConfigDict
 
 class ClientRegisterRequest(BaseModel):
     """
-    Sent by the frontend after Firebase Auth sign-up to register a client profile.
-    The Firebase UID is extracted from the verified ID token on a real deployment.
+    Sent by the web frontend after Firebase Auth sign-up to register a client profile.
+    If 'id' is omitted, the backend will automatically extract the verified Firebase UID from the Bearer Token.
     """
-    id: str = Field(..., description="Firebase Auth UID", json_schema_extra={"example": "firebase_uid_abc123"})
+    id: Optional[str] = Field(None, description="Firebase Auth UID (optional if Bearer Token is supplied)", json_schema_extra={"example": "firebase_uid_abc123"})
 
 
 class ClientResponse(BaseModel):
@@ -20,10 +20,11 @@ class ClientResponse(BaseModel):
 
 class SellerRegisterRequest(BaseModel):
     """
-    Sent by the frontend after Firebase Auth sign-up to register a seller profile.
+    Sent by the web frontend after Firebase Auth sign-up to register a seller profile.
+    If 'id' is omitted, the backend will automatically extract the verified Firebase UID from the Bearer Token.
     NIC image URLs should point to files already uploaded to cloud storage.
     """
-    id: str = Field(..., description="Firebase Auth UID", json_schema_extra={"example": "firebase_uid_xyz789"})
+    id: Optional[str] = Field(None, description="Firebase Auth UID (optional if Bearer Token is supplied)", json_schema_extra={"example": "firebase_uid_xyz789"})
     nic_front: Optional[str] = Field(None, description="Cloud storage URL for NIC front photo")
     nic_rear: Optional[str] = Field(None, description="Cloud storage URL for NIC rear photo")
 

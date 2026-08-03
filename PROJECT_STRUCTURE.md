@@ -1,6 +1,6 @@
-# Fiti Microservice - Project Structure & Clean Architecture Guide
+# Fiti Backend Application - Project Structure & Clean Architecture Guide
 
-This project is a **FastAPI Microservice** built with **Clean Architecture** (Domain-Driven Design / Layered Architecture) principles using **SQLAlchemy 2.0 (Async)**, **PostgreSQL**, and **Pydantic V2**.
+This project is a **FastAPI Application** built with **Clean Architecture** (Domain-Driven Design / Layered Architecture) principles using **SQLAlchemy 2.0 (Async)**, **PostgreSQL**, and **Pydantic V2**.
 
 ---
 
@@ -120,7 +120,7 @@ Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent 
 * **Dependencies (`app/api/dependencies.py`)**: Dependency injection factory for database sessions, repositories, and use case services.
 * **Schemas (`app/api/schemas/`)**: Pydantic V2 request & response validation models (`user_schema.py`, `shop_schema.py`, `order_schema.py`).
 * **Endpoints (`app/api/v1/endpoints/`)**:
-  * `health.py`: Microservice health check endpoint (`/api/v1/health`).
+  * `health.py`: Application health check endpoint (`/api/v1/health`).
   * `users.py`: User registration and profile management (`/api/v1/users`).
   * `shops.py`: Tailor shop registration and discovery (`/api/v1/shops`).
   * `near_shops.py`: Tailor shop near to discovery (`/api/v1/shops`).
