@@ -7,7 +7,6 @@ from typing import Optional
 class GenderEnum(str, Enum):
     MALE = "male"
     FEMALE = "female"
-    OTHER = "other"
 
 
 @dataclass

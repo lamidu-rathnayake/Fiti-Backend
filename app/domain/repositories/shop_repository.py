@@ -27,3 +27,18 @@ class AbstractShopRepository(ABC):
     @abstractmethod
     async def update_average_rating(self, shop_id: int, new_rating: float) -> None:
         pass
+        
+    @abstractmethod
+    async def update_shop(self, shop: Shop) -> Shop:
+        """Update shop details (bio, address, contact number)."""
+        pass
+
+    @abstractmethod
+    async def delete_shop(self, shop_id: int) -> bool:
+        """Soft-delete or remove a shop."""
+        pass
+
+    @abstractmethod
+    async def search_near_location(self, lat: float, lng: float, radius_km: float = 10.0) -> List[Shop]:
+        """Find tailor shops within a GPS radius."""
+        pass

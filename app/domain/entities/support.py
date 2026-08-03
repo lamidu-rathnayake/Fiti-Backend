@@ -16,6 +16,6 @@ class Notification:
     notification_id: Optional[int]
     user_id: str
     title: str
-    message: Optional[str] = None
+    message: str = None
     is_read: bool = False
-    created_at: Optional[datetime] = None
+    created_at: datetime = None

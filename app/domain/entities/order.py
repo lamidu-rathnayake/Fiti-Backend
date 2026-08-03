@@ -83,32 +83,32 @@ class ClothingRequestImage:
 class Bid:
     shop_request_id: int
     bid_amount: float
-    bid_id: Optional[int] = None
-    message: Optional[str] = None
-    created_at: Optional[datetime] = None
+    bid_id: int = None
+    message: str = None
+    created_at: datetime = None
 
 
 @dataclass
 class ShopRequest:
     shop_id: int
-    shop_request_id: Optional[int] = None
-    request_id: Optional[int] = None
+    shop_request_id: int = None
+    request_id: int = None
     offered_price: Optional[float] = None
     status: ShopRequestStatusEnum = ShopRequestStatusEnum.PENDING
     response_date: Optional[datetime] = None
     bids: List[Bid] = field(default_factory=list)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
 
 
 @dataclass
 class ClothingRequest:
     client_id: str
-    request_id: Optional[int] = None
-    target_date: Optional[date] = None
-    target_budget: Optional[float] = None
+    request_id:int = None
+    target_date: date = None
+    target_budget: float = None
     clothing_category: Optional[str] = None
-    gender: Optional[GenderEnum] = None
+    gender: GenderEnum = None
     fabric_status: Optional[FabricStatusEnum] = None
     description: Optional[str] = None
     # NEW: URL stored after client uploads audio to cloud storage
@@ -121,8 +121,8 @@ class ClothingRequest:
     # NEW: Zero or more design-inspiration images
     design_images: List[ClothingRequestImage] = field(default_factory=list)
     shop_requests: List[ShopRequest] = field(default_factory=list)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
 
 
 @dataclass
@@ -133,8 +133,8 @@ class Order:
     accepted_price: float = 0.0
     started_date: Optional[date] = None
     completed_date: Optional[date] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    created_at: datetime = None
+    updated_at: datetime = None
 
 
 @dataclass
@@ -145,7 +145,7 @@ class Payment:
     payment_method: Optional[PaymentMethodEnum] = None
     payment_status: PaymentStatusEnum = PaymentStatusEnum.PENDING
     payment_date: Optional[datetime] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime = None
 
 
 @dataclass
@@ -156,4 +156,4 @@ class Rating:
     rating: int  # 1 to 5
     rating_id: Optional[int] = None
     review: Optional[str] = None
-    created_at: Optional[datetime] = None
+    created_at: datetime = None
