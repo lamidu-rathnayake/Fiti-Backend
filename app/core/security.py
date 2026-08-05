@@ -1,9 +1,9 @@
 import logging
-from typing import Optional
+
 import firebase_admin
-from firebase_admin import auth, credentials
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from firebase_admin import auth, credentials
 
 from app.core.config import settings
 
@@ -32,7 +32,7 @@ def init_firebase_admin():
 
 
 async def get_current_user_uid(
-    auth_header: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    auth_header: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
 ) -> str:
     """
     Statelessly verifies the Firebase ID Token from the 'Authorization: Bearer <token>' header.
@@ -53,7 +53,7 @@ async def get_current_user_uid(
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=f"Invalid or expired Firebase authentication token: {str(exc)}",
+                detail=f"Invalid or expired Firebase authentication token: {exc!s}",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 

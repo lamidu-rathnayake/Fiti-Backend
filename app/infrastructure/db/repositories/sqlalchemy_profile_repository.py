@@ -1,16 +1,17 @@
-from typing import Optional
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.domain.entities.user import Client, Seller, MeasurementProfile
+
+from app.domain.entities.user import Client, MeasurementProfile, Seller
 from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
-    AbstractSellerRepository,
     AbstractMeasurementProfileRepository,
+    AbstractSellerRepository,
 )
 from app.infrastructure.db.models.user_model import (
     ClientModel,
-    SellerModel,
     MeasurementProfileModel,
+    SellerModel,
 )
 
 
@@ -25,7 +26,7 @@ class SQLAlchemyClientRepository(AbstractClientRepository):
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def get_by_id(self, client_id: str) -> Optional[Client]:
+    async def get_by_id(self, client_id: str) -> Client | None:
         stmt = select(ClientModel).where(ClientModel.id == client_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -47,7 +48,7 @@ class SQLAlchemySellerRepository(AbstractSellerRepository):
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def get_by_id(self, seller_id: str) -> Optional[Seller]:
+    async def get_by_id(self, seller_id: str) -> Seller | None:
         stmt = select(SellerModel).where(SellerModel.id == seller_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -85,7 +86,7 @@ class SQLAlchemyMeasurementProfileRepository(AbstractMeasurementProfileRepositor
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def get_by_client_id(self, client_id: str) -> Optional[MeasurementProfile]:
+    async def get_by_client_id(self, client_id: str) -> MeasurementProfile | None:
         stmt = select(MeasurementProfileModel).where(MeasurementProfileModel.client_id == client_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()

@@ -1,9 +1,18 @@
-from datetime import datetime, timezone
-from typing import Optional
-from sqlalchemy import String, Integer, Boolean, Text, DateTime, ForeignKey, UniqueConstraint
+from datetime import UTC, datetime
+
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
-from app.infrastructure.db.base import Base
+
 from app.domain.entities.support import FavoriteShop, Notification
+from app.infrastructure.db.base import Base
 
 
 class FavoriteShopModel(Base):
@@ -14,7 +23,7 @@ class FavoriteShopModel(Base):
     client_id: Mapped[str] = mapped_column(String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
     shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     def to_domain(self) -> FavoriteShop:
@@ -33,10 +42,10 @@ class NotificationModel(Base):
     # firebase_uid holds the Firebase Auth UID — no FK to a users table
     firebase_uid: Mapped[str] = mapped_column(String(128), nullable=False)
     title: Mapped[str] = mapped_column(String(150), nullable=False)
-    message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_read: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     def to_domain(self) -> Notification:

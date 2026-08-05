@@ -1,9 +1,10 @@
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from app.main import app
+from httpx import ASGITransport, AsyncClient
+
 from app.core.database import engine
 from app.infrastructure.db.base import Base
+from app.main import app
 
 
 @pytest_asyncio.fixture(autouse=True)
@@ -174,3 +175,105 @@ async def test_full_marketplace_workflow_api():
         )
         assert rating_resp.status_code == 201
         assert rating_resp.json()["rating"] == 5
+
+
+@pytest.mark.asyncio
+async def test_rbac_endpoints():
+    # Seed the "client" role in the test database directly
+    from app.infrastructure.db.models.rbac_model import RoleModel
+    async with engine.begin() as conn:
+        from sqlalchemy import insert
+        await conn.execute(insert(RoleModel).values(name="client"))
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # 1. Assign role
+        res = await ac.post("/api/v1/rbac/assign-role", json={"user_id": "user_999", "role_name": "client"})
+        assert res.status_code == 204
+        
+        # 2. Get user access
+        res = await ac.get("/api/v1/rbac/users/user_999/access")
+        assert res.status_code == 200
+        data = res.json()
+        assert "client" in data["roles"]
+        
+        # 3. Check route access
+        res = await ac.get("/api/v1/rbac/users/user_999/check-route?route_name=/some/route")
+        assert res.status_code == 200
+        assert "has_access" in res.json()
+
+
+@pytest.mark.asyncio
+async def test_support_endpoints():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        # 1. Create notification
+        res = await ac.post("/api/v1/support/notifications", json={"user_id": "user_1", "title": "Test Alert"})
+        assert res.status_code == 201
+        n_id = res.json()["notification_id"]
+        
+        # 2. List notifications
+        res = await ac.get("/api/v1/support/notifications/user_1")
+        assert res.status_code == 200
+        assert len(res.json()) >= 1
+        
+        # 3. Mark read
+        res = await ac.patch(f"/api/v1/support/notifications/{n_id}/read")
+        assert res.status_code == 204
+        
+        # 4. Create favorite
+        # Note: requires a valid shop_id. Let's create a shop first.
+        # But wait, foreign keys might fail if the shop doesn't exist.
+        # Wait, the sqlite db handles foreign keys if enabled. Let's create a dummy seller and shop.
+        seller_res = await ac.post("/api/v1/profiles/seller", json={"id": "seller_fav", "nic_front": "http://img.com/nic"})
+        assert seller_res.status_code == 201
+        
+        shop_res = await ac.post("/api/v1/shops/", json={
+            "seller_id": "seller_fav", "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "123"
+        })
+        assert shop_res.status_code == 201
+        shop_id = shop_res.json()["shop_id"]
+
+        res = await ac.post("/api/v1/support/favorites", json={"client_id": "client_1", "shop_id": shop_id})
+        assert res.status_code == 201
+        
+        # 5. List favorites
+        res = await ac.get("/api/v1/support/favorites/client_1")
+        assert res.status_code == 200
+        assert len(res.json()) == 1
+        
+        # 6. Remove favorite
+        res = await ac.delete(f"/api/v1/support/favorites/client_1/{shop_id}")
+        assert res.status_code == 204
+
+
+@pytest.mark.asyncio
+async def test_shop_listing_and_update_endpoints():
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        seller_res = await ac.post("/api/v1/profiles/seller", json={"id": "seller_search", "nic_front": "http://img.com/nic"})
+        assert seller_res.status_code == 201
+        
+        shop_res = await ac.post("/api/v1/shops/", json={
+            "seller_id": "seller_search", "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
+        })
+        assert shop_res.status_code == 201
+        shop_id = shop_res.json()["shop_id"]
+
+        # Update
+        res = await ac.put(f"/api/v1/shops/{shop_id}", json={
+            "shop_name": "Updated Shop", "city": "Galle", "contact_number": "123"
+        })
+        assert res.status_code == 200
+        assert res.json()["shop_name"] == "Updated Shop"
+        
+        # Search near
+        res = await ac.get("/api/v1/shops/near?lat=6.92&lng=79.86&radius_km=10")
+        assert res.status_code == 200
+        assert type(res.json()) is list
+        
+        # Get by seller
+        res = await ac.get("/api/v1/shops/seller/seller_search")
+        assert res.status_code == 200
+        assert len(res.json()) >= 1
+        
+        # Delete
+        res = await ac.delete(f"/api/v1/shops/{shop_id}")
+        assert res.status_code == 204

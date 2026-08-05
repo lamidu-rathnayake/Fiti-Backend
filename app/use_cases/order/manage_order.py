@@ -1,41 +1,38 @@
-from typing import List, Optional
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
 from app.domain.entities.order import (
+    Bid,
     ClothingRequest,
     ClothingRequestImage,
     Measurement,
-    ShopRequest,
-    Bid,
     Order,
-    Payment,
-    Rating,
-    ClothingRequestStatusEnum,
-    ShopRequestStatusEnum,
     OrderStatusEnum,
+    Payment,
     PaymentStatusEnum,
+    Rating,
+    ShopRequest,
+)
+from app.domain.exceptions.order import (
+    ClothingRequestNotFoundError,
+    OrderNotFoundError,
+    ShopRequestNotFoundError,
 )
 from app.domain.repositories.order_repository import AbstractOrderRepository
 from app.domain.repositories.shop_repository import AbstractShopRepository
-from app.domain.exceptions.order import (
-    OrderNotFoundError,
-    ClothingRequestNotFoundError,
-    ShopRequestNotFoundError,
-    InvalidOrderStateTransitionError,
-)
 from app.use_cases.dtos.order_dto import (
-    ClothingRequestCreateDTO,
-    ClothingRequestOutputDTO,
-    ClothingRequestImageDTO,
-    MeasurementDTO,
     BidCreateDTO,
     BidDTO,
-    ShopRequestDTO,
+    ClothingRequestCreateDTO,
+    ClothingRequestImageDTO,
+    ClothingRequestOutputDTO,
+    MeasurementDTO,
+    MockPaymentDTO,
     OrderCreateDTO,
     OrderOutputDTO,
-    MockPaymentDTO,
     PaymentOutputDTO,
     RatingCreateDTO,
     RatingOutputDTO,
+    ShopRequestDTO,
 )
 
 
@@ -43,13 +40,13 @@ class ManageOrderUseCase:
     def __init__(
         self,
         order_repository: AbstractOrderRepository,
-        shop_repository: Optional[AbstractShopRepository] = None,
+        shop_repository: AbstractShopRepository | None = None,
     ):
         self.order_repository = order_repository
         self.shop_repository = shop_repository
 
     async def create_clothing_request(
-        self, dto: ClothingRequestCreateDTO, target_shop_ids: Optional[List[int]] = None
+        self, dto: ClothingRequestCreateDTO, target_shop_ids: list[int] | None = None
     ) -> ClothingRequestOutputDTO:
         meas_entity = None
         if dto.measurement:
@@ -96,6 +93,43 @@ class ManageOrderUseCase:
         refetched = await self.order_repository.get_clothing_request(saved_req.request_id)  # type: ignore
         return self._to_clothing_request_dto(refetched or saved_req)
 
+    async def get_clothing_request(self, request_id: int) -> ClothingRequestOutputDTO:
+        req = await self.order_repository.get_clothing_request(request_id)
+        if not req:
+            raise ClothingRequestNotFoundError(request_id)
+        return self._to_clothing_request_dto(req)
+
+    async def list_clothing_requests_by_client(self, client_id: str) -> list[ClothingRequestOutputDTO]:
+        requests = await self.order_repository.list_clothing_requests_by_client(client_id)
+        return [self._to_clothing_request_dto(r) for r in requests]
+
+    async def list_open_clothing_requests(self, skip: int = 0, limit: int = 100) -> list[ClothingRequestOutputDTO]:
+        requests = await self.order_repository.list_open_clothing_requests(skip=skip, limit=limit)
+        return [self._to_clothing_request_dto(r) for r in requests]
+
+    async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequestDTO]:
+        shop_requests = await self.order_repository.list_shop_requests_by_shop(shop_id)
+        return [
+            ShopRequestDTO(
+                shop_request_id=sr.shop_request_id,  # type: ignore
+                request_id=sr.request_id,
+                shop_id=sr.shop_id,
+                offered_price=sr.offered_price,
+                status=sr.status,
+                bids=[
+                    BidDTO(
+                        bid_id=b.bid_id,
+                        shop_request_id=b.shop_request_id,
+                        bid_amount=b.bid_amount,
+                        message=b.message,
+                        created_at=b.created_at,
+                    )
+                    for b in sr.bids
+                ],
+            )
+            for sr in shop_requests
+        ]
+
     async def submit_bid(self, dto: BidCreateDTO) -> BidDTO:
         sr = await self.order_repository.get_shop_request(dto.shop_request_id)
         if not sr:
@@ -136,6 +170,20 @@ class ManageOrderUseCase:
         updated = await self.order_repository.update_order_status(order_id, new_status)
         return self._to_order_dto(updated)
 
+    async def get_order(self, order_id: int) -> OrderOutputDTO:
+        order = await self.order_repository.get_order(order_id)
+        if not order:
+            raise OrderNotFoundError(order_id)
+        return self._to_order_dto(order)
+
+    async def list_orders_by_shop(self, shop_id: int) -> list[OrderOutputDTO]:
+        orders = await self.order_repository.list_orders_by_shop(shop_id)
+        return [self._to_order_dto(o) for o in orders]
+
+    async def list_orders_by_client(self, client_id: str) -> list[OrderOutputDTO]:
+        orders = await self.order_repository.list_orders_by_client(client_id)
+        return [self._to_order_dto(o) for o in orders]
+
     async def process_mock_payment(self, dto: MockPaymentDTO) -> PaymentOutputDTO:
         order = await self.order_repository.get_order(dto.order_id)
         if not order:
@@ -146,7 +194,7 @@ class ManageOrderUseCase:
             amount=dto.amount,
             payment_method=dto.payment_method,
             payment_status=PaymentStatusEnum.PAID,
-            payment_date=datetime.now(timezone.utc),
+            payment_date=datetime.now(UTC),
         )
         saved_payment = await self.order_repository.create_payment(payment)
         return PaymentOutputDTO(
@@ -172,9 +220,12 @@ class ManageOrderUseCase:
         )
         saved_rating = await self.order_repository.create_rating(rating)
 
-        # Update average rating of shop if repository is available
+        # Recalculate average rating for the shop
         if self.shop_repository:
-            pass  # TODO: recalculate average from all ratings for this shop
+            all_ratings = await self.order_repository.get_ratings_by_shop(dto.shop_id)
+            if all_ratings:
+                avg = sum(r.rating for r in all_ratings) / len(all_ratings)
+                await self.shop_repository.update_average_rating(dto.shop_id, round(avg, 2))
 
         return RatingOutputDTO(
             rating_id=saved_rating.rating_id,  # type: ignore

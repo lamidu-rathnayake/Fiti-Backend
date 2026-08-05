@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import List
 
 
 @dataclass
@@ -18,5 +17,5 @@ class SectionOutputDTO:
 @dataclass
 class UserAccessOverviewDTO:
     user_id: str
-    roles: List[str]
-    accessible_sections: List[SectionOutputDTO]
+    roles: list[str]
+    accessible_sections: list[SectionOutputDTO]

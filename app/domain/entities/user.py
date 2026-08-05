@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 
 
 class GenderEnum(str, Enum):
@@ -16,8 +15,8 @@ class Client:
     The Firebase UID is the primary key — full user identity lives in Firebase Auth.
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
-    created_at: datetime = None
-    updated_at: datetime = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
@@ -28,11 +27,11 @@ class Seller:
     NIC images are stored as cloud storage URLs.
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
-    nic_front: str = None   # Cloud storage URL (Firebase Storage / Azure Blob)
-    nic_rear: str = None    # Cloud storage URL
+    nic_front: str | None = None   # Cloud storage URL (Firebase Storage / Azure Blob)
+    nic_rear: str | None = None    # Cloud storage URL
     is_verified: bool = False
-    created_at: datetime = None
-    updated_at: datetime = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
@@ -42,15 +41,15 @@ class MeasurementProfile:
     References the client's Firebase UID directly.
     """
     client_id: str               # Firebase Auth UID referencing clients.id
-    measurement_id: Optional[int] = None
-    chest: Optional[float] = None
-    waist: Optional[float] = None
-    shoulder: Optional[float] = None
-    sleeve: Optional[float] = None
-    neck: Optional[float] = None
-    hip: Optional[float] = None
-    inseam: Optional[float] = None
-    length: Optional[float] = None
-    notes: Optional[str] = None
-    created_at: datetime = None
-    updated_at: datetime = None
+    measurement_id: int | None = None
+    chest: float | None = None
+    waist: float | None = None
+    shoulder: float | None = None
+    sleeve: float | None = None
+    neck: float | None = None
+    hip: float | None = None
+    inseam: float | None = None
+    length: float | None = None
+    notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None

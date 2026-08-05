@@ -1,36 +1,38 @@
-from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import get_manage_order_use_case
 from app.api.schemas.order_schema import (
-    ClothingRequestCreateRequest,
-    ClothingRequestResponse,
     BidCreateRequest,
     BidResponse,
+    ClothingRequestCreateRequest,
+    ClothingRequestResponse,
+    MockPaymentRequest,
     OrderCreateRequest,
     OrderResponse,
-    MockPaymentRequest,
     PaymentResponse,
     RatingCreateRequest,
     RatingResponse,
+    ShopRequestResponse,
 )
 from app.domain.exceptions.order import (
     ClothingRequestNotFoundError,
-    ShopRequestNotFoundError,
     OrderNotFoundError,
+    ShopRequestNotFoundError,
 )
 from app.use_cases.dtos.order_dto import (
+    BidCreateDTO,
     ClothingRequestCreateDTO,
     MeasurementDTO,
-    BidCreateDTO,
-    OrderCreateDTO,
     MockPaymentDTO,
+    OrderCreateDTO,
     RatingCreateDTO,
 )
 from app.use_cases.order.manage_order import ManageOrderUseCase
 
 router = APIRouter(prefix="/orders", tags=["Orders & Requests"])
 
+
+# ── Clothing Requests ──────────────────────────────────────────────────
 
 @router.post("/requests", response_model=ClothingRequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_clothing_request(
@@ -68,6 +70,49 @@ async def create_clothing_request(
     return await use_case.create_clothing_request(dto, target_shop_ids=request.target_shop_ids)
 
 
+@router.get("/requests/{request_id}", response_model=ClothingRequestResponse)
+async def get_clothing_request(
+    request_id: int,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    try:
+        return await use_case.get_clothing_request(request_id)
+    except ClothingRequestNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/requests/client/{client_id}", response_model=list[ClothingRequestResponse])
+async def list_clothing_requests_by_client(
+    client_id: str,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all clothing requests for a specific client."""
+    return await use_case.list_clothing_requests_by_client(client_id)
+
+
+@router.get("/requests/open", response_model=list[ClothingRequestResponse])
+async def list_open_clothing_requests(
+    skip: int = 0,
+    limit: int = 100,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all open clothing requests (marketplace view for sellers)."""
+    return await use_case.list_open_clothing_requests(skip=skip, limit=limit)
+
+
+# ── Shop Requests ──────────────────────────────────────────────────────
+
+@router.get("/shop-requests/shop/{shop_id}", response_model=list[ShopRequestResponse])
+async def list_shop_requests_by_shop(
+    shop_id: int,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all shop requests assigned to a specific shop."""
+    return await use_case.list_shop_requests_by_shop(shop_id)
+
+
+# ── Bids ───────────────────────────────────────────────────────────────
+
 @router.post("/bids", response_model=BidResponse, status_code=status.HTTP_201_CREATED)
 async def submit_bid(
     request: BidCreateRequest,
@@ -84,6 +129,8 @@ async def submit_bid(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
+# ── Orders ─────────────────────────────────────────────────────────────
+
 @router.post("/accept-bid", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def accept_bid_and_create_order(
     request: OrderCreateRequest,
@@ -97,6 +144,35 @@ async def accept_bid_and_create_order(
         return await use_case.accept_bid_and_create_order(dto)
     except ShopRequestNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/{order_id}", response_model=OrderResponse)
+async def get_order(
+    order_id: int,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    try:
+        return await use_case.get_order(order_id)
+    except OrderNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.get("/shop/{shop_id}", response_model=list[OrderResponse])
+async def list_orders_by_shop(
+    shop_id: int,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all orders for a specific shop."""
+    return await use_case.list_orders_by_shop(shop_id)
+
+
+@router.get("/client/{client_id}", response_model=list[OrderResponse])
+async def list_orders_by_client(
+    client_id: str,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all orders for a specific client."""
+    return await use_case.list_orders_by_client(client_id)
 
 
 @router.patch("/{order_id}/status", response_model=OrderResponse)
@@ -113,6 +189,8 @@ async def update_order_status(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
+# ── Payments ───────────────────────────────────────────────────────────
+
 @router.post("/payments/mock", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 async def process_mock_payment(
     request: MockPaymentRequest,
@@ -128,6 +206,8 @@ async def process_mock_payment(
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
+
+# ── Ratings ────────────────────────────────────────────────────────────
 
 @router.post("/ratings", response_model=RatingResponse, status_code=status.HTTP_201_CREATED)
 async def submit_rating(

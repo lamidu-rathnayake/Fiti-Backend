@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
-from app.domain.entities.user import Client, Seller, MeasurementProfile
+
+from app.domain.entities.user import Client, MeasurementProfile, Seller
 
 
 class AbstractClientRepository(ABC):
@@ -11,7 +11,7 @@ class AbstractClientRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, client_id: str) -> Optional[Client]:
+    async def get_by_id(self, client_id: str) -> Client | None:
         pass
 
 
@@ -23,7 +23,7 @@ class AbstractSellerRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_id(self, seller_id: str) -> Optional[Seller]:
+    async def get_by_id(self, seller_id: str) -> Seller | None:
         pass
 
     @abstractmethod
@@ -39,7 +39,7 @@ class AbstractMeasurementProfileRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_by_client_id(self, client_id: str) -> Optional[MeasurementProfile]:
+    async def get_by_client_id(self, client_id: str) -> MeasurementProfile | None:
         pass
 
     @abstractmethod

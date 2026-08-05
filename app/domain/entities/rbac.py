@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -34,3 +33,8 @@ class SubSection:
     name: str
     component_id: str
 
+
+@dataclass
+class SectionSubSection:
+    section_id: int
+    sub_section_id: int

@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
-from typing import Optional, List
-from sqlalchemy import String, Integer, Float, Text, DateTime, ForeignKey
+from datetime import UTC, datetime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.infrastructure.db.base import Base
+
 from app.domain.entities.shop import Shop, ShopImage
+from app.infrastructure.db.base import Base
 
 
 class ShopModel(Base):
@@ -12,25 +13,25 @@ class ShopModel(Base):
     shop_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     seller_id: Mapped[str] = mapped_column(String(128), ForeignKey("sellers.id", ondelete="CASCADE"), nullable=False)
     shop_name: Mapped[str] = mapped_column(String(150), nullable=False)
-    shop_bio: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    shop_address: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
-    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    contact_number: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
-    registration_number: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    latitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    longitude: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    shop_bio: Mapped[str | None] = mapped_column(Text, nullable=True)
+    shop_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    city: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    contact_number: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    registration_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     average_rating: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
-    images: Mapped[List["ShopImageModel"]] = relationship(
+    images: Mapped[list["ShopImageModel"]] = relationship(
         "ShopImageModel", back_populates="shop", cascade="all, delete-orphan"
     )
 
@@ -60,7 +61,7 @@ class ShopImageModel(Base):
     shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
     image_url: Mapped[str] = mapped_column(String(500), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     shop: Mapped["ShopModel"] = relationship("ShopModel", back_populates="images")

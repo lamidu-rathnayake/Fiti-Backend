@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+
 from app.domain.entities.support import FavoriteShop, Notification
 
 
@@ -9,7 +9,7 @@ class AbstractNotificationRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_by_user(self, user_id: str) -> List[Notification]:
+    async def list_by_user(self, user_id: str) -> list[Notification]:
         pass
 
     @abstractmethod
@@ -27,5 +27,5 @@ class AbstractFavoriteShopRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_favorites_by_client(self, client_id: str) -> List[FavoriteShop]:
+    async def list_favorites_by_client(self, client_id: str) -> list[FavoriteShop]:
         pass

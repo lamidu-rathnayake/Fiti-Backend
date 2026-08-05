@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
-from typing import Optional
-from sqlalchemy import String, Boolean, DateTime, Integer, Float, Text, Enum
+from datetime import UTC, datetime
+
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+
+from app.domain.entities.user import Client, MeasurementProfile, Seller
 from app.infrastructure.db.base import Base
-from app.domain.entities.user import Client, Seller, MeasurementProfile, GenderEnum
 
 
 class ClientModel(Base):
@@ -16,12 +17,12 @@ class ClientModel(Base):
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -38,16 +39,16 @@ class SellerModel(Base):
     __tablename__ = "sellers"
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
-    nic_front: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    nic_rear: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    nic_front: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    nic_rear: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -71,22 +72,22 @@ class MeasurementProfileModel(Base):
 
     measurement_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     client_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
-    chest: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    waist: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    shoulder: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    sleeve: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    neck: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    hip: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    inseam: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    chest: Mapped[float | None] = mapped_column(Float, nullable=True)
+    waist: Mapped[float | None] = mapped_column(Float, nullable=True)
+    shoulder: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sleeve: Mapped[float | None] = mapped_column(Float, nullable=True)
+    neck: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hip: Mapped[float | None] = mapped_column(Float, nullable=True)
+    inseam: Mapped[float | None] = mapped_column(Float, nullable=True)
+    length: Mapped[float | None] = mapped_column(Float, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 

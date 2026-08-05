@@ -73,42 +73,60 @@ This project follows Uncle Bob's **Clean Architecture** guidelines, maintaining 
 │   ├── api/                    # Presentation Layer (HTTP / REST)
 │   │   ├── dependencies.py     # FastAPI Dependency Injection Container
 │   │   ├── schemas/            # Pydantic Request/Response Models
-│   │   │   └── user_schema.py
+│   │   │   ├── user_schema.py
+│   │   │   ├── shop_schema.py
+│   │   │   ├── order_schema.py
+│   │   │   ├── rbac_schema.py
+│   │   │   └── support_schema.py
 │   │   └── v1/
 │   │       ├── router.py       # Central API v1 Router
 │   │       └── endpoints/
 │   │           ├── health.py
-│   │           └── users.py
+│   │           ├── profiles.py
+│   │           ├── shops.py
+│   │           ├── orders.py
+│   │           ├── rbac.py
+│   │           └── support.py
 │   ├── core/                   # Core Infrastructure & Configuration
 │   │   ├── config.py           # App Settings (Pydantic BaseSettings)
 │   │   └── database.py         # Async SQLAlchemy Engine & Session setup
 │   ├── domain/                 # Domain Layer (Enterprise Rules)
 │   │   ├── entities/           # Pure Domain Entities
-│   │   │   └── user.py
 │   │   ├── exceptions/         # Domain Exceptions
-│   │   │   └── user.py
 │   │   └── repositories/       # Abstract Repository Contracts
-│   │       └── user_repository.py
 │   ├── infrastructure/         # Infrastructure Layer (Data & Framework Adapters)
 │   │   ├── db/
 │   │   │   ├── base.py         # SQLAlchemy Base
 │   │   │   ├── models/         # SQLAlchemy ORM Models
-│   │   │   │   └── user_model.py
 │   │   │   └── repositories/   # SQLAlchemy Repository Implementations
-│   │   │       └── sqlalchemy_user_repository.py
 │   │   └── security/           # Hashing & Auth utilities
-│   │       └── hashing.py
 │   ├── use_cases/              # Application Layer (Use Cases)
 │   │   ├── dtos/               # Application DTOs
-│   │   │   └── user_dto.py
-│   │   └── user/               # User Use Cases
-│   │       ├── create_user.py
-│   │       ├── get_user.py
-│   │       └── list_users.py
+│   │   ├── user/               # User Use Cases
+│   │   ├── shop/               # Shop Use Cases
+│   │   ├── order/              # Order Use Cases
+│   │   ├── rbac/               # RBAC Use Cases
+│   │   └── support/            # Support Use Cases
 │   └── main.py                 # Application Lifespan & FastAPI Factory
 ├── .env                        # Environment variables
 ├── pyproject.toml              # Project dependencies
 └── main.py                     # Entrypoint script
+```
+
+---
+
+## 🛠️ Code Quality & Testing
+
+The project enforces strict code quality and modern Python typing:
+- **Type Checking**: Uses `mypy` for strict type checking. The codebase leverages modern Python 3.12 type annotations (`list` instead of `List`, `| None` instead of `Optional`).
+- **Linting**: Uses `ruff` for fast linting, formatting, and auto-fixing modern syntax conventions.
+- **Testing**: Uses `pytest` and `pytest-asyncio` for unit and integration testing.
+
+Run tests and linters via `uv`:
+```bash
+uv run pytest tests/
+uvx ruff check .
+uvx mypy .
 ```
 
 ---

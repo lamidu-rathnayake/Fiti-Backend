@@ -1,6 +1,5 @@
 class OrderDomainException(Exception):
     """Base exception for Order domain errors."""
-    pass
 
 
 class ClothingRequestNotFoundError(OrderDomainException):

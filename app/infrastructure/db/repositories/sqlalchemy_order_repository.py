@@ -1,31 +1,30 @@
-from typing import Optional, List
+
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.domain.entities.order import (
+    Bid,
     ClothingRequest,
     ClothingRequestImage,
-    Measurement,
-    ShopRequest,
-    Bid,
+    ClothingRequestStatusEnum,
     Order,
+    OrderStatusEnum,
     Payment,
     Rating,
-    ClothingRequestStatusEnum,
+    ShopRequest,
     ShopRequestStatusEnum,
-    OrderStatusEnum,
-    PaymentStatusEnum,
 )
 from app.domain.repositories.order_repository import AbstractOrderRepository
 from app.infrastructure.db.models.order_model import (
-    ClothingRequestModel,
-    ClothingRequestImageModel,
-    MeasurementModel,
-    ShopRequestModel,
     BidModel,
+    ClothingRequestImageModel,
+    ClothingRequestModel,
+    MeasurementModel,
     OrderModel,
     PaymentModel,
     RatingModel,
+    ShopRequestModel,
 )
 from app.infrastructure.db.models.user_model import MeasurementProfileModel
 
@@ -77,9 +76,11 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
                 await self.session.commit()
 
         # Re-fetch with relationships
-        return await self.get_clothing_request(model.request_id)
+        fetched = await self.get_clothing_request(model.request_id)
+        assert fetched is not None
+        return fetched
 
-    async def get_clothing_request(self, request_id: int) -> Optional[ClothingRequest]:
+    async def get_clothing_request(self, request_id: int) -> ClothingRequest | None:
         stmt = (
             select(ClothingRequestModel)
             .options(
@@ -93,7 +94,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def list_clothing_requests_by_client(self, client_id: str) -> List[ClothingRequest]:
+    async def list_clothing_requests_by_client(self, client_id: str) -> list[ClothingRequest]:
         stmt = (
             select(ClothingRequestModel)
             .options(
@@ -107,7 +108,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def list_open_clothing_requests(self, skip: int = 0, limit: int = 100) -> List[ClothingRequest]:
+    async def list_open_clothing_requests(self, skip: int = 0, limit: int = 100) -> list[ClothingRequest]:
         stmt = (
             select(ClothingRequestModel)
             .options(
@@ -147,7 +148,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         fetched = await self.get_shop_request(model.shop_request_id)
         return fetched if fetched else ShopRequest(shop_id=model.shop_id, shop_request_id=model.shop_request_id, request_id=model.request_id)
 
-    async def get_shop_request(self, shop_request_id: int) -> Optional[ShopRequest]:
+    async def get_shop_request(self, shop_request_id: int) -> ShopRequest | None:
         stmt = (
             select(ShopRequestModel)
             .options(selectinload(ShopRequestModel.bids))
@@ -157,7 +158,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def list_shop_requests_by_shop(self, shop_id: int) -> List[ShopRequest]:
+    async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequest]:
         stmt = (
             select(ShopRequestModel)
             .options(selectinload(ShopRequestModel.bids))
@@ -214,13 +215,13 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def get_order(self, order_id: int) -> Optional[Order]:
+    async def get_order(self, order_id: int) -> Order | None:
         stmt = select(OrderModel).where(OrderModel.order_id == order_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def list_orders_by_shop(self, shop_id: int) -> List[Order]:
+    async def list_orders_by_shop(self, shop_id: int) -> list[Order]:
         stmt = (
             select(OrderModel)
             .join(ShopRequestModel, ShopRequestModel.shop_request_id == OrderModel.shop_request_id)
@@ -230,7 +231,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def list_orders_by_client(self, client_id: str) -> List[Order]:
+    async def list_orders_by_client(self, client_id: str) -> list[Order]:
         stmt = (
             select(OrderModel)
             .join(ShopRequestModel, ShopRequestModel.shop_request_id == OrderModel.shop_request_id)
@@ -276,7 +277,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def get_payment(self, payment_id: int) -> Optional[Payment]:
+    async def get_payment(self, payment_id: int) -> Payment | None:
         stmt = select(PaymentModel).where(PaymentModel.payment_id == payment_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -294,3 +295,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         await self.session.commit()
         await self.session.refresh(model)
         return model.to_domain()
+
+    async def get_ratings_by_shop(self, shop_id: int) -> list[Rating]:
+        stmt = select(RatingModel).where(RatingModel.shop_id == shop_id)
+        result = await self.session.execute(stmt)
+        models = result.scalars().all()
+        return [m.to_domain() for m in models]

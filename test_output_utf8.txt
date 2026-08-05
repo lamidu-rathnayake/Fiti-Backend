@@ -1,0 +1,1309 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: D:\university\academics\Project Management\Assignments\MiniProject\Fiti
+configfile: pyproject.toml
+plugins: anyio-4.14.2, asyncio-1.4.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1 item
+
+tests\test_api.py F                                                      [100%]
+
+================================== FAILURES ===================================
+___________________ test_shop_listing_and_update_endpoints ____________________
+
+    @pytest.mark.asyncio
+    async def test_shop_listing_and_update_endpoints():
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            seller_res = await ac.post("/api/v1/profiles/seller", json={"id": "seller_search", "nic_front": "http://img.com/nic"})
+            assert seller_res.status_code == 201
+    
+            shop_res = await ac.post("/api/v1/shops/", json={
+                "seller_id": "seller_search", "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
+            })
+            assert shop_res.status_code == 201
+            shop_id = shop_res.json()["shop_id"]
+    
+            # Update
+>           res = await ac.put(f"/api/v1/shops/{shop_id}", json={
+                "shop_name": "Updated Shop", "city": "Galle", "contact_number": "123"
+            })
+
+tests\test_api.py:260: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_client.py:1896: in put
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\asgi.py:170: in handle_async_request
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\applications.py:1163: in __call__
+    await super().__call__(scope, receive, send)
+.venv\Lib\site-packages\starlette\applications.py:90: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\errors.py:186: in __call__
+    raise exc
+.venv\Lib\site-packages\starlette\middleware\errors.py:164: in __call__
+    await self.app(scope, receive, _send)
+.venv\Lib\site-packages\starlette\middleware\cors.py:88: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\middleware\exceptions.py:63: in __call__
+    await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\middleware\asyncexitstack.py:18: in __call__
+    await self.app(scope, receive, send)
+.venv\Lib\site-packages\starlette\routing.py:660: in __call__
+    await self.middleware_stack(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:2685: in app
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1766: in handle
+    await self.original_router.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:2740: in handle
+    await included_router._handle_selected(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1777: in _handle_selected
+    await route.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1766: in handle
+    await self.original_router.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:2740: in handle
+    await included_router._handle_selected(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1786: in _handle_selected
+    await original_route.handle(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:1265: in handle
+    await app(scope, receive, send)
+.venv\Lib\site-packages\fastapi\routing.py:151: in app
+    await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+.venv\Lib\site-packages\starlette\_exception_handler.py:53: in wrapped_app
+    raise exc
+.venv\Lib\site-packages\starlette\_exception_handler.py:42: in wrapped_app
+    await app(scope, receive, sender)
+.venv\Lib\site-packages\fastapi\routing.py:137: in app
+    response = await f(request)
+               ^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\fastapi\routing.py:691: in app
+    raw_response = await run_endpoint_function(
+.venv\Lib\site-packages\fastapi\routing.py:345: in run_endpoint_function
+    return await dependant.call(**values)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\api\v1\endpoints\shops.py:92: in update_shop
+    return await use_case.update_shop(dto)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\use_cases\shop\manage_shop.py:65: in update_shop
+    updated = await self.shop_repository.update_shop(shop_entity)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+app\infrastructure\db\repositories\sqlalchemy_shop_repository.py:93: in update_shop
+    return model.to_domain()
+           ^^^^^^^^^^^^^^^^^
+app\infrastructure\db\models\shop_model.py:50: in to_domain
+    images=[img.to_domain() for img in self.images] if self.images else [],
+                                                       ^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:569: in __get__
+    return self.impl.get(state, dict_)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:1096: in get
+    value = self._fire_loader_callables(state, key, passive)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\attributes.py:1131: in _fire_loader_callables
+    return self.callable_(state, passive)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\sqlalchemy\orm\strategies.py:978: in _load_for_state
+    return self._emit_lazyload(
+.venv\Lib\site-packages\sqlalchemy\orm\strategies.py:1141: in _emit_lazyload
+    result = session.execute(
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:2373: in execute
+    return self._execute_internal(
+.venv\Lib\site-packages\sqlalchemy\orm\session.py:2271: in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+.venv\Lib\site-packages\sqlalchemy\orm\context.py:306: in orm_execute_statement
+    result = conn.execute(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1421: in execute
+    return meth(
+.venv\Lib\site-packages\sqlalchemy\sql\elements.py:526: in _execute_on_connection
+    return connection._execute_clauseelement(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1643: in _execute_clauseelement
+    ret = self._execute_context(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1848: in _execute_context
+    return self._exec_single_context(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1988: in _exec_single_context
+    self._handle_dbapi_exception(
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:2368: in _handle_dbapi_exception
+    raise exc_info[1].with_traceback(exc_info[2])
+.venv\Lib\site-packages\sqlalchemy\engine\base.py:1969: in _exec_single_context
+    self.dialect.do_execute(
+.venv\Lib\site-packages\sqlalchemy\engine\default.py:952: in do_execute
+    cursor.execute(statement, parameters)
+.venv\Lib\site-packages\sqlalchemy\dialects\sqlite\aiosqlite.py:183: in execute
+    self._adapt_connection._handle_exception(error)
+.venv\Lib\site-packages\sqlalchemy\dialects\sqlite\aiosqlite.py:343: in _handle_exception
+    raise error
+.venv\Lib\site-packages\sqlalchemy\dialects\sqlite\aiosqlite.py:160: in execute
+    _cursor: AsyncIODBAPICursor = self.await_(self._connection.cursor())  # type: ignore[arg-type] # noqa: E501
+                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+awaitable = <aiosqlite.context.Result object at 0x00000143C6232690>
+
+    def await_only(awaitable: Awaitable[_T]) -> _T:
+        """Awaits an async function in a sync method.
+    
+        The sync method must be inside a :func:`greenlet_spawn` context.
+        :func:`await_only` calls cannot be nested.
+    
+        :param awaitable: The coroutine to call.
+    
+        """
+        # this is called in the context greenlet while running fn
+        current = getcurrent()
+        if not getattr(current, "__sqlalchemy_greenlet_provider__", False):
+            _safe_cancel_awaitable(awaitable)
+    
+>           raise exc.MissingGreenlet(
+                "greenlet_spawn has not been called; can't call await_only() "
+                "here. Was IO attempted in an unexpected place?"
+            )
+E           sqlalchemy.exc.MissingGreenlet: greenlet_spawn has not been called; can't call await_only() here. Was IO attempted in an unexpected place? (Background on this error at: https://sqlalche.me/e/20/xd2s)
+
+.venv\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py:123: MissingGreenlet
+---------------------------- Captured stdout setup ----------------------------
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("clients")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("clients")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("sellers")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("sellers")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("measurement_profile")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("measurement_profile")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("roles")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("roles")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user_roles")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("user_roles")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("sections")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("sections")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("role_section_grants")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("role_section_grants")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("sub_sections")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("sub_sections")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("section_sub_sections")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("section_sub_sections")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("shops")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("shops")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("shop_images")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("shop_images")
+2026-08-05 11:38:24,747 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,763 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("clothing_requests")
+2026-08-05 11:38:24,763 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("clothing_requests")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("clothing_request_images")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("clothing_request_images")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("measurements")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("measurements")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("shop_requests")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("shop_requests")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("bids")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("bids")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("orders")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("orders")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("payments")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("payments")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("ratings")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("ratings")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("favorite_shops")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("favorite_shops")
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,764 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("notifications")
+2026-08-05 11:38:24,774 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,774 INFO sqlalchemy.engine.Engine PRAGMA temp.table_info("notifications")
+2026-08-05 11:38:24,774 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:24,774 INFO sqlalchemy.engine.Engine 
+CREATE TABLE clients (
+	id VARCHAR(128) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2026-08-05 11:38:24,774 INFO sqlalchemy.engine.Engine [no key 0.00011s] ()
+2026-08-05 11:38:24,788 INFO sqlalchemy.engine.Engine 
+CREATE TABLE sellers (
+	id VARCHAR(128) NOT NULL, 
+	nic_front VARCHAR(500), 
+	nic_rear VARCHAR(500), 
+	is_verified BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+2026-08-05 11:38:24,788 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:24,797 INFO sqlalchemy.engine.Engine 
+CREATE TABLE measurement_profile (
+	measurement_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	chest FLOAT, 
+	waist FLOAT, 
+	shoulder FLOAT, 
+	sleeve FLOAT, 
+	neck FLOAT, 
+	hip FLOAT, 
+	inseam FLOAT, 
+	length FLOAT, 
+	notes TEXT, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (measurement_id), 
+	UNIQUE (client_id)
+)
+
+
+2026-08-05 11:38:24,797 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,807 INFO sqlalchemy.engine.Engine 
+CREATE TABLE roles (
+	id INTEGER NOT NULL, 
+	name VARCHAR(50) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (name)
+)
+
+
+2026-08-05 11:38:24,808 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:24,814 INFO sqlalchemy.engine.Engine 
+CREATE TABLE sections (
+	id INTEGER NOT NULL, 
+	name VARCHAR(100) NOT NULL, 
+	route_name VARCHAR(100) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (name), 
+	UNIQUE (route_name)
+)
+
+
+2026-08-05 11:38:24,814 INFO sqlalchemy.engine.Engine [no key 0.00022s] ()
+2026-08-05 11:38:24,830 INFO sqlalchemy.engine.Engine 
+CREATE TABLE sub_sections (
+	id INTEGER NOT NULL, 
+	component_id VARCHAR(100) NOT NULL, 
+	name VARCHAR(100) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (component_id), 
+	UNIQUE (name)
+)
+
+
+2026-08-05 11:38:24,830 INFO sqlalchemy.engine.Engine [no key 0.00018s] ()
+2026-08-05 11:38:24,830 INFO sqlalchemy.engine.Engine 
+CREATE TABLE notifications (
+	notification_id INTEGER NOT NULL, 
+	firebase_uid VARCHAR(128) NOT NULL, 
+	title VARCHAR(150) NOT NULL, 
+	message TEXT, 
+	is_read BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (notification_id)
+)
+
+
+2026-08-05 11:38:24,830 INFO sqlalchemy.engine.Engine [no key 0.00015s] ()
+2026-08-05 11:38:24,845 INFO sqlalchemy.engine.Engine 
+CREATE TABLE user_roles (
+	firebase_uid VARCHAR(128) NOT NULL, 
+	role_id INTEGER NOT NULL, 
+	PRIMARY KEY (firebase_uid, role_id), 
+	FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,845 INFO sqlalchemy.engine.Engine [no key 0.00021s] ()
+2026-08-05 11:38:24,861 INFO sqlalchemy.engine.Engine 
+CREATE TABLE role_section_grants (
+	role_id INTEGER NOT NULL, 
+	section_id INTEGER NOT NULL, 
+	PRIMARY KEY (role_id, section_id), 
+	FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE CASCADE, 
+	FOREIGN KEY(section_id) REFERENCES sections (id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,861 INFO sqlalchemy.engine.Engine [no key 0.00018s] ()
+2026-08-05 11:38:24,861 INFO sqlalchemy.engine.Engine 
+CREATE TABLE section_sub_sections (
+	section_id INTEGER NOT NULL, 
+	sub_section_id INTEGER NOT NULL, 
+	PRIMARY KEY (section_id, sub_section_id), 
+	FOREIGN KEY(section_id) REFERENCES sections (id) ON DELETE CASCADE, 
+	FOREIGN KEY(sub_section_id) REFERENCES sub_sections (id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,861 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,877 INFO sqlalchemy.engine.Engine 
+CREATE TABLE shops (
+	shop_id INTEGER NOT NULL, 
+	seller_id VARCHAR(128) NOT NULL, 
+	shop_name VARCHAR(150) NOT NULL, 
+	shop_bio TEXT, 
+	shop_address VARCHAR(255), 
+	city VARCHAR(100), 
+	contact_number VARCHAR(20), 
+	registration_number VARCHAR(100), 
+	latitude FLOAT, 
+	longitude FLOAT, 
+	average_rating FLOAT NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (shop_id), 
+	FOREIGN KEY(seller_id) REFERENCES sellers (id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,877 INFO sqlalchemy.engine.Engine [no key 0.00021s] ()
+2026-08-05 11:38:24,893 INFO sqlalchemy.engine.Engine 
+CREATE TABLE clothing_requests (
+	request_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	target_date DATE, 
+	target_budget FLOAT, 
+	clothing_category VARCHAR(100), 
+	gender VARCHAR(6), 
+	fabric_status VARCHAR(15), 
+	description TEXT, 
+	voice_note_url VARCHAR(500), 
+	service_type VARCHAR(14) NOT NULL, 
+	request_location VARCHAR(255), 
+	status VARCHAR(11) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	measurement_profile_id INTEGER, 
+	PRIMARY KEY (request_id), 
+	FOREIGN KEY(client_id) REFERENCES clients (id) ON DELETE CASCADE, 
+	FOREIGN KEY(measurement_profile_id) REFERENCES measurement_profile (measurement_id) ON DELETE SET NULL
+)
+
+
+2026-08-05 11:38:24,893 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,898 INFO sqlalchemy.engine.Engine 
+CREATE TABLE shop_images (
+	image_id INTEGER NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	image_url VARCHAR(500) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (image_id), 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,898 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,914 INFO sqlalchemy.engine.Engine 
+CREATE TABLE clothing_request_images (
+	image_id INTEGER NOT NULL, 
+	request_id INTEGER NOT NULL, 
+	image_url VARCHAR(500) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (image_id), 
+	FOREIGN KEY(request_id) REFERENCES clothing_requests (request_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,914 INFO sqlalchemy.engine.Engine [no key 0.00018s] ()
+2026-08-05 11:38:24,921 INFO sqlalchemy.engine.Engine 
+CREATE TABLE measurements (
+	measurement_id INTEGER NOT NULL, 
+	request_id INTEGER NOT NULL, 
+	chest FLOAT, 
+	waist FLOAT, 
+	shoulder FLOAT, 
+	sleeve FLOAT, 
+	neck FLOAT, 
+	hip FLOAT, 
+	inseam FLOAT, 
+	length FLOAT, 
+	notes TEXT, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (measurement_id), 
+	UNIQUE (request_id), 
+	FOREIGN KEY(request_id) REFERENCES clothing_requests (request_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,921 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,931 INFO sqlalchemy.engine.Engine 
+CREATE TABLE shop_requests (
+	shop_request_id INTEGER NOT NULL, 
+	request_id INTEGER NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	offered_price FLOAT, 
+	status VARCHAR(9) NOT NULL, 
+	response_date DATETIME, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (shop_request_id), 
+	CONSTRAINT uq_request_shop UNIQUE (request_id, shop_id), 
+	FOREIGN KEY(request_id) REFERENCES clothing_requests (request_id) ON DELETE CASCADE, 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,931 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,947 INFO sqlalchemy.engine.Engine 
+CREATE TABLE favorite_shops (
+	favorite_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (favorite_id), 
+	CONSTRAINT uq_client_shop_fav UNIQUE (client_id, shop_id), 
+	FOREIGN KEY(client_id) REFERENCES clients (id) ON DELETE CASCADE, 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,947 INFO sqlalchemy.engine.Engine [no key 0.00020s] ()
+2026-08-05 11:38:24,947 INFO sqlalchemy.engine.Engine 
+CREATE TABLE bids (
+	bid_id INTEGER NOT NULL, 
+	shop_request_id INTEGER NOT NULL, 
+	bid_amount FLOAT NOT NULL, 
+	message TEXT, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (bid_id), 
+	FOREIGN KEY(shop_request_id) REFERENCES shop_requests (shop_request_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,947 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:24,964 INFO sqlalchemy.engine.Engine 
+CREATE TABLE orders (
+	order_id INTEGER NOT NULL, 
+	shop_request_id INTEGER NOT NULL, 
+	order_status VARCHAR(11) NOT NULL, 
+	accepted_price FLOAT NOT NULL, 
+	started_date DATE, 
+	completed_date DATE, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (order_id), 
+	UNIQUE (shop_request_id), 
+	FOREIGN KEY(shop_request_id) REFERENCES shop_requests (shop_request_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,964 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:24,981 INFO sqlalchemy.engine.Engine 
+CREATE TABLE payments (
+	payment_id INTEGER NOT NULL, 
+	order_id INTEGER NOT NULL, 
+	amount FLOAT NOT NULL, 
+	payment_method VARCHAR(13), 
+	payment_status VARCHAR(8) NOT NULL, 
+	payment_date DATETIME, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (payment_id), 
+	UNIQUE (order_id), 
+	FOREIGN KEY(order_id) REFERENCES orders (order_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,981 INFO sqlalchemy.engine.Engine [no key 0.00020s] ()
+2026-08-05 11:38:24,981 INFO sqlalchemy.engine.Engine 
+CREATE TABLE ratings (
+	rating_id INTEGER NOT NULL, 
+	order_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	rating INTEGER NOT NULL, 
+	review TEXT, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (rating_id), 
+	UNIQUE (order_id), 
+	FOREIGN KEY(order_id) REFERENCES orders (order_id) ON DELETE CASCADE, 
+	FOREIGN KEY(client_id) REFERENCES clients (id) ON DELETE CASCADE, 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+2026-08-05 11:38:24,981 INFO sqlalchemy.engine.Engine [no key 0.00022s] ()
+2026-08-05 11:38:24,997 INFO sqlalchemy.engine.Engine COMMIT
+----------------------------- Captured log setup ------------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("clients")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("clients")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("sellers")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("sellers")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("measurement_profile")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("measurement_profile")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("roles")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("roles")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("user_roles")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("user_roles")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("role_section_grants")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("role_section_grants")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("sub_sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("sub_sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("section_sub_sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("section_sub_sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("shops")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("shops")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("shop_images")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("shop_images")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("clothing_requests")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("clothing_requests")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("clothing_request_images")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("clothing_request_images")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("measurements")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("measurements")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("shop_requests")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("shop_requests")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("bids")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("bids")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("orders")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("orders")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("payments")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("payments")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("ratings")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("ratings")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("favorite_shops")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("favorite_shops")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("notifications")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA temp.table_info("notifications")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE clients (
+	id VARCHAR(128) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00011s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE sellers (
+	id VARCHAR(128) NOT NULL, 
+	nic_front VARCHAR(500), 
+	nic_rear VARCHAR(500), 
+	is_verified BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (id)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE measurement_profile (
+	measurement_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	chest FLOAT, 
+	waist FLOAT, 
+	shoulder FLOAT, 
+	sleeve FLOAT, 
+	neck FLOAT, 
+	hip FLOAT, 
+	inseam FLOAT, 
+	length FLOAT, 
+	notes TEXT, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (measurement_id), 
+	UNIQUE (client_id)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE roles (
+	id INTEGER NOT NULL, 
+	name VARCHAR(50) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (name)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE sections (
+	id INTEGER NOT NULL, 
+	name VARCHAR(100) NOT NULL, 
+	route_name VARCHAR(100) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (name), 
+	UNIQUE (route_name)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00022s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE sub_sections (
+	id INTEGER NOT NULL, 
+	component_id VARCHAR(100) NOT NULL, 
+	name VARCHAR(100) NOT NULL, 
+	PRIMARY KEY (id), 
+	UNIQUE (component_id), 
+	UNIQUE (name)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00018s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE notifications (
+	notification_id INTEGER NOT NULL, 
+	firebase_uid VARCHAR(128) NOT NULL, 
+	title VARCHAR(150) NOT NULL, 
+	message TEXT, 
+	is_read BOOLEAN NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (notification_id)
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00015s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE user_roles (
+	firebase_uid VARCHAR(128) NOT NULL, 
+	role_id INTEGER NOT NULL, 
+	PRIMARY KEY (firebase_uid, role_id), 
+	FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00021s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE role_section_grants (
+	role_id INTEGER NOT NULL, 
+	section_id INTEGER NOT NULL, 
+	PRIMARY KEY (role_id, section_id), 
+	FOREIGN KEY(role_id) REFERENCES roles (id) ON DELETE CASCADE, 
+	FOREIGN KEY(section_id) REFERENCES sections (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00018s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE section_sub_sections (
+	section_id INTEGER NOT NULL, 
+	sub_section_id INTEGER NOT NULL, 
+	PRIMARY KEY (section_id, sub_section_id), 
+	FOREIGN KEY(section_id) REFERENCES sections (id) ON DELETE CASCADE, 
+	FOREIGN KEY(sub_section_id) REFERENCES sub_sections (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE shops (
+	shop_id INTEGER NOT NULL, 
+	seller_id VARCHAR(128) NOT NULL, 
+	shop_name VARCHAR(150) NOT NULL, 
+	shop_bio TEXT, 
+	shop_address VARCHAR(255), 
+	city VARCHAR(100), 
+	contact_number VARCHAR(20), 
+	registration_number VARCHAR(100), 
+	latitude FLOAT, 
+	longitude FLOAT, 
+	average_rating FLOAT NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (shop_id), 
+	FOREIGN KEY(seller_id) REFERENCES sellers (id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00021s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE clothing_requests (
+	request_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	target_date DATE, 
+	target_budget FLOAT, 
+	clothing_category VARCHAR(100), 
+	gender VARCHAR(6), 
+	fabric_status VARCHAR(15), 
+	description TEXT, 
+	voice_note_url VARCHAR(500), 
+	service_type VARCHAR(14) NOT NULL, 
+	request_location VARCHAR(255), 
+	status VARCHAR(11) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	measurement_profile_id INTEGER, 
+	PRIMARY KEY (request_id), 
+	FOREIGN KEY(client_id) REFERENCES clients (id) ON DELETE CASCADE, 
+	FOREIGN KEY(measurement_profile_id) REFERENCES measurement_profile (measurement_id) ON DELETE SET NULL
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE shop_images (
+	image_id INTEGER NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	image_url VARCHAR(500) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (image_id), 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE clothing_request_images (
+	image_id INTEGER NOT NULL, 
+	request_id INTEGER NOT NULL, 
+	image_url VARCHAR(500) NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (image_id), 
+	FOREIGN KEY(request_id) REFERENCES clothing_requests (request_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00018s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE measurements (
+	measurement_id INTEGER NOT NULL, 
+	request_id INTEGER NOT NULL, 
+	chest FLOAT, 
+	waist FLOAT, 
+	shoulder FLOAT, 
+	sleeve FLOAT, 
+	neck FLOAT, 
+	hip FLOAT, 
+	inseam FLOAT, 
+	length FLOAT, 
+	notes TEXT, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (measurement_id), 
+	UNIQUE (request_id), 
+	FOREIGN KEY(request_id) REFERENCES clothing_requests (request_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE shop_requests (
+	shop_request_id INTEGER NOT NULL, 
+	request_id INTEGER NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	offered_price FLOAT, 
+	status VARCHAR(9) NOT NULL, 
+	response_date DATETIME, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (shop_request_id), 
+	CONSTRAINT uq_request_shop UNIQUE (request_id, shop_id), 
+	FOREIGN KEY(request_id) REFERENCES clothing_requests (request_id) ON DELETE CASCADE, 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE favorite_shops (
+	favorite_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (favorite_id), 
+	CONSTRAINT uq_client_shop_fav UNIQUE (client_id, shop_id), 
+	FOREIGN KEY(client_id) REFERENCES clients (id) ON DELETE CASCADE, 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00020s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE bids (
+	bid_id INTEGER NOT NULL, 
+	shop_request_id INTEGER NOT NULL, 
+	bid_amount FLOAT NOT NULL, 
+	message TEXT, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (bid_id), 
+	FOREIGN KEY(shop_request_id) REFERENCES shop_requests (shop_request_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE orders (
+	order_id INTEGER NOT NULL, 
+	shop_request_id INTEGER NOT NULL, 
+	order_status VARCHAR(11) NOT NULL, 
+	accepted_price FLOAT NOT NULL, 
+	started_date DATE, 
+	completed_date DATE, 
+	created_at DATETIME NOT NULL, 
+	updated_at DATETIME NOT NULL, 
+	PRIMARY KEY (order_id), 
+	UNIQUE (shop_request_id), 
+	FOREIGN KEY(shop_request_id) REFERENCES shop_requests (shop_request_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE payments (
+	payment_id INTEGER NOT NULL, 
+	order_id INTEGER NOT NULL, 
+	amount FLOAT NOT NULL, 
+	payment_method VARCHAR(13), 
+	payment_status VARCHAR(8) NOT NULL, 
+	payment_date DATETIME, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (payment_id), 
+	UNIQUE (order_id), 
+	FOREIGN KEY(order_id) REFERENCES orders (order_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00020s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+CREATE TABLE ratings (
+	rating_id INTEGER NOT NULL, 
+	order_id INTEGER NOT NULL, 
+	client_id VARCHAR(128) NOT NULL, 
+	shop_id INTEGER NOT NULL, 
+	rating INTEGER NOT NULL, 
+	review TEXT, 
+	created_at DATETIME NOT NULL, 
+	PRIMARY KEY (rating_id), 
+	UNIQUE (order_id), 
+	FOREIGN KEY(order_id) REFERENCES orders (order_id) ON DELETE CASCADE, 
+	FOREIGN KEY(client_id) REFERENCES clients (id) ON DELETE CASCADE, 
+	FOREIGN KEY(shop_id) REFERENCES shops (shop_id) ON DELETE CASCADE
+)
+
+
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00022s] ()
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+---------------------------- Captured stdout call -----------------------------
+2026-08-05 11:38:25,013 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,031 INFO sqlalchemy.engine.Engine SELECT sellers.id, sellers.nic_front, sellers.nic_rear, sellers.is_verified, sellers.created_at, sellers.updated_at 
+FROM sellers 
+WHERE sellers.id = ?
+2026-08-05 11:38:25,031 INFO sqlalchemy.engine.Engine [generated in 0.00026s] ('seller_search',)
+2026-08-05 11:38:25,034 INFO sqlalchemy.engine.Engine INSERT INTO sellers (id, nic_front, nic_rear, is_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+2026-08-05 11:38:25,034 INFO sqlalchemy.engine.Engine [generated in 0.00025s] ('seller_search', 'http://img.com/nic', None, 0, '2026-08-05 06:08:25.034065', '2026-08-05 06:08:25.034065')
+2026-08-05 11:38:25,035 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-05 11:38:25,045 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,047 INFO sqlalchemy.engine.Engine SELECT sellers.id, sellers.nic_front, sellers.nic_rear, sellers.is_verified, sellers.created_at, sellers.updated_at 
+FROM sellers 
+WHERE sellers.id = ?
+2026-08-05 11:38:25,047 INFO sqlalchemy.engine.Engine [generated in 0.00025s] ('seller_search',)
+2026-08-05 11:38:25,048 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-05 11:38:25,061 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,062 INFO sqlalchemy.engine.Engine INSERT INTO shops (seller_id, shop_name, shop_bio, shop_address, city, contact_number, registration_number, latitude, longitude, average_rating, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+2026-08-05 11:38:25,062 INFO sqlalchemy.engine.Engine [generated in 0.00021s] ('seller_search', 'Search Shop', None, None, 'Galle', '123', None, None, None, 0.0, '2026-08-05 06:08:25.062613', '2026-08-05 06:08:25.062613')
+2026-08-05 11:38:25,063 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-05 11:38:25,075 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,075 INFO sqlalchemy.engine.Engine SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+2026-08-05 11:38:25,075 INFO sqlalchemy.engine.Engine [generated in 0.00016s] (1,)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine [generated in 0.00018s] (1,)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine SELECT shop_images.shop_id AS shop_images_shop_id, shop_images.image_id AS shop_images_image_id, shop_images.image_url AS shop_images_image_url, shop_images.created_at AS shop_images_created_at 
+FROM shop_images 
+WHERE shop_images.shop_id IN (?)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine [generated in 0.00023s] (1,)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine [cached since 0.007636s ago] (1,)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine SELECT shop_images.shop_id AS shop_images_shop_id, shop_images.image_id AS shop_images_image_id, shop_images.image_url AS shop_images_image_url, shop_images.created_at AS shop_images_created_at 
+FROM shop_images 
+WHERE shop_images.shop_id IN (?)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine [cached since 0.00644s ago] (1,)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine [generated in 0.00014s] (1,)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine UPDATE shops SET shop_name=?, updated_at=? WHERE shops.shop_id = ?
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine [generated in 0.00017s] ('Updated Shop', '2026-08-05 06:08:25.079450', 1)
+2026-08-05 11:38:25,079 INFO sqlalchemy.engine.Engine COMMIT
+2026-08-05 11:38:25,095 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,095 INFO sqlalchemy.engine.Engine SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+2026-08-05 11:38:25,095 INFO sqlalchemy.engine.Engine [cached since 0.02656s ago] (1,)
+2026-08-05 11:38:25,095 INFO sqlalchemy.engine.Engine SELECT shop_images.image_id AS shop_images_image_id, shop_images.shop_id AS shop_images_shop_id, shop_images.image_url AS shop_images_image_url, shop_images.created_at AS shop_images_created_at 
+FROM shop_images 
+WHERE ? = shop_images.shop_id
+2026-08-05 11:38:25,095 INFO sqlalchemy.engine.Engine [generated in 0.00017s] (1,)
+2026-08-05 11:38:25,095 INFO sqlalchemy.engine.Engine ROLLBACK
+------------------------------ Captured log call ------------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT sellers.id, sellers.nic_front, sellers.nic_rear, sellers.is_verified, sellers.created_at, sellers.updated_at 
+FROM sellers 
+WHERE sellers.id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00026s] ('seller_search',)
+INFO     sqlalchemy.engine.Engine:base.py:1848 INSERT INTO sellers (id, nic_front, nic_rear, is_verified, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00025s] ('seller_search', 'http://img.com/nic', None, 0, '2026-08-05 06:08:25.034065', '2026-08-05 06:08:25.034065')
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT sellers.id, sellers.nic_front, sellers.nic_rear, sellers.is_verified, sellers.created_at, sellers.updated_at 
+FROM sellers 
+WHERE sellers.id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00025s] ('seller_search',)
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 INSERT INTO shops (seller_id, shop_name, shop_bio, shop_address, city, contact_number, registration_number, latitude, longitude, average_rating, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00021s] ('seller_search', 'Search Shop', None, None, 'Galle', '123', None, None, None, 0.0, '2026-08-05 06:08:25.062613', '2026-08-05 06:08:25.062613')
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00016s] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00018s] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shop_images.shop_id AS shop_images_shop_id, shop_images.image_id AS shop_images_image_id, shop_images.image_url AS shop_images_image_url, shop_images.created_at AS shop_images_created_at 
+FROM shop_images 
+WHERE shop_images.shop_id IN (?)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00023s] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [cached since 0.007636s ago] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shop_images.shop_id AS shop_images_shop_id, shop_images.image_id AS shop_images_image_id, shop_images.image_url AS shop_images_image_url, shop_images.created_at AS shop_images_created_at 
+FROM shop_images 
+WHERE shop_images.shop_id IN (?)
+INFO     sqlalchemy.engine.Engine:base.py:1848 [cached since 0.00644s ago] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00014s] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:1848 UPDATE shops SET shop_name=?, updated_at=? WHERE shops.shop_id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00017s] ('Updated Shop', '2026-08-05 06:08:25.079450', 1)
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shops.shop_id, shops.seller_id, shops.shop_name, shops.shop_bio, shops.shop_address, shops.city, shops.contact_number, shops.registration_number, shops.latitude, shops.longitude, shops.average_rating, shops.created_at, shops.updated_at 
+FROM shops 
+WHERE shops.shop_id = ?
+INFO     sqlalchemy.engine.Engine:base.py:1848 [cached since 0.02656s ago] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:1848 SELECT shop_images.image_id AS shop_images_image_id, shop_images.shop_id AS shop_images_shop_id, shop_images.image_url AS shop_images_image_url, shop_images.created_at AS shop_images_created_at 
+FROM shop_images 
+WHERE ? = shop_images.shop_id
+INFO     sqlalchemy.engine.Engine:base.py:1848 [generated in 0.00017s] (1,)
+INFO     sqlalchemy.engine.Engine:base.py:2715 ROLLBACK
+-------------------------- Captured stdout teardown ---------------------------
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("clients")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("sellers")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("measurement_profile")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("roles")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user_roles")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("sections")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("role_section_grants")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("sub_sections")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("section_sub_sections")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("shops")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("shop_images")
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:25,997 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("clothing_requests")
+2026-08-05 11:38:26,013 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,013 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("clothing_request_images")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("measurements")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("shop_requests")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("bids")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("orders")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("payments")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("ratings")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("favorite_shops")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("notifications")
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [raw sql] ()
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine 
+DROP TABLE ratings
+2026-08-05 11:38:26,014 INFO sqlalchemy.engine.Engine [no key 0.00010s] ()
+2026-08-05 11:38:26,029 INFO sqlalchemy.engine.Engine 
+DROP TABLE payments
+2026-08-05 11:38:26,029 INFO sqlalchemy.engine.Engine [no key 0.00019s] ()
+2026-08-05 11:38:26,038 INFO sqlalchemy.engine.Engine 
+DROP TABLE orders
+2026-08-05 11:38:26,038 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,048 INFO sqlalchemy.engine.Engine 
+DROP TABLE bids
+2026-08-05 11:38:26,048 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:26,058 INFO sqlalchemy.engine.Engine 
+DROP TABLE favorite_shops
+2026-08-05 11:38:26,058 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,063 INFO sqlalchemy.engine.Engine 
+DROP TABLE shop_requests
+2026-08-05 11:38:26,063 INFO sqlalchemy.engine.Engine [no key 0.00021s] ()
+2026-08-05 11:38:26,076 INFO sqlalchemy.engine.Engine 
+DROP TABLE measurements
+2026-08-05 11:38:26,076 INFO sqlalchemy.engine.Engine [no key 0.00019s] ()
+2026-08-05 11:38:26,079 INFO sqlalchemy.engine.Engine 
+DROP TABLE clothing_request_images
+2026-08-05 11:38:26,079 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,095 INFO sqlalchemy.engine.Engine 
+DROP TABLE shop_images
+2026-08-05 11:38:26,095 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:26,095 INFO sqlalchemy.engine.Engine 
+DROP TABLE clothing_requests
+2026-08-05 11:38:26,095 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:26,110 INFO sqlalchemy.engine.Engine 
+DROP TABLE shops
+2026-08-05 11:38:26,110 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,126 INFO sqlalchemy.engine.Engine 
+DROP TABLE section_sub_sections
+2026-08-05 11:38:26,126 INFO sqlalchemy.engine.Engine [no key 0.00021s] ()
+2026-08-05 11:38:26,126 INFO sqlalchemy.engine.Engine 
+DROP TABLE role_section_grants
+2026-08-05 11:38:26,126 INFO sqlalchemy.engine.Engine [no key 0.00022s] ()
+2026-08-05 11:38:26,147 INFO sqlalchemy.engine.Engine 
+DROP TABLE user_roles
+2026-08-05 11:38:26,147 INFO sqlalchemy.engine.Engine [no key 0.00021s] ()
+2026-08-05 11:38:26,147 INFO sqlalchemy.engine.Engine 
+DROP TABLE notifications
+2026-08-05 11:38:26,163 INFO sqlalchemy.engine.Engine [no key 0.00023s] ()
+2026-08-05 11:38:26,164 INFO sqlalchemy.engine.Engine 
+DROP TABLE sub_sections
+2026-08-05 11:38:26,164 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,181 INFO sqlalchemy.engine.Engine 
+DROP TABLE sections
+2026-08-05 11:38:26,181 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,181 INFO sqlalchemy.engine.Engine 
+DROP TABLE roles
+2026-08-05 11:38:26,181 INFO sqlalchemy.engine.Engine [no key 0.00020s] ()
+2026-08-05 11:38:26,197 INFO sqlalchemy.engine.Engine 
+DROP TABLE measurement_profile
+2026-08-05 11:38:26,197 INFO sqlalchemy.engine.Engine [no key 0.00017s] ()
+2026-08-05 11:38:26,214 INFO sqlalchemy.engine.Engine 
+DROP TABLE sellers
+2026-08-05 11:38:26,214 INFO sqlalchemy.engine.Engine [no key 0.00018s] ()
+2026-08-05 11:38:26,214 INFO sqlalchemy.engine.Engine 
+DROP TABLE clients
+2026-08-05 11:38:26,214 INFO sqlalchemy.engine.Engine [no key 0.00016s] ()
+2026-08-05 11:38:26,230 INFO sqlalchemy.engine.Engine COMMIT
+---------------------------- Captured log teardown ----------------------------
+INFO     sqlalchemy.engine.Engine:base.py:2712 BEGIN (implicit)
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("clients")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("sellers")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("measurement_profile")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("roles")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("user_roles")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("role_section_grants")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("sub_sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("section_sub_sections")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("shops")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("shop_images")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("clothing_requests")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("clothing_request_images")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("measurements")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("shop_requests")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("bids")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("orders")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("payments")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("ratings")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("favorite_shops")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 PRAGMA main.table_info("notifications")
+INFO     sqlalchemy.engine.Engine:base.py:1848 [raw sql] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE ratings
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00010s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE payments
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00019s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE orders
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE bids
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE favorite_shops
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE shop_requests
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00021s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE measurements
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00019s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE clothing_request_images
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE shop_images
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE clothing_requests
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE shops
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE section_sub_sections
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00021s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE role_section_grants
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00022s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE user_roles
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00021s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE notifications
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00023s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE sub_sections
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE sections
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE roles
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00020s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE measurement_profile
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00017s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE sellers
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00018s] ()
+INFO     sqlalchemy.engine.Engine:base.py:1848 
+DROP TABLE clients
+INFO     sqlalchemy.engine.Engine:base.py:1848 [no key 0.00016s] ()
+INFO     sqlalchemy.engine.Engine:base.py:2718 COMMIT
+=========================== short test summary info ===========================
+FAILED tests/test_api.py::test_shop_listing_and_update_endpoints - sqlalchemy...
+============================== 1 failed in 2.69s ==============================

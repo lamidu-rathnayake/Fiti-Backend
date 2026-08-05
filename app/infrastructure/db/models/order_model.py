@@ -1,28 +1,40 @@
-from datetime import datetime, date, timezone
-from typing import Optional, List
-from sqlalchemy import String, Integer, Float, Text, Date, DateTime, Enum, ForeignKey, UniqueConstraint
+from datetime import UTC, date, datetime
+from typing import Optional
+
+from sqlalchemy import (
+    Date,
+    DateTime,
+    Enum,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from app.infrastructure.db.base import Base
-from app.domain.entities.user import GenderEnum
-from app.infrastructure.db.models.user_model import MeasurementProfileModel
-from app.domain.entities.order import Measurement as DomainMeasurement
+
 from app.domain.entities.order import (
+    Bid,
     ClothingRequest,
     ClothingRequestImage,
-    Measurement,
-    ShopRequest,
-    Bid,
-    Order,
-    Payment,
-    Rating,
-    FabricStatusEnum,
-    ServiceTypeEnum,
     ClothingRequestStatusEnum,
-    ShopRequestStatusEnum,
+    FabricStatusEnum,
+    Measurement,
+    Order,
     OrderStatusEnum,
+    Payment,
     PaymentMethodEnum,
     PaymentStatusEnum,
+    Rating,
+    ServiceTypeEnum,
+    ShopRequest,
+    ShopRequestStatusEnum,
 )
+from app.domain.entities.order import Measurement as DomainMeasurement
+from app.domain.entities.user import GenderEnum
+from app.infrastructure.db.base import Base
+from app.infrastructure.db.models.user_model import MeasurementProfileModel
 
 
 class ClothingRequestModel(Base):
@@ -30,35 +42,35 @@ class ClothingRequestModel(Base):
 
     request_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     client_id: Mapped[str] = mapped_column(String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
-    target_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    target_budget: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    clothing_category: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    gender: Mapped[Optional[GenderEnum]] = mapped_column(Enum(GenderEnum, native_enum=False), nullable=True)
-    fabric_status: Mapped[Optional[FabricStatusEnum]] = mapped_column(
+    target_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    target_budget: Mapped[float | None] = mapped_column(Float, nullable=True)
+    clothing_category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    gender: Mapped[GenderEnum | None] = mapped_column(Enum(GenderEnum, native_enum=False), nullable=True)
+    fabric_status: Mapped[FabricStatusEnum | None] = mapped_column(
         Enum(FabricStatusEnum, native_enum=False), nullable=True
     )
-    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     # NEW: URL to audio file stored in Firebase Storage / Azure Blob
-    voice_note_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    voice_note_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     # NEW: Online vs. physical-visit workflow toggle
     service_type: Mapped[ServiceTypeEnum] = mapped_column(
         Enum(ServiceTypeEnum, native_enum=False),
         default=ServiceTypeEnum.ONLINE,
         nullable=False,
     )
-    request_location: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    request_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[ClothingRequestStatusEnum] = mapped_column(
         Enum(ClothingRequestStatusEnum, native_enum=False),
         default=ClothingRequestStatusEnum.OPEN,
         nullable=False,
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -66,7 +78,7 @@ class ClothingRequestModel(Base):
         "MeasurementModel", back_populates="request", uselist=False, cascade="all, delete-orphan"
     )
     # Optional reference to the client's saved MeasurementProfile (reusable)
-    measurement_profile_id: Mapped[Optional[int]] = mapped_column(
+    measurement_profile_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("measurement_profile.measurement_id", ondelete="SET NULL"), nullable=True
     )
     measurement_profile: Mapped[Optional["MeasurementProfileModel"]] = relationship(
@@ -76,10 +88,10 @@ class ClothingRequestModel(Base):
         uselist=False,
     )
     # NEW: Zero-to-many design inspiration images
-    design_images: Mapped[List["ClothingRequestImageModel"]] = relationship(
+    design_images: Mapped[list["ClothingRequestImageModel"]] = relationship(
         "ClothingRequestImageModel", back_populates="request", cascade="all, delete-orphan"
     )
-    shop_requests: Mapped[List["ShopRequestModel"]] = relationship(
+    shop_requests: Mapped[list["ShopRequestModel"]] = relationship(
         "ShopRequestModel", back_populates="clothing_request", cascade="all, delete-orphan"
     )
 
@@ -137,7 +149,7 @@ class ClothingRequestImageModel(Base):
     )
     image_url: Mapped[str] = mapped_column(String(500), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="design_images")
@@ -158,22 +170,22 @@ class MeasurementModel(Base):
     request_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("clothing_requests.request_id", ondelete="CASCADE"), unique=True, nullable=False
     )
-    chest: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    waist: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    shoulder: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    sleeve: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    neck: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    hip: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    inseam: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    length: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    chest: Mapped[float | None] = mapped_column(Float, nullable=True)
+    waist: Mapped[float | None] = mapped_column(Float, nullable=True)
+    shoulder: Mapped[float | None] = mapped_column(Float, nullable=True)
+    sleeve: Mapped[float | None] = mapped_column(Float, nullable=True)
+    neck: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hip: Mapped[float | None] = mapped_column(Float, nullable=True)
+    inseam: Mapped[float | None] = mapped_column(Float, nullable=True)
+    length: Mapped[float | None] = mapped_column(Float, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -206,25 +218,25 @@ class ShopRequestModel(Base):
         Integer, ForeignKey("clothing_requests.request_id", ondelete="CASCADE"), nullable=False
     )
     shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
-    offered_price: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    offered_price: Mapped[float | None] = mapped_column(Float, nullable=True)
     status: Mapped[ShopRequestStatusEnum] = mapped_column(
         Enum(ShopRequestStatusEnum, native_enum=False),
         default=ShopRequestStatusEnum.PENDING,
         nullable=False,
     )
-    response_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    response_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
     clothing_request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="shop_requests")
-    bids: Mapped[List["BidModel"]] = relationship(
+    bids: Mapped[list["BidModel"]] = relationship(
         "BidModel", back_populates="shop_request", cascade="all, delete-orphan"
     )
 
@@ -250,9 +262,9 @@ class BidModel(Base):
         Integer, ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"), nullable=False
     )
     bid_amount: Mapped[float] = mapped_column(Float, nullable=False)
-    message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    message: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     shop_request: Mapped["ShopRequestModel"] = relationship("ShopRequestModel", back_populates="bids")
@@ -280,15 +292,15 @@ class OrderModel(Base):
         nullable=False,
     )
     accepted_price: Mapped[float] = mapped_column(Float, nullable=False)
-    started_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
-    completed_date: Mapped[Optional[date]] = mapped_column(Date, nullable=True)
+    started_date: Mapped[date | None] = mapped_column(Date, nullable=True)
+    completed_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -313,7 +325,7 @@ class PaymentModel(Base):
         Integer, ForeignKey("orders.order_id", ondelete="CASCADE"), unique=True, nullable=False
     )
     amount: Mapped[float] = mapped_column(Float, nullable=False)
-    payment_method: Mapped[Optional[PaymentMethodEnum]] = mapped_column(
+    payment_method: Mapped[PaymentMethodEnum | None] = mapped_column(
         Enum(PaymentMethodEnum, native_enum=False), nullable=True
     )
     payment_status: Mapped[PaymentStatusEnum] = mapped_column(
@@ -321,9 +333,9 @@ class PaymentModel(Base):
         default=PaymentStatusEnum.PENDING,
         nullable=False,
     )
-    payment_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    payment_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     def to_domain(self) -> Payment:
@@ -348,9 +360,9 @@ class RatingModel(Base):
     client_id: Mapped[str] = mapped_column(String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
     shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
-    review: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    review: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
     def to_domain(self) -> Rating:

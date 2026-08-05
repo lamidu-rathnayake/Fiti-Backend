@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
-from app.domain.entities.rbac import Role, Section, SubSection
+
+from app.domain.entities.rbac import Role, Section
 
 
 class AbstractRBACRepository(ABC):
     @abstractmethod
-    async def get_role_by_name(self, name: str) -> Optional[Role]:
+    async def get_role_by_name(self, name: str) -> Role | None:
         pass
 
     @abstractmethod
@@ -13,11 +13,11 @@ class AbstractRBACRepository(ABC):
         pass
 
     @abstractmethod
-    async def get_user_roles(self, user_id: str) -> List[Role]:
+    async def get_user_roles(self, user_id: str) -> list[Role]:
         pass
 
     @abstractmethod
-    async def get_accessible_sections_for_user(self, user_id: str) -> List[Section]:
+    async def get_accessible_sections_for_user(self, user_id: str) -> list[Section]:
         pass
 
     @abstractmethod

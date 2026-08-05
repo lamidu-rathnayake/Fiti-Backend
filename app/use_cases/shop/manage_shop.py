@@ -1,8 +1,13 @@
-from typing import List, Optional
+
 from app.domain.entities.shop import Shop, ShopImage
-from app.domain.repositories.shop_repository import AbstractShopRepository
 from app.domain.exceptions.shop import ShopNotFoundError
-from app.use_cases.dtos.shop_dto import ShopCreateDTO, ShopOutputDTO, ShopImageDTO
+from app.domain.repositories.shop_repository import AbstractShopRepository
+from app.use_cases.dtos.shop_dto import (
+    ShopCreateDTO,
+    ShopImageDTO,
+    ShopOutputDTO,
+    ShopUpdateDTO,
+)
 
 
 class ManageShopUseCase:
@@ -30,11 +35,11 @@ class ManageShopUseCase:
             raise ShopNotFoundError(shop_id)
         return self._to_dto(shop)
 
-    async def get_shops_by_seller(self, seller_id: str) -> List[ShopOutputDTO]:
+    async def get_shops_by_seller(self, seller_id: str) -> list[ShopOutputDTO]:
         shops = await self.shop_repository.get_by_seller_id(seller_id)
         return [self._to_dto(s) for s in shops]
 
-    async def list_shops(self, skip: int = 0, limit: int = 100, city: Optional[str] = None) -> List[ShopOutputDTO]:
+    async def list_shops(self, skip: int = 0, limit: int = 100, city: str | None = None) -> list[ShopOutputDTO]:
         shops = await self.shop_repository.list_all(skip=skip, limit=limit, city=city)
         return [self._to_dto(s) for s in shops]
 
@@ -45,6 +50,37 @@ class ManageShopUseCase:
         img = ShopImage(shop_id=shop_id, image_url=image_url)
         saved = await self.shop_repository.add_image(img)
         return ShopImageDTO(image_id=saved.image_id, shop_id=saved.shop_id, image_url=saved.image_url)
+
+    async def update_shop(self, dto: ShopUpdateDTO) -> ShopOutputDTO:
+        existing = await self.shop_repository.get_by_id(dto.shop_id)
+        if not existing:
+            raise ShopNotFoundError(dto.shop_id)
+        shop_entity = Shop(
+            shop_id=dto.shop_id,
+            seller_id=existing.seller_id,
+            shop_name=dto.shop_name,
+            shop_bio=dto.shop_bio,
+            shop_address=dto.shop_address,
+            city=dto.city,
+            contact_number=dto.contact_number,
+            registration_number=dto.registration_number,
+            latitude=dto.latitude,
+            longitude=dto.longitude,
+        )
+        updated = await self.shop_repository.update_shop(shop_entity)
+        if not updated:
+            raise ShopNotFoundError(dto.shop_id)
+        return self._to_dto(updated)
+
+    async def delete_shop(self, shop_id: int) -> bool:
+        existing = await self.shop_repository.get_by_id(shop_id)
+        if not existing:
+            raise ShopNotFoundError(shop_id)
+        return await self.shop_repository.delete_shop(shop_id)
+
+    async def search_near_location(self, lat: float, lng: float, radius_km: float = 10.0) -> list[ShopOutputDTO]:
+        shops = await self.shop_repository.search_near_location(lat=lat, lng=lng, radius_km=radius_km)
+        return [self._to_dto(s) for s in shops]
 
     def _to_dto(self, shop: Shop) -> ShopOutputDTO:
         return ShopOutputDTO(

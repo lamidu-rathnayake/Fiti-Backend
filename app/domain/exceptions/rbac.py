@@ -1,6 +1,5 @@
 class RBACDomainException(Exception):
     """Base exception for RBAC domain errors."""
-    pass
 
 
 class RoleNotFoundError(RBACDomainException):

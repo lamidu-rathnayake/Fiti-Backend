@@ -1,6 +1,10 @@
+from app.domain.exceptions.rbac import AccessDeniedError, RoleNotFoundError
 from app.domain.repositories.rbac_repository import AbstractRBACRepository
-from app.domain.exceptions.rbac import RoleNotFoundError, AccessDeniedError
-from app.use_cases.dtos.rbac_dto import RoleAssignDTO, UserAccessOverviewDTO, SectionOutputDTO
+from app.use_cases.dtos.rbac_dto import (
+    RoleAssignDTO,
+    SectionOutputDTO,
+    UserAccessOverviewDTO,
+)
 
 
 class ManageRBACUseCase:
@@ -29,5 +33,5 @@ class ManageRBACUseCase:
     async def verify_user_route_access(self, user_id: str, route_name: str) -> bool:
         has_access = await self.rbac_repository.check_user_access_to_route(user_id, route_name)
         if not has_access:
-            raise AccessDeniedError(user_id=user_id, section_route=route_name)
+            raise AccessDeniedError(user_id=user_id, section_name=route_name)
         return True

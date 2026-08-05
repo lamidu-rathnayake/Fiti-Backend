@@ -1,6 +1,5 @@
 class ProfileDomainException(Exception):
     """Base exception for profile domain errors."""
-    pass
 
 
 class ProfileNotFoundError(ProfileDomainException):

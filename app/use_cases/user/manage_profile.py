@@ -1,18 +1,18 @@
-from typing import Optional
-from app.domain.entities.user import Client, Seller, MeasurementProfile
+
+from app.domain.entities.user import Client, MeasurementProfile, Seller
+from app.domain.exceptions.user import ProfileAlreadyExistsError
 from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
-    AbstractSellerRepository,
     AbstractMeasurementProfileRepository,
+    AbstractSellerRepository,
 )
-from app.domain.exceptions.user import ProfileAlreadyExistsError, ProfileNotFoundError
 from app.use_cases.dtos.user_dto import (
-    ClientRegisterDTO,
     ClientOutputDTO,
-    SellerRegisterDTO,
-    SellerOutputDTO,
+    ClientRegisterDTO,
     MeasurementProfileDTO,
     MeasurementProfileOutputDTO,
+    SellerOutputDTO,
+    SellerRegisterDTO,
 )
 
 
@@ -77,7 +77,7 @@ class ManageProfileUseCase:
         )
         return self._to_measurement_output_dto(saved)
 
-    async def get_measurement_profile(self, client_id: str) -> Optional[MeasurementProfileOutputDTO]:
+    async def get_measurement_profile(self, client_id: str) -> MeasurementProfileOutputDTO | None:
         profile = await self.measurement_repository.get_by_client_id(client_id)
         return self._to_measurement_output_dto(profile) if profile else None
 

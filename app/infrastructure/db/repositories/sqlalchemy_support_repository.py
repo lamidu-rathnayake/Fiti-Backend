@@ -1,12 +1,15 @@
-from typing import Optional, List
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.domain.entities.support import FavoriteShop, Notification
 from app.domain.repositories.notification_repository import (
-    AbstractNotificationRepository,
     AbstractFavoriteShopRepository,
+    AbstractNotificationRepository,
 )
-from app.infrastructure.db.models.support_model import FavoriteShopModel, NotificationModel
+from app.infrastructure.db.models.support_model import (
+    FavoriteShopModel,
+    NotificationModel,
+)
 
 
 class SQLAlchemyNotificationRepository(AbstractNotificationRepository):
@@ -25,7 +28,7 @@ class SQLAlchemyNotificationRepository(AbstractNotificationRepository):
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def list_by_user(self, user_id: str) -> List[Notification]:
+    async def list_by_user(self, user_id: str) -> list[Notification]:
         stmt = select(NotificationModel).where(NotificationModel.firebase_uid == user_id).order_by(NotificationModel.created_at.desc())
         result = await self.session.execute(stmt)
         models = result.scalars().all()
@@ -65,7 +68,7 @@ class SQLAlchemyFavoriteShopRepository(AbstractFavoriteShopRepository):
             return True
         return False
 
-    async def list_favorites_by_client(self, client_id: str) -> List[FavoriteShop]:
+    async def list_favorites_by_client(self, client_id: str) -> list[FavoriteShop]:
         stmt = select(FavoriteShopModel).where(FavoriteShopModel.client_id == client_id)
         result = await self.session.execute(stmt)
         models = result.scalars().all()

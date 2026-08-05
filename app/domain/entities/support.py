@@ -1,19 +1,18 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 
 @dataclass
 class FavoriteShop:
-    favorite_id: Optional[int]
+    favorite_id: int | None
     client_id: str
     shop_id: int
-    created_at: Optional[datetime] = None
+    created_at: datetime | None = None
 
 
 @dataclass
 class Notification:
-    notification_id: Optional[int]
+    notification_id: int | None
     user_id: str
     title: str
     message: str = None

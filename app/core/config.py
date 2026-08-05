@@ -1,4 +1,4 @@
-from typing import Optional
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Firebase Auth Settings
-    FIREBASE_CREDENTIALS_PATH: Optional[str] = None
+    FIREBASE_CREDENTIALS_PATH: str | None = None
     MOCK_FIREBASE_AUTH: bool = True
 
     model_config = SettingsConfigDict(

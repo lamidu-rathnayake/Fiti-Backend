@@ -1,6 +1,5 @@
 class ShopDomainException(Exception):
     """Base exception for Shop domain errors."""
-    pass
 
 
 class ShopNotFoundError(ShopDomainException):

@@ -1,20 +1,22 @@
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.api.dependencies import get_manage_profile_use_case, get_current_user_uid
+from app.api.dependencies import get_manage_profile_use_case
+from app.core.security import get_current_user_uid
 from app.api.schemas.user_schema import (
     ClientRegisterRequest,
     ClientResponse,
-    SellerRegisterRequest,
-    SellerResponse,
     MeasurementProfileRequest,
     MeasurementProfileResponse,
+    SellerRegisterRequest,
+    SellerResponse,
 )
-from app.domain.exceptions.user import ProfileAlreadyExistsError, ProfileNotFoundError
+from app.domain.exceptions.user import ProfileAlreadyExistsError
 from app.use_cases.dtos.user_dto import (
     ClientRegisterDTO,
-    SellerRegisterDTO,
     MeasurementProfileDTO,
+    SellerRegisterDTO,
 )
 from app.use_cases.user.manage_profile import ManageProfileUseCase
 

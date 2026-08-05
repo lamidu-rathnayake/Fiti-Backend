@@ -1,13 +1,14 @@
-from typing import Optional, List
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.domain.entities.rbac import Role, Section
 from app.domain.repositories.rbac_repository import AbstractRBACRepository
 from app.infrastructure.db.models.rbac_model import (
     RoleModel,
-    UserRoleModel,
-    SectionModel,
     RoleSectionGrantModel,
+    SectionModel,
+    UserRoleModel,
 )
 
 
@@ -15,7 +16,7 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_role_by_name(self, name: str) -> Optional[Role]:
+    async def get_role_by_name(self, name: str) -> Role | None:
         stmt = select(RoleModel).where(RoleModel.name == name)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
@@ -27,11 +28,11 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
         )
         res = await self.session.execute(stmt)
         if not res.scalar_one_or_none():
-            ur = UserRoleModel(user_id=user_id, role_id=role_id)
+            ur = UserRoleModel(firebase_uid=user_id, role_id=role_id)
             self.session.add(ur)
             await self.session.commit()
 
-    async def get_user_roles(self, user_id: str) -> List[Role]:
+    async def get_user_roles(self, user_id: str) -> list[Role]:
         stmt = (
             select(RoleModel)
             .join(UserRoleModel, UserRoleModel.role_id == RoleModel.id)
@@ -41,7 +42,7 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def get_accessible_sections_for_user(self, user_id: str) -> List[Section]:
+    async def get_accessible_sections_for_user(self, user_id: str) -> list[Section]:
         stmt = (
             select(SectionModel)
             .join(RoleSectionGrantModel, RoleSectionGrantModel.section_id == SectionModel.id)

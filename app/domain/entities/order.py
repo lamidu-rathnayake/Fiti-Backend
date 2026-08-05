@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from enum import Enum
-from typing import Optional, List
+
 from app.domain.entities.user import GenderEnum
 
 
@@ -55,19 +55,19 @@ class PaymentStatusEnum(str, Enum):
 @dataclass
 class Measurement:
     """Per-request body measurements attached to a ClothingRequest."""
-    measurement_id: Optional[int] = None
-    request_id: Optional[int] = None
-    chest: Optional[float] = None
-    waist: Optional[float] = None
-    shoulder: Optional[float] = None
-    sleeve: Optional[float] = None
-    neck: Optional[float] = None
-    hip: Optional[float] = None
-    inseam: Optional[float] = None
-    length: Optional[float] = None
-    notes: Optional[str] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    measurement_id: int | None = None
+    request_id: int | None = None
+    chest: float | None = None
+    waist: float | None = None
+    shoulder: float | None = None
+    sleeve: float | None = None
+    neck: float | None = None
+    hip: float | None = None
+    inseam: float | None = None
+    length: float | None = None
+    notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
@@ -75,77 +75,77 @@ class ClothingRequestImage:
     """Design-inspiration image uploaded to cloud storage and linked to a request."""
     request_id: int
     image_url: str
-    image_id: Optional[int] = None
-    created_at: Optional[datetime] = None
+    image_id: int | None = None
+    created_at: datetime | None = None
 
 
 @dataclass
 class Bid:
     shop_request_id: int
     bid_amount: float
-    bid_id: int = None
-    message: str = None
-    created_at: datetime = None
+    bid_id: int | None = None
+    message: str | None = None
+    created_at: datetime | None = None
 
 
 @dataclass
 class ShopRequest:
     shop_id: int
-    shop_request_id: int = None
-    request_id: int = None
-    offered_price: Optional[float] = None
+    shop_request_id: int | None = None
+    request_id: int | None = None
+    offered_price: float | None = None
     status: ShopRequestStatusEnum = ShopRequestStatusEnum.PENDING
-    response_date: Optional[datetime] = None
-    bids: List[Bid] = field(default_factory=list)
-    created_at: datetime = None
-    updated_at: datetime = None
+    response_date: datetime | None = None
+    bids: list[Bid] = field(default_factory=list)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
 class ClothingRequest:
     client_id: str
-    request_id:int = None
-    target_date: date = None
-    target_budget: float = None
-    clothing_category: Optional[str] = None
-    gender: GenderEnum = None
-    fabric_status: Optional[FabricStatusEnum] = None
-    description: Optional[str] = None
+    request_id: int | None = None
+    target_date: date | None = None
+    target_budget: float | None = None
+    clothing_category: str | None = None
+    gender: GenderEnum | None = None
+    fabric_status: FabricStatusEnum | None = None
+    description: str | None = None
     # NEW: URL stored after client uploads audio to cloud storage
-    voice_note_url: Optional[str] = None
+    voice_note_url: str | None = None
     # NEW: Online processing vs. physical shop visit toggle
     service_type: ServiceTypeEnum = ServiceTypeEnum.ONLINE
-    request_location: Optional[str] = None
+    request_location: str | None = None
     status: ClothingRequestStatusEnum = ClothingRequestStatusEnum.OPEN
-    measurement: Optional[Measurement] = None
+    measurement: Measurement | None = None
     # NEW: Zero or more design-inspiration images
-    design_images: List[ClothingRequestImage] = field(default_factory=list)
-    shop_requests: List[ShopRequest] = field(default_factory=list)
-    created_at: datetime = None
-    updated_at: datetime = None
+    design_images: list[ClothingRequestImage] = field(default_factory=list)
+    shop_requests: list[ShopRequest] = field(default_factory=list)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
 class Order:
     shop_request_id: int
-    order_id: Optional[int] = None
+    order_id: int | None = None
     order_status: OrderStatusEnum = OrderStatusEnum.IN_PROGRESS
     accepted_price: float = 0.0
-    started_date: Optional[date] = None
-    completed_date: Optional[date] = None
-    created_at: datetime = None
-    updated_at: datetime = None
+    started_date: date | None = None
+    completed_date: date | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
 class Payment:
     order_id: int
     amount: float
-    payment_id: Optional[int] = None
-    payment_method: Optional[PaymentMethodEnum] = None
+    payment_id: int | None = None
+    payment_method: PaymentMethodEnum | None = None
     payment_status: PaymentStatusEnum = PaymentStatusEnum.PENDING
-    payment_date: Optional[datetime] = None
-    created_at: datetime = None
+    payment_date: datetime | None = None
+    created_at: datetime | None = None
 
 
 @dataclass
@@ -154,6 +154,6 @@ class Rating:
     client_id: str
     shop_id: int
     rating: int  # 1 to 5
-    rating_id: Optional[int] = None
-    review: Optional[str] = None
-    created_at: datetime = None
+    rating_id: int | None = None
+    review: str | None = None
+    created_at: datetime | None = None

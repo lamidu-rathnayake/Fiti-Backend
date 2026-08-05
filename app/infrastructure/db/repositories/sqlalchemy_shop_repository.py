@@ -1,11 +1,12 @@
-from typing import Optional, List
 import math
+
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
+
 from app.domain.entities.shop import Shop, ShopImage
 from app.domain.repositories.shop_repository import AbstractShopRepository
-from app.infrastructure.db.models.shop_model import ShopModel, ShopImageModel
+from app.infrastructure.db.models.shop_model import ShopImageModel, ShopModel
 
 
 class SQLAlchemyShopRepository(AbstractShopRepository):
@@ -33,13 +34,13 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         refetched = await self.get_by_id(model.shop_id)
         return refetched if refetched else model.to_domain()
 
-    async def get_by_id(self, shop_id: int) -> Optional[Shop]:
+    async def get_by_id(self, shop_id: int) -> Shop | None:
         stmt = select(ShopModel).options(selectinload(ShopModel.images)).where(ShopModel.shop_id == shop_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def get_by_seller_id(self, seller_id: str) -> List[Shop]:
+    async def get_by_seller_id(self, seller_id: str) -> list[Shop]:
         stmt = (
             select(ShopModel)
             .options(selectinload(ShopModel.images))
@@ -49,7 +50,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def list_all(self, skip: int = 0, limit: int = 100, city: Optional[str] = None) -> List[Shop]:
+    async def list_all(self, skip: int = 0, limit: int = 100, city: str | None = None) -> list[Shop]:
         stmt = select(ShopModel).options(selectinload(ShopModel.images))
         if city:
             stmt = stmt.where(ShopModel.city == city)
@@ -73,8 +74,8 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
             model.average_rating = new_rating
             await self.session.commit()
 
-    async def update_shop(self, shop: Shop) -> Shop:
-        stmt = select(ShopModel).where(ShopModel.shop_id == shop.shop_id)
+    async def update_shop(self, shop: Shop) -> Shop | None:
+        stmt = select(ShopModel).options(selectinload(ShopModel.images)).where(ShopModel.shop_id == shop.shop_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:
@@ -102,7 +103,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         await self.session.commit()
         return True
 
-    async def search_near_location(self, lat: float, lng: float, radius_km: float = 10.0) -> List[Shop]:
+    async def search_near_location(self, lat: float, lng: float, radius_km: float = 10.0) -> list[Shop]:
         # Approximate bounding box using degrees (1 degree lat ~ 111 km)
         lat_delta = radius_km / 111.0
         # avoid division by zero for cos

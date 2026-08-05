@@ -306,7 +306,7 @@ CREATE INDEX IF NOT EXISTS idx_shop_requests_shop_id          ON shop_requests(s
 CREATE INDEX IF NOT EXISTS idx_bids_shop_request_id           ON bids(shop_request_id);
 CREATE INDEX IF NOT EXISTS idx_ratings_shop_id                ON ratings(shop_id);
 CREATE INDEX IF NOT EXISTS idx_favorite_shops_shop_id         ON favorite_shops(shop_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id          ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_firebase_uid     ON notifications(firebase_uid);
 CREATE INDEX IF NOT EXISTS idx_user_roles_role_id             ON user_roles(role_id);
 
 -- ---------------------------------------------------------

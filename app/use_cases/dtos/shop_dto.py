@@ -1,11 +1,10 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, List
 
 
 @dataclass
 class ShopImageDTO:
-    image_id: Optional[int]
+    image_id: int | None
     shop_id: int
     image_url: str
 
@@ -14,13 +13,26 @@ class ShopImageDTO:
 class ShopCreateDTO:
     seller_id: str
     shop_name: str
-    shop_bio: Optional[str] = None
-    shop_address: Optional[str] = None
-    city: Optional[str] = None
-    contact_number: Optional[str] = None
-    registration_number: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    shop_bio: str | None = None
+    shop_address: str | None = None
+    city: str | None = None
+    contact_number: str | None = None
+    registration_number: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+
+
+@dataclass
+class ShopUpdateDTO:
+    shop_id: int
+    shop_name: str
+    shop_bio: str | None = None
+    shop_address: str | None = None
+    city: str | None = None
+    contact_number: str | None = None
+    registration_number: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 @dataclass
@@ -28,14 +40,14 @@ class ShopOutputDTO:
     shop_id: int
     seller_id: str
     shop_name: str
-    shop_bio: Optional[str] = None
-    shop_address: Optional[str] = None
-    city: Optional[str] = None
-    contact_number: Optional[str] = None
-    registration_number: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    shop_bio: str | None = None
+    shop_address: str | None = None
+    city: str | None = None
+    contact_number: str | None = None
+    registration_number: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     average_rating: float = 0.0
-    images: List[ShopImageDTO] = field(default_factory=list)
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    images: list[ShopImageDTO] = field(default_factory=list)
+    created_at: datetime | None = None
+    updated_at: datetime | None = None

@@ -1,10 +1,10 @@
 from datetime import datetime
-from typing import Optional, List
-from pydantic import BaseModel, Field, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ShopImageSchema(BaseModel):
-    image_id: Optional[int] = None
+    image_id: int | None = None
     shop_id: int
     image_url: str
 
@@ -12,13 +12,24 @@ class ShopImageSchema(BaseModel):
 class ShopCreateRequest(BaseModel):
     seller_id: str = Field(..., description="Firebase UID of seller")
     shop_name: str = Field(..., min_length=2, max_length=150)
-    shop_bio: Optional[str] = None
-    shop_address: Optional[str] = None
-    city: Optional[str] = None
-    contact_number: Optional[str] = None
-    registration_number: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    shop_bio: str | None = None
+    shop_address: str | None = None
+    city: str | None = None
+    contact_number: str | None = None
+    registration_number: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+
+
+class ShopUpdateRequest(BaseModel):
+    shop_name: str = Field(..., min_length=2, max_length=150)
+    shop_bio: str | None = None
+    shop_address: str | None = None
+    city: str | None = None
+    contact_number: str | None = None
+    registration_number: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class ShopResponse(BaseModel):
@@ -27,14 +38,14 @@ class ShopResponse(BaseModel):
     shop_id: int
     seller_id: str
     shop_name: str
-    shop_bio: Optional[str] = None
-    shop_address: Optional[str] = None
-    city: Optional[str] = None
-    contact_number: Optional[str] = None
-    registration_number: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    shop_bio: str | None = None
+    shop_address: str | None = None
+    city: str | None = None
+    contact_number: str | None = None
+    registration_number: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     average_rating: float = 0.0
-    images: List[ShopImageSchema] = []
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    images: list[ShopImageSchema] = []
+    created_at: datetime | None = None
+    updated_at: datetime | None = None

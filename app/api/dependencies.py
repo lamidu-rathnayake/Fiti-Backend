@@ -2,30 +2,41 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db_session
-from app.core.security import get_current_user_uid
+from app.domain.repositories.notification_repository import (
+    AbstractFavoriteShopRepository,
+    AbstractNotificationRepository,
+)
+from app.domain.repositories.order_repository import AbstractOrderRepository
 from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
-    AbstractSellerRepository,
     AbstractMeasurementProfileRepository,
+    AbstractSellerRepository,
 )
 from app.domain.repositories.rbac_repository import AbstractRBACRepository
 from app.domain.repositories.shop_repository import AbstractShopRepository
-from app.domain.repositories.order_repository import AbstractOrderRepository
-
+from app.infrastructure.db.repositories.sqlalchemy_order_repository import (
+    SQLAlchemyOrderRepository,
+)
 from app.infrastructure.db.repositories.sqlalchemy_profile_repository import (
     SQLAlchemyClientRepository,
-    SQLAlchemySellerRepository,
     SQLAlchemyMeasurementProfileRepository,
+    SQLAlchemySellerRepository,
 )
-from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import SQLAlchemyRBACRepository
-from app.infrastructure.db.repositories.sqlalchemy_shop_repository import SQLAlchemyShopRepository
-from app.infrastructure.db.repositories.sqlalchemy_order_repository import SQLAlchemyOrderRepository
-
-from app.use_cases.user.manage_profile import ManageProfileUseCase
+from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import (
+    SQLAlchemyRBACRepository,
+)
+from app.infrastructure.db.repositories.sqlalchemy_shop_repository import (
+    SQLAlchemyShopRepository,
+)
+from app.infrastructure.db.repositories.sqlalchemy_support_repository import (
+    SQLAlchemyFavoriteShopRepository,
+    SQLAlchemyNotificationRepository,
+)
+from app.use_cases.order.manage_order import ManageOrderUseCase
 from app.use_cases.rbac.manage_rbac import ManageRBACUseCase
 from app.use_cases.shop.manage_shop import ManageShopUseCase
-from app.use_cases.order.manage_order import ManageOrderUseCase
-
+from app.use_cases.support.manage_support import ManageSupportUseCase
+from app.use_cases.user.manage_profile import ManageProfileUseCase
 
 # ── Repository Factories ──────────────────────────────────────────────────────
 
@@ -53,6 +64,14 @@ def get_shop_repository(session: AsyncSession = Depends(get_db_session)) -> Abst
 
 def get_order_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractOrderRepository:
     return SQLAlchemyOrderRepository(session=session)
+
+
+def get_notification_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractNotificationRepository:
+    return SQLAlchemyNotificationRepository(session=session)
+
+
+def get_favorite_shop_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractFavoriteShopRepository:
+    return SQLAlchemyFavoriteShopRepository(session=session)
 
 
 # ── Use Case Factories ────────────────────────────────────────────────────────
@@ -86,3 +105,13 @@ def get_manage_order_use_case(
     shop_repo: AbstractShopRepository = Depends(get_shop_repository),
 ) -> ManageOrderUseCase:
     return ManageOrderUseCase(order_repository=order_repo, shop_repository=shop_repo)
+
+
+def get_manage_support_use_case(
+    notification_repo: AbstractNotificationRepository = Depends(get_notification_repository),
+    favorite_shop_repo: AbstractFavoriteShopRepository = Depends(get_favorite_shop_repository),
+) -> ManageSupportUseCase:
+    return ManageSupportUseCase(
+        notification_repository=notification_repo,
+        favorite_shop_repository=favorite_shop_repo,
+    )

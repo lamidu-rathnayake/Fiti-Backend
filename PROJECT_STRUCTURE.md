@@ -56,10 +56,10 @@ Contains pure Python business logic, dataclasses, and domain interfaces. It has 
 
 * **Entities (`app/domain/entities/`)**: Pure dataclasses representing core domain objects.
   * `user.py`: `User`, `MeasurementProfile`, `Client`, `Seller`, `GenderEnum`.
-  * `shop.py`: `Shop`, `ShopImage`, `FavoriteShop`.
+  * `shop.py`: `Shop`, `ShopImage`.
   * `order.py`: `ClothingRequest`, `ClothingRequestImage`, `Measurement`, `ShopRequest`, `Bid`, `Order`, `Payment`, `Rating`, `FabricStatusEnum`, `ServiceTypeEnum`, `ClothingRequestStatusEnum`, `ShopRequestStatusEnum`, `OrderStatusEnum`, `PaymentMethodEnum`, `PaymentStatusEnum`.
   * `rbac.py`: `Role`, `UserRole`, `Section`, `RoleSectionGrant`, `SubSection`, `SectionSubSection`.
-  * `support.py`: `Notification`.
+  * `support.py`: `Notification`, `FavoriteShop`.
 
 * **Exceptions (`app/domain/exceptions/`)**: Custom domain exception hierarchy.
   * `user.py`: `UserNotFoundError`, `UserAlreadyExistsError`, `InvalidUserDataError`.
@@ -84,12 +84,14 @@ Orchestrates domain entities to execute application use cases.
   * `shop_dto.py`: DTOs for shop registration, updates, search, and images.
   * `order_dto.py`: DTOs for clothing requests (voice notes, design images, service toggles), bids, orders, mock payments, and ratings.
   * `rbac_dto.py`: DTOs for roles, route access grants, and sub-sections.
+  * `support_dto.py`: DTOs for notifications and favorite shops.
 
 * **Workflows (`app/use_cases/`)**:
-  * `user/`: `create_user.py`, `get_user.py`, `list_users.py`, `manage_measurement.py`.
-  * `shop/`: `manage_shop.py` (create, update, fetch, search near location, favorite shops).
+  * `user/`: `manage_profile.py` (client and seller registration).
+  * `shop/`: `manage_shop.py` (create, update, fetch, search near location).
   * `order/`: `manage_order.py` (create requests, submit bids, accept bids, transition order states, process payments, submit ratings).
   * `rbac/`: `manage_rbac.py` (manage roles, sections, user role assignments).
+  * `support/`: `manage_support.py` (manage notifications, favorite shops).
 
 ---
 
@@ -121,10 +123,11 @@ Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent 
 * **Schemas (`app/api/schemas/`)**: Pydantic V2 request & response validation models (`user_schema.py`, `shop_schema.py`, `order_schema.py`).
 * **Endpoints (`app/api/v1/endpoints/`)**:
   * `health.py`: Application health check endpoint (`/api/v1/health`).
-  * `users.py`: User registration and profile management (`/api/v1/users`).
-  * `shops.py`: Tailor shop registration and discovery (`/api/v1/shops`).
-  * `near_shops.py`: Tailor shop near to discovery (`/api/v1/shops`).
+  * `profiles.py`: Client and seller registration/profiles (`/api/v1/profiles`).
+  * `shops.py`: Tailor shop registration, updates, and geospatial discovery (`/api/v1/shops`).
   * `orders.py`: Clothing requests, bids, orders, mock payments, ratings (`/api/v1/orders`).
+  * `rbac.py`: Role assignments and route access verification (`/api/v1/rbac`).
+  * `support.py`: Notifications and favorite shops (`/api/v1/support`).
 * **Router (`app/api/v1/router.py`)**: Central API router combining all v1 endpoints under `/api/v1`.
 
 ---
@@ -140,3 +143,12 @@ Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent 
 
 * `tests/test_api.py`: Async HTTP integration tests verifying end-to-end marketplace flows (Client/Seller creation -> Shop setup -> Request creation with voice notes & design images -> Bidding -> Order completion -> Mock payment -> Rating).
 * `tests/test_use_cases.py`: Unit tests for domain logic and use case exception handling.
+
+---
+
+## 🛠️ Code Quality & Typing
+
+This project strictly adheres to modern Python standards:
+* **Python 3.12+ Typing**: Uses built-in `list` and union operators `| None` in place of legacy `typing` constructs (`List`, `Optional`).
+* **Static Analysis**: Enforced by `mypy` for strict type checking across the entire domain, use cases, and infrastructure.
+* **Linting & Formatting**: Maintained by `ruff` for consistent style and auto-fixing of syntax conventions.
