@@ -27,6 +27,7 @@ from app.infrastructure.db.models.order_model import (
     PaymentModel,
     RatingModel,
 )
+from app.infrastructure.db.models.user_model import MeasurementProfileModel
 
 
 class SQLAlchemyOrderRepository(AbstractOrderRepository):
@@ -66,6 +67,14 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             )
             self.session.add(meas_model)
             await self.session.commit()
+        else:
+            # If no per-request measurements provided, reference client's saved profile if exists
+            stmt = select(MeasurementProfileModel).where(MeasurementProfileModel.client_id == request.client_id)
+            res = await self.session.execute(stmt)
+            profile = res.scalar_one_or_none()
+            if profile:
+                model.measurement_profile_id = profile.measurement_id
+                await self.session.commit()
 
         # Re-fetch with relationships
         return await self.get_clothing_request(model.request_id)

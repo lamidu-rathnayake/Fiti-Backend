@@ -4,6 +4,8 @@ from sqlalchemy import String, Integer, Float, Text, Date, DateTime, Enum, Forei
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.infrastructure.db.base import Base
 from app.domain.entities.user import GenderEnum
+from app.infrastructure.db.models.user_model import MeasurementProfileModel
+from app.domain.entities.order import Measurement as DomainMeasurement
 from app.domain.entities.order import (
     ClothingRequest,
     ClothingRequestImage,
@@ -63,6 +65,16 @@ class ClothingRequestModel(Base):
     measurement: Mapped[Optional["MeasurementModel"]] = relationship(
         "MeasurementModel", back_populates="request", uselist=False, cascade="all, delete-orphan"
     )
+    # Optional reference to the client's saved MeasurementProfile (reusable)
+    measurement_profile_id: Mapped[Optional[int]] = mapped_column(
+        Integer, ForeignKey("measurement_profile.measurement_id", ondelete="SET NULL"), nullable=True
+    )
+    measurement_profile: Mapped[Optional["MeasurementProfileModel"]] = relationship(
+        "MeasurementProfileModel",
+        primaryjoin="MeasurementProfileModel.measurement_id==ClothingRequestModel.measurement_profile_id",
+        viewonly=True,
+        uselist=False,
+    )
     # NEW: Zero-to-many design inspiration images
     design_images: Mapped[List["ClothingRequestImageModel"]] = relationship(
         "ClothingRequestImageModel", back_populates="request", cascade="all, delete-orphan"
@@ -85,7 +97,29 @@ class ClothingRequestModel(Base):
             service_type=self.service_type,
             request_location=self.request_location,
             status=self.status,
-            measurement=self.measurement.to_domain() if self.measurement else None,
+            measurement=(
+                self.measurement.to_domain()
+                if self.measurement
+                else (
+                    DomainMeasurement(
+                        measurement_id=self.measurement_profile.measurement_id,
+                        request_id=None,
+                        chest=self.measurement_profile.chest,
+                        waist=self.measurement_profile.waist,
+                        shoulder=self.measurement_profile.shoulder,
+                        sleeve=self.measurement_profile.sleeve,
+                        neck=self.measurement_profile.neck,
+                        hip=self.measurement_profile.hip,
+                        inseam=self.measurement_profile.inseam,
+                        length=self.measurement_profile.length,
+                        notes=self.measurement_profile.notes,
+                        created_at=self.measurement_profile.created_at,
+                        updated_at=self.measurement_profile.updated_at,
+                    )
+                    if self.measurement_profile
+                    else None
+                )
+            ),
             design_images=[img.to_domain() for img in self.design_images] if self.design_images else [],
             shop_requests=[sr.to_domain() for sr in self.shop_requests] if self.shop_requests else [],
             created_at=self.created_at,

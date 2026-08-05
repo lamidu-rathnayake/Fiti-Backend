@@ -1,7 +1,7 @@
 from sqlalchemy import String, Integer, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 from app.infrastructure.db.base import Base
-from app.domain.entities.rbac import Role, Section, SubSection
+from app.domain.entities.rbac import Role, UserRole, Section, RoleSectionGrant, SubSection
 
 
 class RoleModel(Base):
@@ -21,6 +21,9 @@ class UserRoleModel(Base):
     firebase_uid: Mapped[str] = mapped_column(String(128), primary_key=True)
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
 
+    def to_domain(self) -> UserRole:
+        return UserRole(user_id=self.firebase_uid, role_id=self.role_id)
+
 
 class SectionModel(Base):
     __tablename__ = "sections"
@@ -39,6 +42,9 @@ class RoleSectionGrantModel(Base):
     role_id: Mapped[int] = mapped_column(Integer, ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
     section_id: Mapped[int] = mapped_column(Integer, ForeignKey("sections.id", ondelete="CASCADE"), primary_key=True)
 
+    def to_domain(self) -> RoleSectionGrant:
+        return RoleSectionGrant(role_id=self.role_id, section_id=self.section_id)
+
 
 class SubSectionModel(Base):
     __tablename__ = "sub_sections"
@@ -49,6 +55,6 @@ class SubSectionModel(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
     def to_domain(self) -> SubSection:
-        return SubSection(id=self.id, name=self.name, component_id=self.component_id)
+        return SubSection(id=self.id, section_id=self.section_id, name=self.name, component_id=self.component_id)
 
 

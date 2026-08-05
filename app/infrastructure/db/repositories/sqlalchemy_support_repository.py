@@ -15,7 +15,7 @@ class SQLAlchemyNotificationRepository(AbstractNotificationRepository):
 
     async def create_notification(self, notification: Notification) -> Notification:
         model = NotificationModel(
-            user_id=notification.user_id,
+            firebase_uid=notification.user_id,
             title=notification.title,
             message=notification.message,
             is_read=notification.is_read,
@@ -26,7 +26,7 @@ class SQLAlchemyNotificationRepository(AbstractNotificationRepository):
         return model.to_domain()
 
     async def list_by_user(self, user_id: str) -> List[Notification]:
-        stmt = select(NotificationModel).where(NotificationModel.user_id == user_id).order_by(NotificationModel.created_at.desc())
+        stmt = select(NotificationModel).where(NotificationModel.firebase_uid == user_id).order_by(NotificationModel.created_at.desc())
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [m.to_domain() for m in models]
