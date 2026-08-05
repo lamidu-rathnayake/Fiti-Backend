@@ -3,20 +3,21 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "FastAPI Clean Architecture Application"
-    VERSION: str = "0.1.0"
-    API_V1_STR: str = "/api/v1"
-    
-    # Database Settings
-    DATABASE_URL: str = "sqlite+aiosqlite:///./sql_app.db"
+    PROJECT_NAME: str 
+    VERSION: str 
+    API_V1_STR: str
     
     # Environment
-    ENVIRONMENT: str = "development"
-    DEBUG: bool = True
+    ENVIRONMENT: str
+    DEBUG: bool
+
+    # Database Settings
+    DATABASE_URL: str
+    
 
     # Firebase Auth Settings
-    FIREBASE_CREDENTIALS_PATH: str | None = None
-    MOCK_FIREBASE_AUTH: bool = True
+    MOCK_FIREBASE_AUTH: bool
+    FIREBASE_CREDENTIALS_PATH: str | None
 
     model_config = SettingsConfigDict(
         env_file=".env",
