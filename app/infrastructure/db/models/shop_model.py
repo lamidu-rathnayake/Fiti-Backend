@@ -32,7 +32,7 @@ class ShopModel(Base):
     )
 
     images: Mapped[list["ShopImageModel"]] = relationship(
-        "ShopImageModel", back_populates="shop", cascade="all, delete-orphan"
+        "ShopImageModel", back_populates="shop", cascade="all, delete-orphan", lazy="selectin"
     )
 
     def to_domain(self) -> Shop:
