@@ -264,8 +264,8 @@ async def test_shop_listing_and_update_endpoints():
         assert res.status_code == 200
         assert res.json()["shop_name"] == "Updated Shop"
         
-        # Search near
-        res = await ac.get("/api/v1/shops/near?lat=6.92&lng=79.86&radius_km=10")
+        # Search nearby shops
+        res = await ac.get("/api/v1/shops/nearby?lat=6.92&lng=79.86&radius_km=10")
         assert res.status_code == 200
         assert type(res.json()) is list
         

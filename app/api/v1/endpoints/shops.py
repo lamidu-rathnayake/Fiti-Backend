@@ -34,7 +34,7 @@ async def create_shop(
     return await use_case.create_shop(dto)
 
 
-@router.get("/near", response_model=list[ShopResponse])
+@router.get("/nearby", response_model=list[ShopResponse])
 async def search_near_shops(
     lat: float = Query(..., description="Latitude"),
     lng: float = Query(..., description="Longitude"),
