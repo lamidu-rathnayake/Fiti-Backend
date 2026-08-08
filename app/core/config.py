@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Database Settings
-    DATABASE_URL = os.getenv("ConnectionString")
+    DATABASE_URL = os.getenv("CONNECTION_STRING")
     
     # Firebase Auth Settings
     MOCK_FIREBASE_AUTH: bool = True
