@@ -4,7 +4,6 @@ import firebase_admin
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from firebase_admin import auth, credentials
-
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)

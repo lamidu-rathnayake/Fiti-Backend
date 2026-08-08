@@ -1,6 +1,9 @@
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from dotenv import load_dotenv
+import os
 
+load_dotenv()  # Load environment variables from .env file
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "FastAPI Clean Architecture Application"
@@ -12,7 +15,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
 
     # Database Settings
-    DATABASE_URL: str = "sqlite+aiosqlite:///./sql_app.db"
+    DATABASE_URL = os.getenv("ConnectionString")
     
     # Firebase Auth Settings
     MOCK_FIREBASE_AUTH: bool = True
