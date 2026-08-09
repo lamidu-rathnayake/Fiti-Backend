@@ -57,7 +57,8 @@ class ClothingRequestCreateDTO:
 @dataclass
 class BidDTO:
     bid_id: int | None
-    shop_request_id: int
+    request_id: int
+    shop_id: int
     bid_amount: float
     message: str | None = None
     created_at: datetime | None = None
@@ -70,7 +71,6 @@ class ShopRequestDTO:
     shop_id: int
     offered_price: float | None = None
     status: ShopRequestStatusEnum = ShopRequestStatusEnum.PENDING
-    bids: list[BidDTO] = field(default_factory=list)
 
 
 @dataclass
@@ -90,27 +90,29 @@ class ClothingRequestOutputDTO:
     measurement: MeasurementDTO | None = None
     design_images: list[ClothingRequestImageDTO] = field(default_factory=list)
     shop_requests: list[ShopRequestDTO] = field(default_factory=list)
+    bids: list[BidDTO] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
 
 @dataclass
 class BidCreateDTO:
-    shop_request_id: int
+    request_id: int
+    shop_id: int
     bid_amount: float
     message: str | None = None
 
 
 @dataclass
 class OrderCreateDTO:
-    shop_request_id: int
+    bid_id: int
     accepted_price: float
 
 
 @dataclass
 class OrderOutputDTO:
     order_id: int
-    shop_request_id: int
+    bid_id: int
     order_status: OrderStatusEnum
     accepted_price: float
     started_date: date | None = None

@@ -94,6 +94,9 @@ class ClothingRequestModel(Base):
     shop_requests: Mapped[list["ShopRequestModel"]] = relationship(
         "ShopRequestModel", back_populates="clothing_request", cascade="all, delete-orphan"
     )
+    bids: Mapped[list["BidModel"]] = relationship(
+        "BidModel", back_populates="clothing_request", cascade="all, delete-orphan"
+    )
 
     def to_domain(self) -> ClothingRequest:
         return ClothingRequest(
@@ -134,6 +137,7 @@ class ClothingRequestModel(Base):
             ),
             design_images=[img.to_domain() for img in self.design_images] if self.design_images else [],
             shop_requests=[sr.to_domain() for sr in self.shop_requests] if self.shop_requests else [],
+            bids=[b.to_domain() for b in self.bids] if self.bids else [],
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -236,9 +240,6 @@ class ShopRequestModel(Base):
     )
 
     clothing_request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="shop_requests")
-    bids: Mapped[list["BidModel"]] = relationship(
-        "BidModel", back_populates="shop_request", cascade="all, delete-orphan"
-    )
 
     def to_domain(self) -> ShopRequest:
         return ShopRequest(
@@ -248,7 +249,6 @@ class ShopRequestModel(Base):
             offered_price=self.offered_price,
             status=self.status,
             response_date=self.response_date,
-            bids=[b.to_domain() for b in self.bids] if self.bids else [],
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -258,8 +258,11 @@ class BidModel(Base):
     __tablename__ = "bids"
 
     bid_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    shop_request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"), nullable=False
+    request_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("clothing_requests.request_id", ondelete="CASCADE"), nullable=False
+    )
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
     )
     bid_amount: Mapped[float] = mapped_column(Float, nullable=False)
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -267,12 +270,13 @@ class BidModel(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
-    shop_request: Mapped["ShopRequestModel"] = relationship("ShopRequestModel", back_populates="bids")
+    clothing_request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="bids")
 
     def to_domain(self) -> Bid:
         return Bid(
             bid_id=self.bid_id,
-            shop_request_id=self.shop_request_id,
+            request_id=self.request_id,
+            shop_id=self.shop_id,
             bid_amount=self.bid_amount,
             message=self.message,
             created_at=self.created_at,
@@ -283,8 +287,8 @@ class OrderModel(Base):
     __tablename__ = "orders"
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    shop_request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"), unique=True, nullable=False
+    bid_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("bids.bid_id", ondelete="CASCADE"), unique=True, nullable=False
     )
     order_status: Mapped[OrderStatusEnum] = mapped_column(
         Enum(OrderStatusEnum, native_enum=False),
