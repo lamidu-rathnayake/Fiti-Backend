@@ -120,13 +120,14 @@ async def submit_bid(
 ):
     try:
         dto = BidCreateDTO(
-            shop_request_id=request.shop_request_id,
+            request_id=request.request_id,
+            shop_id=request.shop_id,
             bid_amount=request.bid_amount,
             message=request.message,
         )
         return await use_case.submit_bid(dto)
-    except ShopRequestNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 # ── Orders ─────────────────────────────────────────────────────────────
@@ -138,12 +139,12 @@ async def accept_bid_and_create_order(
 ):
     try:
         dto = OrderCreateDTO(
-            shop_request_id=request.shop_request_id,
+            bid_id=request.bid_id,
             accepted_price=request.accepted_price,
         )
         return await use_case.accept_bid_and_create_order(dto)
-    except ShopRequestNotFoundError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 @router.get("/{order_id}", response_model=OrderResponse)
