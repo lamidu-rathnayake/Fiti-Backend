@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fiti - Authentication & API Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Firebase Web SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">F</div>
+          <div>
+            <div class="logo-title">Fiti</div>
+            <div class="logo-sub">Portal & API Tester</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Firebase Config Drawer -->
+      <div class="fb-config-box">
+        <div class="fb-config-header">
+          <span>🔥 Firebase Config</span>
+          <button id="toggleFbConfigBtn" class="sm-btn">Edit</button>
+        </div>
+        <div id="fbConfigFields" style="display:none; margin-top:8px;">
+          <label>API Key</label>
+          <input id="fbApiKey" type="text" placeholder="AIzaSy..." value="AIzaSyBGbesTxWPOqshyBogCuUjS8pccJWitTdQ" />
+          <label style="margin-top:4px;">Auth Domain</label>
+          <input id="fbAuthDomain" type="text" value="fiti-b0cb2.firebaseapp.com" />
+          <label style="margin-top:4px;">Project ID</label>
+          <input id="fbProjectId" type="text" value="fiti-b0cb2" />
+          <button id="saveFbConfigBtn" class="sm-btn accent" style="margin-top:6px; width:100%;">Initialize Firebase</button>
+        </div>
+      </div>
+
+      <!-- Live User Status Card -->
+      <div class="user-status-card" id="userStatusCard">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <div class="user-info">
+          <div class="user-name" id="userName">Not Signed In</div>
+          <div class="user-email" id="userEmail">Sign in to sync token</div>
+        </div>
+        <button id="signOutBtn" class="sm-btn red" style="display:none;">Logout</button>
+      </div>
+
+      <div class="base-url-section">
+        <label>Backend API Base URL</label>
+        <input id="baseUrl" type="text" value="http://localhost:8000/api/v1" placeholder="http://localhost:8000/api/v1" />
+      </div>
+
+      <div class="auth-section">
+        <label>Active Bearer Token</label>
+        <textarea id="authToken" rows="2" placeholder="Firebase JWT token auto-synced upon login..."></textarea>
+        <div class="mock-toggle">
+          <label class="switch">
+            <input type="checkbox" id="mockAuth" />
+            <span class="slider"></span>
+          </label>
+          <span>Use Mock UID Instead</span>
+        </div>
+        <div id="mockUidRow" class="mock-uid-row" style="display:none">
+          <input id="mockUid" type="text" placeholder="mock-uid-001" value="mock-uid-001" />
+        </div>
+      </div>
+
+      <!-- Nav -->
+      <nav class="nav">
+        <div class="nav-group">
+          <div class="nav-group-label">🔑 Authentication & Onboarding</div>
+          <button class="nav-item active" data-section="auth-hub">Firebase Auth & Login</button>
+          <button class="nav-item" data-section="onboarding-client">Client Registration Form</button>
+          <button class="nav-item" data-section="onboarding-seller">Seller Registration Form</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">🏥 Health</div>
+          <button class="nav-item" data-section="health">Health Check</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">👤 Profiles</div>
+          <button class="nav-item" data-section="client">Register Client (API)</button>
+          <button class="nav-item" data-section="seller">Register Seller (API)</button>
+          <button class="nav-item" data-section="measurements">Measurements (API)</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">🏪 Shops</div>
+          <button class="nav-item" data-section="shop-create">Create Shop</button>
+          <button class="nav-item" data-section="shop-list">List Shops</button>
+          <button class="nav-item" data-section="shop-get">Get Shop</button>
+          <button class="nav-item" data-section="shop-nearby">Nearby Shops</button>
+          <button class="nav-item" data-section="shop-seller">Shops by Seller</button>
+          <button class="nav-item" data-section="shop-update">Update Shop</button>
+          <button class="nav-item" data-section="shop-delete">Delete Shop</button>
+          <button class="nav-item" data-section="shop-image">Add Image</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">📦 Orders</div>
+          <button class="nav-item" data-section="clothing-request">Create Clothing Request</button>
+          <button class="nav-item" data-section="clothing-get">Get Clothing Request</button>
+          <button class="nav-item" data-section="clothing-client">Requests by Client</button>
+          <button class="nav-item" data-section="clothing-open">Open Requests</button>
+          <button class="nav-item" data-section="shop-requests">Shop Requests</button>
+          <button class="nav-item" data-section="bid-submit">Submit Bid</button>
+          <button class="nav-item" data-section="order-accept">Accept Bid</button>
+          <button class="nav-item" data-section="order-get">Get Order</button>
+          <button class="nav-item" data-section="order-shop">Orders by Shop</button>
+          <button class="nav-item" data-section="order-client">Orders by Client</button>
+          <button class="nav-item" data-section="order-status">Update Status</button>
+          <button class="nav-item" data-section="payment">Mock Payment</button>
+          <button class="nav-item" data-section="rating">Submit Rating</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">🔔 Support</div>
+          <button class="nav-item" data-section="notif-create">Create Notification</button>
+          <button class="nav-item" data-section="notif-list">List Notifications</button>
+          <button class="nav-item" data-section="notif-read">Mark Read</button>
+          <button class="nav-item" data-section="fav-add">Add Favorite</button>
+          <button class="nav-item" data-section="fav-remove">Remove Favorite</button>
+          <button class="nav-item" data-section="fav-list">List Favorites</button>
+        </div>
+        <div class="nav-group">
+          <div class="nav-group-label">🔐 RBAC</div>
+          <button class="nav-item" data-section="rbac-assign">Assign Role</button>
+          <button class="nav-item" data-section="rbac-access">User Access</button>
+          <button class="nav-item" data-section="rbac-check">Check Route</button>
+        </div>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="main">
+      <div id="content" class="content"></div>
+
+      <!-- Response Panel -->
+      <div class="response-panel">
+        <div class="response-header">
+          <span>Response Log</span>
+          <div class="response-meta">
+            <span id="statusBadge" class="status-badge"></span>
+            <span id="timeBadge" class="time-badge"></span>
+          </div>
+          <button class="copy-btn" id="copyBtn">Copy Response</button>
+        </div>
+        <pre id="responseBody" class="response-body">// Output results will appear here...</pre>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
