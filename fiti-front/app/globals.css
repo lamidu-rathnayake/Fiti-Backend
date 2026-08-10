@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
+
+  --color-gold-primary: #F2CA50;
+  --color-gold-accent: #D4AF37;
+  --color-gold-dark: #3C2F00;
+  --color-gold-darker: #241A00;
+  --color-[#121414]: #121414;
+  --color-[#0D0F0F]: #0D0F0F;
+  --color-[#1A1C1C]: #1A1C1C;
+  --color-[#282A2B]: #282A2B;
+  --color-[#D0C5AF]: #D0C5AF;
+  --color-[#99907C]: #99907C;
+  --color-[#E2E2E2]: #E2E2E2;
+}
+
+:root {
+  --bg-dark: #121414;
+  --bg-canvas: #0D0F0F;
+  --bg-card: #1A1C1C;
+  --gold-primary: #F2CA50;
+  --gold-accent: #D4AF37;
+  --text-primary: #E2E2E2;
+  --text-secondary: #D0C5AF;
+  --text-muted: #99907C;
+  --border-gold: rgba(212, 175, 55, 0.3);
+  --border-gold-bright: rgba(242, 202, 80, 0.4);
+  --border-dark: #4D4635;
+}
+
+body {
+  background: #0D0F0F;
+  color: #E2E2E2;
+  font-family: var(--font-manrope), 'Manrope', sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Scrollbar for overflow containers */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(18, 20, 20, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(212, 175, 55, 0.3);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(242, 202, 80, 0.6);
+}
+
+/* Custom Utilities for Glassmorphism & Gold Shadows */
+.glass-card-gold {
+  background: rgba(26, 26, 26, 0.75);
+  border: 1px solid rgba(212, 175, 55, 0.3);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0px 25px 50px -12px rgba(0, 0, 0, 0.35);
+  border-radius: 12px;
+}
+
+.glass-card-seller {
+  background: rgba(22, 24, 24, 0.85);
+  border: 1px solid rgba(242, 202, 80, 0.15);
+  box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 12px;
+}
+
+.btn-gold-shadow {
+  box-shadow: 0px 10px 15px -3px rgba(242, 202, 80, 0.25), 0px 4px 6px -4px rgba(242, 202, 80, 0.25);
+}
+
+.gold-neon-glow {
+  box-shadow: 0px 0px 15px rgba(242, 202, 80, 0.35);
+}
+
+.gold-accent-glow {
+  box-shadow: 0px 10px 15px -3px rgba(242, 202, 80, 0.3), 0px 4px 6px -4px rgba(242, 202, 80, 0.3);
+}
+
+/* Mobile Frame simulation container */
+.mobile-frame-wrapper {
+  position: relative;
+  width: 390px;
+  height: 840px;
+  background: linear-gradient(0deg, #121414, #121414), #FFFFFF;
+  border-radius: 36px;
+  border: 4px solid #333535;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.8), 0 0 15px rgba(242, 202, 80, 0.15);
+  overflow-y: auto;
+}
+
+/* Mono font utility */
+.font-mono-code {
+  font-family: var(--font-jetbrains-mono), 'JetBrains Mono', monospace;
+}
