@@ -43,14 +43,13 @@ class ClothingRequestCreateRequest(BaseModel):
 
 
 class BidCreateRequest(BaseModel):
-    request_id: int
-    shop_id: int
+    shop_request_id: int
     bid_amount: float = Field(..., gt=0)
     message: str | None = None
 
 
 class OrderCreateRequest(BaseModel):
-    bid_id: int
+    shop_request_id: int
     accepted_price: float = Field(..., gt=0)
 
 
@@ -70,8 +69,7 @@ class RatingCreateRequest(BaseModel):
 
 class BidResponse(BaseModel):
     bid_id: int | None
-    request_id: int
-    shop_id: int
+    shop_request_id: int
     bid_amount: float
     message: str | None = None
     created_at: datetime | None = None
@@ -112,7 +110,7 @@ class OrderResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     order_id: int
-    bid_id: int
+    shop_request_id: int
     order_status: OrderStatusEnum
     accepted_price: float
     started_date: date | None = None

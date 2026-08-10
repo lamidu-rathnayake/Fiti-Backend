@@ -170,8 +170,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
 
     async def create_bid(self, bid: Bid) -> Bid:
         model = BidModel(
-            request_id=bid.request_id,
-            shop_id=bid.shop_id,
+            shop_request_id=bid.shop_request_id,
             bid_amount=bid.bid_amount,
             message=bid.message,
         )
@@ -179,8 +178,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
 
         # Update shop_request offered_price & status to QUOTED
         sr_stmt = select(ShopRequestModel).where(
-            ShopRequestModel.request_id == bid.request_id,
-            ShopRequestModel.shop_id == bid.shop_id
+            ShopRequestModel.shop_request_id == bid.shop_request_id
         )
         sr_res = await self.session.execute(sr_stmt)
         sr_model = sr_res.scalar_one_or_none()
@@ -194,7 +192,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
 
     async def create_order(self, order: Order) -> Order:
         model = OrderModel(
-            bid_id=order.bid_id,
+            shop_request_id=order.shop_request_id,
             order_status=order.order_status,
             accepted_price=order.accepted_price,
             started_date=order.started_date,
@@ -202,21 +200,16 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         )
         self.session.add(model)
 
-        # Mark bid's shop request accepted
-        bid_stmt = select(BidModel).where(BidModel.bid_id == order.bid_id)
-        bid_res = await self.session.execute(bid_stmt)
-        bid_model = bid_res.scalar_one_or_none()
-        if bid_model:
-            sr_stmt = select(ShopRequestModel).where(
-                ShopRequestModel.request_id == bid_model.request_id,
-                ShopRequestModel.shop_id == bid_model.shop_id
-            )
-            sr_res = await self.session.execute(sr_stmt)
-            sr_model = sr_res.scalar_one_or_none()
-            if sr_model:
-                sr_model.status = ShopRequestStatusEnum.ACCEPTED
+        # Mark shop request accepted
+        sr_stmt = select(ShopRequestModel).where(
+            ShopRequestModel.shop_request_id == order.shop_request_id
+        )
+        sr_res = await self.session.execute(sr_stmt)
+        sr_model = sr_res.scalar_one_or_none()
+        if sr_model:
+            sr_model.status = ShopRequestStatusEnum.ACCEPTED
             # Mark parent clothing request in_progress
-            cr_stmt = select(ClothingRequestModel).where(ClothingRequestModel.request_id == bid_model.request_id)
+            cr_stmt = select(ClothingRequestModel).where(ClothingRequestModel.request_id == sr_model.request_id)
             cr_res = await self.session.execute(cr_stmt)
             cr_model = cr_res.scalar_one_or_none()
             if cr_model:
@@ -235,8 +228,8 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
     async def list_orders_by_shop(self, shop_id: int) -> list[Order]:
         stmt = (
             select(OrderModel)
-            .join(BidModel, BidModel.bid_id == OrderModel.bid_id)
-            .where(BidModel.shop_id == shop_id)
+            .join(ShopRequestModel, ShopRequestModel.shop_request_id == OrderModel.shop_request_id)
+            .where(ShopRequestModel.shop_id == shop_id)
         )
         result = await self.session.execute(stmt)
         models = result.scalars().all()
@@ -245,8 +238,8 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
     async def list_orders_by_client(self, client_id: str) -> list[Order]:
         stmt = (
             select(OrderModel)
-            .join(BidModel, BidModel.bid_id == OrderModel.bid_id)
-            .join(ClothingRequestModel, ClothingRequestModel.request_id == BidModel.request_id)
+            .join(ShopRequestModel, ShopRequestModel.shop_request_id == OrderModel.shop_request_id)
+            .join(ClothingRequestModel, ClothingRequestModel.request_id == ShopRequestModel.request_id)
             .where(ClothingRequestModel.client_id == client_id)
         )
         result = await self.session.execute(stmt)

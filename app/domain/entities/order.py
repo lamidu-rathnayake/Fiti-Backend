@@ -81,8 +81,7 @@ class ClothingRequestImage:
 
 @dataclass
 class Bid:
-    request_id: int
-    shop_id: int
+    shop_request_id: int
     bid_amount: float
     bid_id: int | None = None
     message: str | None = None
@@ -97,6 +96,7 @@ class ShopRequest:
     offered_price: float | None = None
     status: ShopRequestStatusEnum = ShopRequestStatusEnum.PENDING
     response_date: datetime | None = None
+    bids: list[Bid] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -120,9 +120,9 @@ class ClothingRequest:
     measurement: Measurement | None = None
     # NEW: Zero or more design-inspiration images
     design_images: list[ClothingRequestImage] = field(default_factory=list)
+    shop_requests: list[ShopRequest] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None
-    
 
 
 @dataclass

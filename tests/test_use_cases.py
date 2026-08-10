@@ -9,6 +9,7 @@ from app.domain.entities.order import (
     Payment,
     Rating,
     ShopRequest,
+    ShopRequestStatusEnum,
 )
 from app.domain.entities.rbac import (
     Role,
@@ -210,7 +211,11 @@ class InMemoryOrderRepository(AbstractOrderRepository):
     async def create_bid(self, bid: Bid) -> Bid:
         bid.bid_id = self._next()
         self._bids[bid.bid_id] = bid
-        self._shop_reqs[bid.shop_request_id].bids.append(bid)
+        sr = self._shop_reqs.get(bid.shop_request_id)
+        if sr:
+            sr.bids.append(bid)
+            sr.offered_price = bid.bid_amount
+            sr.status = ShopRequestStatusEnum.QUOTED
         return bid
     
     async def create_order(self, order: Order) -> Order:
@@ -412,6 +417,36 @@ async def test_order_workflow_and_rating_recalc():
     
     shop = await shop_repo.get_by_id(1)
     assert shop.average_rating == 4.0
+
+
+@pytest.mark.asyncio
+async def test_direct_order_workflow_without_bids():
+    shop_repo = InMemoryShopRepository()
+    await shop_repo.create(Shop(seller_id="seller_2", shop_name="Direct Tailor", city="Kandy", shop_id=2))
+    
+    uc = make_order_use_case(shop_repo=shop_repo)
+    
+    # 1. Create request directly targeting the shop (no broadcast)
+    req = await uc.create_clothing_request(
+        ClothingRequestCreateDTO(client_id="client_2", clothing_category="Dress", target_budget=200.0),
+        target_shop_ids=[2]
+    )
+    assert req.request_id == 1
+    shop_req_id = req.shop_requests[0].shop_request_id
+    
+    # 2. Skip the Bid phase entirely! (Client and tailor negotiated offline/chat)
+    
+    # 3. Create Order directly from the shop request
+    order = await uc.accept_bid_and_create_order(OrderCreateDTO(shop_request_id=shop_req_id, accepted_price=180.0))
+    
+    # Assertions
+    assert order.order_status == "in_progress"
+    assert order.accepted_price == 180.0
+    
+    # Verify the order exists and is tied to the shop correctly
+    shop_orders = await uc.list_orders_by_shop(2)
+    assert len(shop_orders) == 1
+    assert shop_orders[0].accepted_price == 180.0
 
 
 # SUPPORT TESTS

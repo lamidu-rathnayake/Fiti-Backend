@@ -57,8 +57,7 @@ class ClothingRequestCreateDTO:
 @dataclass
 class BidDTO:
     bid_id: int | None
-    request_id: int
-    shop_id: int
+    shop_request_id: int
     bid_amount: float
     message: str | None = None
     created_at: datetime | None = None
@@ -97,22 +96,21 @@ class ClothingRequestOutputDTO:
 
 @dataclass
 class BidCreateDTO:
-    request_id: int
-    shop_id: int
+    shop_request_id: int
     bid_amount: float
     message: str | None = None
 
 
 @dataclass
 class OrderCreateDTO:
-    bid_id: int
+    shop_request_id: int
     accepted_price: float
 
 
 @dataclass
 class OrderOutputDTO:
     order_id: int
-    bid_id: int
+    shop_request_id: int
     order_status: OrderStatusEnum
     accepted_price: float
     started_date: date | None = None

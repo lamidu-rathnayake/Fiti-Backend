@@ -122,16 +122,14 @@ class ManageOrderUseCase:
 
     async def submit_bid(self, dto: BidCreateDTO) -> BidDTO:
         bid = Bid(
-            request_id=dto.request_id,
-            shop_id=dto.shop_id,
+            shop_request_id=dto.shop_request_id,
             bid_amount=dto.bid_amount,
             message=dto.message,
         )
         saved_bid = await self.order_repository.create_bid(bid)
         return BidDTO(
             bid_id=saved_bid.bid_id,
-            request_id=saved_bid.request_id,
-            shop_id=saved_bid.shop_id,
+            shop_request_id=saved_bid.shop_request_id,
             bid_amount=saved_bid.bid_amount,
             message=saved_bid.message,
             created_at=saved_bid.created_at,
@@ -139,7 +137,7 @@ class ManageOrderUseCase:
 
     async def accept_bid_and_create_order(self, dto: OrderCreateDTO) -> OrderOutputDTO:
         order = Order(
-            bid_id=dto.bid_id,
+            shop_request_id=dto.shop_request_id,
             accepted_price=dto.accepted_price,
             order_status=OrderStatusEnum.IN_PROGRESS,
         )
@@ -275,13 +273,12 @@ class ManageOrderUseCase:
             bids=[
                 BidDTO(
                     bid_id=b.bid_id,
-                    request_id=b.request_id,
-                    shop_id=b.shop_id,
+                    shop_request_id=b.shop_request_id,
                     bid_amount=b.bid_amount,
                     message=b.message,
                     created_at=b.created_at,
                 )
-                for b in req.bids
+                for sr in req.shop_requests for b in sr.bids
             ],
             created_at=req.created_at,
             updated_at=req.updated_at,
@@ -290,7 +287,7 @@ class ManageOrderUseCase:
     def _to_order_dto(self, order: Order) -> OrderOutputDTO:
         return OrderOutputDTO(
             order_id=order.order_id,  # type: ignore
-            bid_id=order.bid_id,
+            shop_request_id=order.shop_request_id,
             order_status=order.order_status,
             accepted_price=order.accepted_price,
             started_date=order.started_date,

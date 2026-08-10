@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-
 from app.api.dependencies import get_manage_order_use_case
+from app.use_cases.order.manage_order import ManageOrderUseCase
 from app.api.schemas.order_schema import (
     BidCreateRequest,
     BidResponse,
@@ -27,7 +27,6 @@ from app.use_cases.dtos.order_dto import (
     OrderCreateDTO,
     RatingCreateDTO,
 )
-from app.use_cases.order.manage_order import ManageOrderUseCase
 
 router = APIRouter(prefix="/orders", tags=["Orders & Requests"])
 
@@ -120,8 +119,7 @@ async def submit_bid(
 ):
     try:
         dto = BidCreateDTO(
-            request_id=request.request_id,
-            shop_id=request.shop_id,
+            shop_request_id=request.shop_request_id,
             bid_amount=request.bid_amount,
             message=request.message,
         )
@@ -139,7 +137,7 @@ async def accept_bid_and_create_order(
 ):
     try:
         dto = OrderCreateDTO(
-            bid_id=request.bid_id,
+            shop_request_id=request.shop_request_id,
             accepted_price=request.accepted_price,
         )
         return await use_case.accept_bid_and_create_order(dto)
