@@ -1,9 +1,16 @@
+import { auth } from "./firebase";
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  let token = "mock_firebase_uid";
+  if (auth.currentUser) {
+    token = await auth.currentUser.getIdToken();
+  }
+
   const headers = {
     "Content-Type": "application/json",
-    "Authorization": "Bearer mock_firebase_uid",
+    "Authorization": `Bearer ${token}`,
     ...options.headers,
   };
 

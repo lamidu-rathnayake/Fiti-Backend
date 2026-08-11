@@ -3,19 +3,30 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { useAuth } from "@/lib/AuthContext";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const { setRole } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setError("");
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      // For now, assume client on login. If they are a seller, they would need a role switch.
+      setRole("client");
       window.location.href = "/client/home";
-    }, 1000);
+    } catch (err: any) {
+      setError(err.message || "Failed to log in.");
+      setLoading(false);
+    }
   };
 
   return (
@@ -96,6 +107,12 @@ export function LoginPage() {
               className="w-full h-[46px] bg-[#121414] border border-[#4D4635] rounded-xl px-4 text-[#E2E2E2] placeholder:text-[#D0C5AF]/30 font-sans text-sm focus:outline-none focus:border-[#F2CA50] transition-colors"
             />
           </div>
+
+          {error && (
+            <div className="text-red-500 text-xs text-center font-medium">
+              {error}
+            </div>
+          )}
 
           {/* Log In Button (Gold Fill) */}
           <button

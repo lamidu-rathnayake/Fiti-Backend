@@ -8,10 +8,16 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { registerClient } from "@/lib/api";
 
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+
 export function ClientRegisterPage() {
   const router = useRouter();
-  const { user } = useAuth();
-  const [form, setForm] = useState({ firstName: "", lastName: "", address: "", city: "", phone: "", gender: "Male", age: "28" });
+  const { setRole } = useAuth();
+  const [form, setForm] = useState({ 
+    email: "", password: "",
+    firstName: "", lastName: "", address: "", city: "", phone: "", gender: "Male", age: "28" 
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -23,10 +29,24 @@ export function ClientRegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      await registerClient({ id: user?.uid });
+      // 1. Create Firebase User
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      
+      // 2. Set Firebase Display Name
+      await updateProfile(userCredential.user, { displayName: `${form.firstName} ${form.lastName}` });
+
+      // 3. Sync with FastAPI Backend
+      await registerClient({ 
+        id: userCredential.user.uid,
+        name: `${form.firstName} ${form.lastName}`,
+        phone: form.phone
+      });
+      
+      setRole("client");
       router.push("/client/home");
     } catch (err: any) {
       if (err?.message?.includes("409") || err?.message?.includes("already exists")) {
+        setRole("client");
         router.push("/client/home");
       } else {
         setError(err.message || "Registration failed. Please try again.");
@@ -93,6 +113,10 @@ export function ClientRegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div><label className="input-label">Email</label><input type="email" required value={form.email} onChange={set("email")} placeholder="alexander@mayfair.com" className="input-field" /></div>
+              <div><label className="input-label">Password</label><input type="password" required value={form.password} onChange={set("password")} placeholder="••••••••" className="input-field" /></div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div><label className="input-label">First Name</label><input type="text" required value={form.firstName} onChange={set("firstName")} placeholder="Alexander" className="input-field" /></div>
               <div><label className="input-label">Last Name</label><input type="text" required value={form.lastName} onChange={set("lastName")} placeholder="Wright" className="input-field" /></div>

@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { auth } from "./firebase";
+import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
 
 export interface UserProfile {
   uid: string;
@@ -13,55 +15,58 @@ export interface UserProfile {
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
-  loginAsClient: (name?: string) => void;
-  loginAsSeller: (name?: string) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  // We'll set the role dynamically after login or allow manual override if needed for testing
+  setRole: (role: "client" | "seller") => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
-  loading: false,
-  loginAsClient: () => {},
-  loginAsSeller: () => {},
-  logout: () => {},
+  loading: true,
+  logout: async () => {},
+  setRole: () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>({
-    uid: "mock_firebase_uid",
-    email: "adam@example.com",
-    displayName: "Adam Wright",
-    photoURL: null,
-    role: "client",
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [roleState, setRoleState] = useState<"client" | "seller">("client"); // Default
 
-  const loginAsClient = (name = "Adam Wright") => {
-    setUser({
-      uid: "mock_firebase_uid",
-      email: "adam@example.com",
-      displayName: name,
-      photoURL: null,
-      role: "client",
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        // Here we could fetch the user's role from our backend or custom claims.
+        // For now, we will rely on the roleState or fallback to a default.
+        setUser({
+          uid: firebaseUser.uid,
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          photoURL: firebaseUser.photoURL,
+          role: roleState,
+        });
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
     });
-  };
 
-  const loginAsSeller = (name = "Master Tailor") => {
-    setUser({
-      uid: "seller_firebase_uid_1",
-      email: "atelier@savilerow.com",
-      displayName: name,
-      photoURL: null,
-      role: "seller",
-    });
-  };
+    return () => unsubscribe();
+  }, [roleState]);
 
-  const logout = () => {
+  const logout = async () => {
+    await signOut(auth);
     setUser(null);
   };
 
+  const setRole = (role: "client" | "seller") => {
+    setRoleState(role);
+    if (user) {
+      setUser({ ...user, role });
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, loginAsClient, loginAsSeller, logout }}>
+    <AuthContext.Provider value={{ user, loading, logout, setRole }}>
       {children}
     </AuthContext.Provider>
   );
