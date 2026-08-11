@@ -223,6 +223,9 @@ async def test_support_endpoints():
         # Note: requires a valid shop_id. Let's create a shop first.
         # But wait, foreign keys might fail if the shop doesn't exist.
         # Wait, the sqlite db handles foreign keys if enabled. Let's create a dummy seller and shop.
+        client_res = await ac.post("/api/v1/profiles/client", json={"id": "client_1"})
+        assert client_res.status_code == 201
+
         seller_res = await ac.post("/api/v1/profiles/seller", json={"id": "seller_fav", "nic_front": "http://img.com/nic"})
         assert seller_res.status_code == 201
         

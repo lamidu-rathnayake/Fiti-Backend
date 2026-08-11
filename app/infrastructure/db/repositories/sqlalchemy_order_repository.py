@@ -86,8 +86,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             .options(
                 selectinload(ClothingRequestModel.measurement),
                 selectinload(ClothingRequestModel.design_images),
-                selectinload(ClothingRequestModel.shop_requests),
-                selectinload(ClothingRequestModel.bids),
+                selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
             )
             .where(ClothingRequestModel.request_id == request_id)
         )
@@ -101,8 +100,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             .options(
                 selectinload(ClothingRequestModel.measurement),
                 selectinload(ClothingRequestModel.design_images),
-                selectinload(ClothingRequestModel.shop_requests),
-                selectinload(ClothingRequestModel.bids),
+                selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
             )
             .where(ClothingRequestModel.client_id == client_id)
         )
@@ -116,8 +114,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             .options(
                 selectinload(ClothingRequestModel.measurement),
                 selectinload(ClothingRequestModel.design_images),
-                selectinload(ClothingRequestModel.shop_requests),
-                selectinload(ClothingRequestModel.bids),
+                selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
             )
             .where(ClothingRequestModel.status == ClothingRequestStatusEnum.OPEN)
             .offset(skip)
