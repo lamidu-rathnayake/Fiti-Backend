@@ -1,294 +1,192 @@
-# Fiti — Web User Login System Report
+# Fiti — Web User Login & Firestore Profile System Report
 
 ## Architecture Overview
 
-Fiti uses a **Hybrid Auth Architecture** designed for a **Web Application** (e.g., Next.js, React, or Vue). The responsibility is split between two systems:
+Fiti uses a **Firebase-Native Auth & Firestore User Profile Architecture** designed for the **Next.js Web Application**. The system manages user authentication, account details, and roles entirely through Firebase services:
 
-| Responsibility | Owner |
-|---|---|
-| Password hashing, session tokens, Google/OAuth popups, email auth | **Firebase Auth** (Google Web JS SDK) |
-| Role profile (Client/Tailor), measurements, shops, orders | **Fiti FastAPI Backend** (PostgreSQL) |
-
-The backend **never stores passwords or emails**. It receives a **Firebase UID** — a unique ID string that Firebase assigns to every authenticated user — and creates a role-specific profile record in PostgreSQL around it.
-
----
-
-## System Components
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Web Frontend (Browser)                   │
-│                    (e.g., Next.js / React)                  │
-│                                                             │
-│  Firebase Web JS SDK ←────────────────────────────────────  │
-│  (Google OAuth popup / Email Auth handled in browser)       │
-└────────────────────────┬─────────────────────┬──────────────┘
-                         │                     │
-                    (on sign-up)         (on sign-in)
-                         │                     │
-                         ▼                     ▼
-             ┌───────────────────┐   ┌─────────────────────┐
-             │  Fiti Backend     │   │  Fiti Backend       │
-             │  FastAPI          │   │  FastAPI            │
-             │                  │   │                     │
-             │  POST /profiles/ │   │  GET /api/...       │
-             │  client OR tailor│   │  (uses Firebase UID │
-             │  (first-time only)│   │  to fetch data)     │
-             └────────┬──────────┘   └──────────┬──────────┘
-                      │                          │
-                      ▼                          ▼
-             ┌──────────────────────────────────────────────┐
-             │               PostgreSQL                      │
-             │                                              │
-             │   clients table         tailors table        │
-             │   ┌────────────────┐   ┌──────────────────┐  │
-             │   │ id (Firebase   │   │ id (Firebase UID)│  │
-             │   │     UID) PK    │   │ nic_front        │  │
-             │   │ created_at     │   │ nic_rear         │  │
-             │   └────────────────┘   │ is_verified      │  │
-             │                        └──────────────────┘  │
-             └──────────────────────────────────────────────┘
-```
-
----
-
-## Scenario 1: New Web User Sign-Up (First Time)
-
-> **Jane** visits `fiti.lk` on her desktop or mobile browser and wants to order a custom suit. She clicks "Sign up with Google".
-
-### Step-by-step Web Flow
-
-```
-STEP 1: Firebase Authentication (Browser SDK — no backend involved)
-────────────────────────────────────────────────────────────────────
-
-Jane clicks "Sign up with Google" on the web app
-        │
-        ▼
-Firebase Web JS SDK (`signInWithPopup` / `signInWithRedirect`)
-opens Google OAuth popup
-        │
-        ▼
-Google verifies Jane's Google account
-        │
-        ▼
-Firebase Web SDK receives user credentials:
-    Firebase UID: "abc123xyz"
-    Email:        "jane@gmail.com"
-    Name:         "Jane Perera"
-    Provider:     "google.com"
-        │
-        ▼
-Firebase SDK stores token in Browser IndexedDB / LocalStorage
-```
-
-```
-STEP 2: Profile Registration (Web Browser → Fiti FastAPI Backend)
-──────────────────────────────────────────────────────────────────
-
-Web app extracts the Firebase UID from the `user` object
-        │
-        ▼
-fetch('/api/v1/profiles/client', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ id: "abc123xyz" })
-})
-        │
-        ▼
-ManageProfileUseCase.register_client()
-        │
-        ├── Checks if clients.id = "abc123xyz" exists → NOT FOUND
-        │
-        ├── Creates Client entity:
-        │     Client(id="abc123xyz")
-        │
-        └── Saves to PostgreSQL clients table:
-              INSERT INTO clients (id) VALUES ('abc123xyz');
-        │
-        ▼
-Response 201 Created:
-{
-  "id": "abc123xyz",
-  "created_at": "2026-08-02T09:15:00Z"
-}
-```
-
-```
-STEP 3: Redirect & Web Session (Onboarding)
-───────────────────────────────────────────
-
-Web app receives 201 Created
-Browser router redirects Jane to `/onboarding/measurements`
-```
-
----
-
-## Scenario 2: Returning Web User Login (Already Registered)
-
-> **Jane** clears her browser cache or uses a new browser, visits `fiti.lk`, and clicks "Sign in with Google".
-
-### Step-by-step Web Flow
-
-```
-STEP 1: Firebase Web Authentication
-───────────────────────────────────
-
-Jane clicks "Sign in with Google"
-        │
-        ▼
-Firebase Web JS SDK (`signInWithPopup`) verifies credentials
-        │
-        ▼
-Firebase Web SDK returns user object with same Firebase UID: "abc123xyz"
-```
-
-```
-STEP 2: Profile Check (Web Browser → Fiti FastAPI Backend)
-──────────────────────────────────────────────────────────
-
-Web app calls profile registration endpoint:
-fetch('/api/v1/profiles/client', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ id: "abc123xyz" })
-})
-        │
-        ▼
-ManageProfileUseCase.register_client()
-        │
-        ├── Checks if clients.id = "abc123xyz" exists → FOUND ✅
-        │
-        └── Raises ProfileAlreadyExistsError
-              │
-              ▼
-        API returns 409 Conflict:
-        {
-          "detail": "Client profile for Firebase UID 'abc123xyz' already exists."
-        }
-        │
-        ▼
-Web frontend receives 409 → Profile already exists → RETURNING USER
-        │
-        ▼
-Skip onboarding → Router redirects directly to `/dashboard` ✅
-```
-
-### Returning Web User Decision Logic (JavaScript / Next.js example)
-```javascript
-import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth } from "@/lib/firebase";
-
-async function handleGoogleLogin() {
-  try {
-    const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-    const uid = userCredential.user.uid;
-
-    // Check / register profile on FastAPI backend
-    const res = await fetch("/api/v1/profiles/client", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: uid }),
-    });
-
-    if (res.status === 201) {
-      // NEW USER — Redirect to measurement onboarding
-      router.push("/onboarding/measurements");
-    } else if (res.status === 409) {
-      // RETURNING USER — Redirect to main client dashboard
-      router.push("/dashboard");
-    }
-  } catch (error) {
-    console.error("Login failed:", error);
-  }
-}
-```
-
----
-
-## Scenario 3: New Web Tailor/Tailor Registration
-
-> **Rasheed** (a tailor) opens `fiti.lk/tailor/register` on his browser.
-
-```
-STEP 1: Firebase Auth sign-up in browser
-        Firebase UID assigned: "tailor_uid_r99"
-
-STEP 2: Upload NIC images directly from browser to Firebase Storage / S3 / Cloud Storage
-        Returns:
-          nic_front: "https://storage.googleapis.com/fiti/nic/front_r99.jpg"
-          nic_rear:  "https://storage.googleapis.com/fiti/nic/rear_r99.jpg"
-
-STEP 3: Register Tailor Profile on FastAPI Backend
-
-fetch('/api/v1/profiles/tailor', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    id: "tailor_uid_r99",
-    nic_front: "https://storage.googleapis.com/fiti/nic/front_r99.jpg",
-    nic_rear:  "https://storage.googleapis.com/fiti/nic/rear_r99.jpg"
-  })
-})
-        │
-        ▼
-Response 201:
-{
-  "id": "tailor_uid_r99",
-  "is_verified": false,    ← Admin verifies before shop activation
-  "nic_front": "https://...",
-  "nic_rear":  "https://..."
-}
-
-STEP 4: Redirect tailor to `/tailor/dashboard` (showing "Verification Pending" banner)
-```
-
----
-
-## What Firebase Stores vs What PostgreSQL Stores
-
-| Field | Firebase Auth (Web SDK) | PostgreSQL (FastAPI) |
+| System Layer | Responsible Service | Description |
 |---|---|---|
-| Email & Password | ✅ Yes | ❌ No |
-| Display Name & Photo | ✅ Yes | ❌ No |
-| Firebase UID | ✅ Yes | ✅ Yes (as Primary Key) |
-| Role (client/tailor) | ❌ No | ✅ clients / tailors table |
-| Measurements | ❌ No | ✅ measurement_profile table |
-| Shop details & location | ❌ No | ✅ shops table |
-| Voice Notes & Images | ❌ No | ✅ clothing_requests & images |
-| Orders, Bids, Payments | ❌ No | ✅ Full order flow tables |
+| **Authentication** | **Firebase Auth** | Handles Google SSO (`signInWithPopup`), Email & Password Auth (`signInWithEmailAndPassword`, `createUserWithEmailAndPassword`), session tokens, and security. |
+| **User Profiles & Roles** | **Firebase Firestore DB** | Stores user role (`client`, `seller`, `admin`), personal profile data, contact details, and timestamp records in the `users` collection. **No user profile data is stored in PostgreSQL.** |
 
 ---
 
-## Web Security & Token Handling (Production Ready Guidelines)
+## System Architecture Diagram
 
-1. **Session Management**: Firebase Web SDK manages token refresh (`getIdToken()`) automatically in the browser.
-2. **Backend Authentication Middleware**: In production, every API call from the web frontend should attach the ID token:
-   ```javascript
-   const token = await auth.currentUser.getIdToken();
-   fetch('/api/v1/orders/requests', {
-     headers: {
-       'Authorization': `Bearer ${token}`
-     }
-   })
-   ```
-3. **FastAPI Token Verification**: The backend verifies the token using the `firebase-admin` Python SDK:
-   ```python
-   # FastAPI Dependency
-   async def get_current_user_uid(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme)) -> str:
-       decoded_token = auth.verify_id_token(credentials.credentials)
-       return decoded_token['uid']
-   ```
+```
+┌───────────────────────────────────────────────────────────────────┐
+│                     Next.js Frontend Browser                      │
+│                                                                   │
+│  [Google SSO]  or  [Email & Password Login / Register]            │
+│                              │                                    │
+│                              ▼                                    │
+│                   Firebase Auth Web SDK                           │
+│           (Generates Firebase UID & ID Token)                     │
+└──────────────────────────────┬────────────────────────────────────┘
+                               │
+       ┌───────────────────────┴───────────────────────┐
+       │                                               │
+       ▼ (First-Time Registration)                     ▼ (Returning Login)
+┌───────────────────────────────────────┐     ┌─────────────────────────────────┐
+│ 1. Fill Profile Form in UI            │     │ 1. Fetch User Doc from          │
+│    (Name, Phone, Address, Role)       │     │    Firestore (`users/{uid}`)    │
+│ 2. Save directly to Firestore DB      │     │ 2. Read `role` field            │
+│    `doc(db, "users", uid)`            │     │ 3. Redirect to role dashboard:  │
+│ 3. Redirect to Dashboard              │     │    • client  → /client/home     │
+│    • client  → /client/home           │     │    • seller  → /seller/dashboard│
+│    • seller  → /seller/dashboard      │     │    • admin   → /admin/dashboard │
+└──────────────────┬────────────────────┘     └────────────────┬────────────────┘
+                   │                                           │
+                   └───────────────────┬───────────────────────┘
+                                       │
+                                       ▼
+┌───────────────────────────────────────────────────────────────────┐
+│                       Firebase Firestore DB                       │
+│                                                                   │
+│ Collection: `users`                                               │
+│ Document ID: `{uid}`                                              │
+│                                                                   │
+│ {                                                                 │
+│   "uid": "abc123xyz",                                             │
+│   "email": "user@example.com",                                    │
+│   "displayName": "Alexander Wright",                              │
+│   "role": "client",  // or "seller" / "admin"                     │
+│   "phone": "+44 7911 123456",                                     │
+│   "address": "42 Regent Street",                                  │
+│   "city": "London",                                               │
+│   "gender": "Male",                                               │
+│   "age": 28,                                                      │
+│   "createdAt": "2026-08-13T10:00:00Z"                             │
+│ }                                                                 │
+└───────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## Endpoints Summary
+## Supported Authentication Methods
 
-| Endpoint | Web Page / Trigger | Purpose |
+### 1. Google OAuth (Google SSO)
+- Handled via `signInWithPopup(auth, googleProvider)` in the browser.
+- Automatically extracts user's `uid`, `email`, `displayName`, and `photoURL`.
+- If the user doc does not exist in Firestore, user is routed to the role onboarding form to complete profile registration.
+
+### 2. Username (Email) & Password Authentication
+- **Sign-Up**: `createUserWithEmailAndPassword(auth, email, password)` creates the Firebase Auth credential, followed by updating `displayName`.
+- **Sign-In**: `signInWithEmailAndPassword(auth, email, password)` verifies credentials and logs the user in.
+
+---
+
+## User Onboarding & Form Data Persistence (Firestore DB)
+
+After completing authentication via Google SSO or Email/Password, the user fills out their profile details in the UI form. The frontend writes this document directly into Firestore DB:
+
+### Client Profile Registration Flow
+
+```typescript
+import { db } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+
+// Called after UI form submission
+async function handleClientFormSubmit(uid: string, formData: ClientFormData) {
+  const userRef = doc(db, "users", uid);
+
+  await setDoc(userRef, {
+    uid: uid,
+    email: formData.email,
+    displayName: `${formData.firstName} ${formData.lastName}`,
+    role: "client",
+    phone: formData.phone,
+    address: formData.address,
+    city: formData.city,
+    gender: formData.gender,
+    age: Number(formData.age),
+    createdAt: serverTimestamp(),
+  }, { merge: true });
+}
+```
+
+### Seller Profile Registration Flow
+
+```typescript
+import { db } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+
+// Called after UI form submission
+async function handleSellerFormSubmit(uid: string, formData: SellerFormData) {
+  const userRef = doc(db, "users", uid);
+
+  await setDoc(userRef, {
+    uid: uid,
+    email: formData.email,
+    displayName: `${formData.firstName} ${formData.lastName}`,
+    role: "seller",
+    phone: formData.phone,
+    address: formData.address,
+    city: formData.city,
+    bio: formData.bio || "",
+    isVerified: false,
+    createdAt: serverTimestamp(),
+  }, { merge: true });
+}
+```
+
+---
+
+## Scenario 1: New User Registration (Step-by-Step)
+
+1. **User opens Login/Register page** (`/login` or `/register`).
+2. **User selects Auth Method**:
+   - Option A: Clicks **"Sign up with Google"** → Google popup authenticates user → Returns `Firebase User` (`uid`).
+   - Option B: Enters **Email & Password** + clicks **Register** → `createUserWithEmailAndPassword` creates user → Returns `Firebase User` (`uid`).
+3. **Form Completion in UI**:
+   - User enters name, contact number, address, and selects role (`client` or `seller`).
+4. **Firestore Storage**:
+   - Frontend executes `setDoc(doc(db, "users", uid), profileData)`.
+   - Data stored in Firestore DB (`users/{uid}`) with assigned `role`.
+5. **Redirection**:
+   - Client → Redirected to `/client/home`
+   - Seller → Redirected to `/register/seller/shop` / `/seller/dashboard`
+
+---
+
+## Scenario 2: Returning User Login (Step-by-Step)
+
+1. **User opens Login page** (`/login`).
+2. **User logs in** using Google SSO or Email/Password (`signInWithEmailAndPassword`).
+3. **Firestore Role Lookup**:
+   - App checks Firestore DB: `getDoc(doc(db, "users", user.uid))`.
+4. **Automatic Routing based on Firestore `role`**:
+   - If `role === "admin"` → Redirect to `/admin/dashboard`
+   - If `role === "seller"` → Redirect to `/seller/dashboard`
+   - If `role === "client"` → Redirect to `/client/home`
+   - If profile document does not exist yet → Redirect to `/register` onboarding form.
+
+---
+
+## Firestore Database Schema Summary
+
+### Collection: `users`
+**Document ID**: `{uid}`
+
+| Field Name | Type | Description |
 |---|---|---|
-| `POST /api/v1/profiles/client` | `/register` (First-time) | Register new client profile |
-| `POST /api/v1/profiles/tailor` | `/tailor/register` | Register tailor profile + NIC |
-| `POST /api/v1/profiles/client` (returns 409) | `/login` (Returning) | Identifies returning client |
-| `PUT /api/v1/profiles/client/{id}/measurements` | `/onboarding/measurements` | Save client measurements |
-| `GET /api/v1/profiles/client/{id}/measurements` | `/profile` | Load client measurements |
+| `uid` | string | Unique Firebase Authentication User ID |
+| `email` | string | User's email address |
+| `displayName` | string | Full Name (First + Last Name) |
+| `role` | string | User role (`"client"` \| `"seller"` \| `"admin"`) |
+| `phone` | string | Contact / WhatsApp phone number |
+| `address` | string | Street address |
+| `city` | string | City |
+| `gender` | string | Gender (for client profiles) |
+| `age` | number | Age (for client profiles) |
+| `bio` | string | Seller description / bio |
+| `isVerified` | boolean | Verification flag for seller accounts |
+| `createdAt` | timestamp | Server timestamp when profile was saved |
+
+---
+
+## Advantages of Firestore DB Storage over Postgres for Users & Roles
+
+1. **Direct Web SDK Access**: Fast client-side reads/writes via standard Firebase Firestore rules without needing custom backend ORM mapping for user metadata.
+2. **Real-time State Synchronization**: `onAuthStateChanged` combined with `onSnapshot` allows immediate UI updates when roles or profile details change.
+3. **Seamless Multi-Role Security Rules**: Security rules can check `request.auth.uid` against `resource.data.role` directly inside Firestore Rules.

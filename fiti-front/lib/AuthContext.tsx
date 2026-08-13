@@ -1,23 +1,26 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { auth } from "./firebase";
+import { auth, db } from "./firebase";
 import { onAuthStateChanged, User as FirebaseUser, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
 
 export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
   photoURL: string | null;
-  role?: "client" | "seller";
+  role?: "client" | "seller" | "admin";
+  phone?: string;
+  address?: string;
+  city?: string;
 }
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   logout: () => Promise<void>;
-  // We'll set the role dynamically after login or allow manual override if needed for testing
-  setRole: (role: "client" | "seller") => void;
+  setRole: (role: "client" | "seller" | "admin") => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,19 +33,38 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [roleState, setRoleState] = useState<"client" | "seller">("client"); // Default
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // Here we could fetch the user's role from our backend or custom claims.
-        // For now, we will rely on the roleState or fallback to a default.
+        let roleFromDb: "client" | "seller" | "admin" = "client";
+        let extraProfileData: Partial<UserProfile> = {};
+
+        try {
+          const userDocRef = doc(db, "users", firebaseUser.uid);
+          const userSnap = await getDoc(userDocRef);
+          if (userSnap.exists()) {
+            const data = userSnap.data();
+            if (data.role) {
+              roleFromDb = data.role as "client" | "seller" | "admin";
+            }
+            extraProfileData = {
+              phone: data.phone,
+              address: data.address,
+              city: data.city,
+            };
+          }
+        } catch (err) {
+          console.error("Error fetching user profile from Firestore:", err);
+        }
+
         setUser({
           uid: firebaseUser.uid,
           email: firebaseUser.email,
           displayName: firebaseUser.displayName,
           photoURL: firebaseUser.photoURL,
-          role: roleState,
+          role: roleFromDb,
+          ...extraProfileData,
         });
       } else {
         setUser(null);
@@ -51,15 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, [roleState]);
+  }, []);
 
   const logout = async () => {
     await signOut(auth);
     setUser(null);
   };
 
-  const setRole = (role: "client" | "seller") => {
-    setRoleState(role);
+  const setRole = (role: "client" | "seller" | "admin") => {
     if (user) {
       setUser({ ...user, role });
     }
@@ -75,3 +96,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+

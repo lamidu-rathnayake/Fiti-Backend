@@ -6,9 +6,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
-import { registerSeller } from "@/lib/api";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export function SellerRegisterPage() {
   const router = useRouter();
@@ -29,19 +29,29 @@ export function SellerRegisterPage() {
     setError(null);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const uid = userCredential.user.uid;
+
       await updateProfile(userCredential.user, { displayName: `${form.firstName} ${form.lastName}` });
 
-      await registerSeller({ id: userCredential.user.uid });
+      // Save seller profile and role to Firestore DB
+      await setDoc(doc(db, "users", uid), {
+        uid,
+        email: form.email,
+        displayName: `${form.firstName} ${form.lastName}`,
+        role: "seller",
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        bio: form.bio || "",
+        isVerified: false,
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+
       setRole("seller");
       router.push("/register/seller/shop");
     } catch (err: any) {
-      if (err?.message?.includes("409") || err?.message?.includes("already exists")) {
-        setRole("seller");
-        router.push("/register/seller/shop");
-      } else {
-        setError(err.message || "Registration failed. Please try again.");
-        setLoading(false);
-      }
+      setError(err.message || "Registration failed. Please try again.");
+      setLoading(false);
     }
   };
 

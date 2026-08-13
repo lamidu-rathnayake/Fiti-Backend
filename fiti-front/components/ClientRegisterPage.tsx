@@ -6,10 +6,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
-import { registerClient } from "@/lib/api";
 
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export function ClientRegisterPage() {
   const router = useRouter();
@@ -29,29 +29,32 @@ export function ClientRegisterPage() {
     setLoading(true);
     setError(null);
     try {
-      // 1. Create Firebase User
+      // 1. Create Firebase Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const uid = userCredential.user.uid;
       
       // 2. Set Firebase Display Name
       await updateProfile(userCredential.user, { displayName: `${form.firstName} ${form.lastName}` });
 
-      // 3. Sync with FastAPI Backend
-      await registerClient({ 
-        id: userCredential.user.uid,
-        name: `${form.firstName} ${form.lastName}`,
-        phone: form.phone
-      });
-      
+      // 3. Save profile and role directly to Firestore DB (not PostgreSQL)
+      await setDoc(doc(db, "users", uid), {
+        uid,
+        email: form.email,
+        displayName: `${form.firstName} ${form.lastName}`,
+        role: "client",
+        phone: form.phone,
+        address: form.address,
+        city: form.city,
+        gender: form.gender,
+        age: Number(form.age),
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+
       setRole("client");
       router.push("/client/home");
     } catch (err: any) {
-      if (err?.message?.includes("409") || err?.message?.includes("already exists")) {
-        setRole("client");
-        router.push("/client/home");
-      } else {
-        setError(err.message || "Registration failed. Please try again.");
-        setLoading(false);
-      }
+      setError(err.message || "Registration failed. Please try again.");
+      setLoading(false);
     }
   };
 

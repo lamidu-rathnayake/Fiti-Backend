@@ -3,7 +3,7 @@ import logging
 import firebase_admin
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from firebase_admin import auth, credentials
+from firebase_admin import auth, credentials, firestore
 
 from app.core.config import settings
 
@@ -33,28 +33,23 @@ def init_firebase_admin():
             )
 
 
-async def get_current_user_uid(
+async def get_current_user(
     auth_header: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
-) -> str:
+) -> dict:
     """
     Statelessly verifies the Firebase ID Token from the 'Authorization: Bearer <token>' header.
-
-    Architecture Flow:
-    1. Client signs in directly with Firebase Auth on the web browser.
-    2. Client receives a Firebase ID Token.
-    3. Client sends request to FastAPI with header: Authorization: Bearer <token>.
-    4. Backend cryptographically verifies the token signature using Firebase Admin SDK.
-    5. Returns the verified Firebase UID.
-
-    MOCK mode: Only active when MOCK_FIREBASE_AUTH=true is explicitly set in .env (local dev only).
-    Never enable in production — all authentication checks will be bypassed.
+    Decodes and returns user info dictionary containing uid, email, and role.
     """
     if auth_header and auth_header.credentials:
         token = auth_header.credentials
         try:
             init_firebase_admin()
             decoded_token = auth.verify_id_token(token)
-            return decoded_token["uid"]
+            return {
+                "uid": decoded_token["uid"],
+                "email": decoded_token.get("email"),
+                "role": decoded_token.get("role"),
+            }
         except Exception as exc:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -65,7 +60,7 @@ async def get_current_user_uid(
     # Mock mode — ONLY when explicitly enabled in .env for local development
     if settings.MOCK_FIREBASE_AUTH:
         logger.warning("MOCK_FIREBASE_AUTH is enabled — bypassing token verification.")
-        return "mock_firebase_uid"
+        return {"uid": "mock_firebase_uid", "email": "mock@example.com", "role": "client"}
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,38 +69,69 @@ async def get_current_user_uid(
     )
 
 
+async def get_current_user_uid(
+    user_info: dict = Depends(get_current_user),
+) -> str:
+    """
+    Extracts and returns the verified Firebase UID string from the current user payload.
+    """
+    return user_info["uid"]
+
+
 def require_role(role_name: str):
     """
     Dependency factory that verifies a Firebase token AND checks the user holds the required role.
-
-    Usage:
-        @router.post("/shops/")
-        async def create_shop(uid: str = Depends(require_role("tailor"))):
-            ...
-
-    The role check queries the user_roles and roles tables in PostgreSQL.
-    Raises HTTP 401 if the token is invalid, HTTP 403 if the role is not assigned.
+    Role is verified either from JWT token custom claims or from Firestore DB ('users' collection).
+    No PostgreSQL user/role table is used.
     """
 
     async def _check_role(
-        uid: str = Depends(get_current_user_uid),
-        # Import here to avoid circular imports
+        user_info: dict = Depends(get_current_user),
     ) -> str:
-        from app.core.database import AsyncSessionFactory
-        from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import (
-            SQLAlchemyRBACRepository,
-        )
+        uid = user_info["uid"]
+        token_role = user_info.get("role")
 
-        async with AsyncSessionFactory() as session:
-            rbac_repo = SQLAlchemyRBACRepository(session)
-            user_roles = await rbac_repo.get_user_roles(uid)
-            role_names = [r.name for r in user_roles]
+        if settings.MOCK_FIREBASE_AUTH:
+            return uid
 
-        if role_name not in role_names:
+        # 1. Verify role directly from JWT payload/claims if present
+        if token_role:
+            if token_role == role_name:
+                return uid
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Access denied. Required role: '{role_name}'. Your role: '{token_role}'.",
+                )
+
+        # 2. Fallback: Verify role from Firestore DB users collection
+        try:
+            init_firebase_admin()
+            db = firestore.client()
+            user_doc = db.collection("users").document(uid).get()
+
+            if not user_doc.exists:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"User profile for UID '{uid}' not found in Firestore DB.",
+                )
+
+            user_data = user_doc.to_dict() or {}
+            db_role = user_data.get("role")
+
+            if db_role != role_name:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Access denied. Required role: '{role_name}'. Your role: '{db_role or 'none'}'.",
+                )
+            return uid
+        except HTTPException:
+            raise
+        except Exception as exc:
+            logger.error(f"Error checking Firestore role for UID {uid}: {exc}")
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Access denied. Required role: '{role_name}'. Your roles: {role_names or ['none']}.",
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Role verification failed: {exc!s}",
             )
-        return uid
 
     return _check_role
