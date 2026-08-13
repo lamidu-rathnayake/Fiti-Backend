@@ -15,7 +15,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
 
     async def create(self, shop: Shop) -> Shop:
         model = ShopModel(
-            seller_id=shop.seller_id,
+            tailor_id=shop.tailor_id,
             shop_name=shop.shop_name,
             shop_bio=shop.shop_bio,
             shop_address=shop.shop_address,
@@ -29,7 +29,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         self.session.add(model)
         await self.session.commit()
         await self.session.refresh(model)
-        
+
         # Re-fetch with selectinload for relationship
         refetched = await self.get_by_id(model.shop_id)
         return refetched if refetched else model.to_domain()

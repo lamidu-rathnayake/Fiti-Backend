@@ -1,18 +1,22 @@
 
-from app.domain.entities.user import Client, MeasurementProfile, Seller
-from app.domain.exceptions.user import ProfileAlreadyExistsError
+from app.domain.entities.user import Client, MeasurementProfile, Tailor
+from app.domain.exceptions.user import (
+    ClientNotFoundError,
+    ProfileAlreadyExistsError,
+    TailorNotFoundError,
+)
 from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
     AbstractMeasurementProfileRepository,
-    AbstractSellerRepository,
+    AbstractTailorRepository,
 )
 from app.use_cases.dtos.user_dto import (
     ClientOutputDTO,
     ClientRegisterDTO,
     MeasurementProfileDTO,
     MeasurementProfileOutputDTO,
-    SellerOutputDTO,
-    SellerRegisterDTO,
+    TailorOutputDTO,
+    TailorRegisterDTO,
 )
 
 
@@ -26,11 +30,11 @@ class ManageProfileUseCase:
     def __init__(
         self,
         client_repository: AbstractClientRepository,
-        seller_repository: AbstractSellerRepository,
+        tailor_repository: AbstractTailorRepository,
         measurement_repository: AbstractMeasurementProfileRepository,
     ):
         self.client_repository = client_repository
-        self.seller_repository = seller_repository
+        self.tailor_repository = tailor_repository
         self.measurement_repository = measurement_repository
 
     async def register_client(self, dto: ClientRegisterDTO) -> ClientOutputDTO:
@@ -41,19 +45,38 @@ class ManageProfileUseCase:
         saved = await self.client_repository.create(client)
         return ClientOutputDTO(id=saved.id, created_at=saved.created_at, updated_at=saved.updated_at)
 
-    async def register_seller(self, dto: SellerRegisterDTO) -> SellerOutputDTO:
-        existing = await self.seller_repository.get_by_id(dto.id)
+    async def register_tailor(self, dto: TailorRegisterDTO) -> TailorOutputDTO:
+        existing = await self.tailor_repository.get_by_id(dto.id)
         if existing:
-            raise ProfileAlreadyExistsError(dto.id, role="seller")
-        seller = Seller(id=dto.id, nic_front=dto.nic_front, nic_rear=dto.nic_rear)
-        saved = await self.seller_repository.create(seller)
-        return SellerOutputDTO(
+            raise ProfileAlreadyExistsError(dto.id, role="tailor")
+        tailor = Tailor(id=dto.id, nic_front=dto.nic_front, nic_rear=dto.nic_rear)
+        saved = await self.tailor_repository.create(tailor)
+        return TailorOutputDTO(
             id=saved.id,
             nic_front=saved.nic_front,
             nic_rear=saved.nic_rear,
             is_verified=saved.is_verified,
             created_at=saved.created_at,
             updated_at=saved.updated_at,
+        )
+
+    async def get_client_profile(self, client_id: str) -> ClientOutputDTO:
+        client = await self.client_repository.get_by_id(client_id)
+        if not client:
+            raise ClientNotFoundError(client_id)
+        return ClientOutputDTO(id=client.id, created_at=client.created_at, updated_at=client.updated_at)
+
+    async def get_tailor_profile(self, tailor_id: str) -> TailorOutputDTO:
+        tailor = await self.tailor_repository.get_by_id(tailor_id)
+        if not tailor:
+            raise TailorNotFoundError(tailor_id)
+        return TailorOutputDTO(
+            id=tailor.id,
+            nic_front=tailor.nic_front,
+            nic_rear=tailor.nic_rear,
+            is_verified=tailor.is_verified,
+            created_at=tailor.created_at,
+            updated_at=tailor.updated_at,
         )
 
     async def upsert_measurement_profile(self, dto: MeasurementProfileDTO) -> MeasurementProfileOutputDTO:
@@ -97,3 +120,4 @@ class ManageProfileUseCase:
             created_at=p.created_at,
             updated_at=p.updated_at,
         )
+

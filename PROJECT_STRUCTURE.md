@@ -13,6 +13,7 @@ This project is a **FastAPI Application** built with **Clean Architecture** (Dom
 ├── main.py               # Root execution entrypoint script
 ├── schema.sql            # Raw PostgreSQL DDL for production DB migrations & seeding
 ├── pyproject.toml        # Project metadata, dependencies (uv/pip), and pytest config
+├── README.md             # Project overview and setup instructions
 └── PROJECT_STRUCTURE.md  # Clean Architecture documentation & directory layout
 ```
 
@@ -49,30 +50,46 @@ Dependencies strictly flow **inward**: Presentation → Use Cases → Domain ←
 
 ---
 
+## 🔐 Post-Login Architecture & Role Enforcement
+
+Fiti utilizes a centralized API Gateway design for authentication routing:
+
+1. **Firebase Authentication**: All users log in via Firebase on the shared frontend.
+2. **Gateway Endpoint (`GET /api/v1/auth/me/role`)**: The frontend sends the Firebase ID token here to determine the user's role.
+3. **Redirection Flow**:
+   - `admin` -> Redirected away from this API entirely to `ADMIN_BACKEND_URL`.
+   - `client` / `tailor` -> Directed to respective dashboards, continuing to use this API.
+   - `None` -> Directed to `/onboarding`.
+
+### Role Enforcement (`require_role`)
+Endpoints are guarded by the `require_role("role_name")` FastAPI dependency located in `app/core/security.py`. This verifies the token and queries the `user_roles` database table to ensure the caller has the necessary permissions.
+
+---
+
 ## 📁 Detailed Directory & Component Breakdown
 
 ### 1. Domain Layer (`app/domain/`) — *Enterprise Core*
 Contains pure Python business logic, dataclasses, and domain interfaces. It has **zero dependencies** on external frameworks, FastAPI, or SQLAlchemy.
 
 * **Entities (`app/domain/entities/`)**: Pure dataclasses representing core domain objects.
-  * `user.py`: `User`, `MeasurementProfile`, `Client`, `Seller`, `GenderEnum`.
+  * `user.py`: `MeasurementProfile`, `Client`, `Tailor`, `GenderEnum`.
   * `shop.py`: `Shop`, `ShopImage`.
   * `order.py`: `ClothingRequest`, `ClothingRequestImage`, `Measurement`, `ShopRequest`, `Bid`, `Order`, `Payment`, `Rating`, `FabricStatusEnum`, `ServiceTypeEnum`, `ClothingRequestStatusEnum`, `ShopRequestStatusEnum`, `OrderStatusEnum`, `PaymentMethodEnum`, `PaymentStatusEnum`.
   * `rbac.py`: `Role`, `UserRole`, `Section`, `RoleSectionGrant`, `SubSection`, `SectionSubSection`.
   * `support.py`: `Notification`, `FavoriteShop`.
 
 * **Exceptions (`app/domain/exceptions/`)**: Custom domain exception hierarchy.
-  * `user.py`: `UserNotFoundError`, `UserAlreadyExistsError`, `InvalidUserDataError`.
+  * `user.py`: `ClientNotFoundError`, `TailorNotFoundError`, `ProfileAlreadyExistsError`, `InvalidUserDataError`.
   * `shop.py`: `ShopNotFoundError`, `ShopAlreadyExistsError`.
   * `order.py`: `OrderNotFoundError`, `ClothingRequestNotFoundError`, `ShopRequestNotFoundError`, `InvalidOrderStateTransitionError`.
-  * `rbac.py`: `RoleNotFoundError`, `SectionNotFoundError`, `UnauthorizedSectionAccessError`.
+  * `rbac.py`: `RoleNotFoundError`, `SectionNotFoundError`, `UnauthorizedSectionAccessError`, `AccessDeniedError`.
 
 * **Repositories (`app/domain/repositories/`)**: Abstract Base Classes defining persistence contracts.
-  * `user_repository.py`: `AbstractUserRepository`.
+  * `profile_repository.py`: `AbstractClientRepository`, `AbstractTailorRepository`, `AbstractMeasurementProfileRepository`.
   * `shop_repository.py`: `AbstractShopRepository`.
   * `order_repository.py`: `AbstractOrderRepository`.
   * `rbac_repository.py`: `AbstractRBACRepository`.
-  * `notification_repository.py`: `AbstractNotificationRepository`.
+  * `support_repository.py`: `AbstractSupportRepository`.
 
 ---
 
@@ -80,17 +97,17 @@ Contains pure Python business logic, dataclasses, and domain interfaces. It has 
 Orchestrates domain entities to execute application use cases.
 
 * **Data Transfer Objects (`app/use_cases/dtos/`)**:
-  * `user_dto.py`: DTOs for user creation, measurements, seller registration, and user profiles.
+  * `user_dto.py`: DTOs for client/tailor creation, measurements, and profile retrieval.
   * `shop_dto.py`: DTOs for shop registration, updates, search, and images.
   * `order_dto.py`: DTOs for clothing requests (voice notes, design images, service toggles), bids, orders, mock payments, and ratings.
   * `rbac_dto.py`: DTOs for roles, route access grants, and sub-sections.
   * `support_dto.py`: DTOs for notifications and favorite shops.
 
 * **Workflows (`app/use_cases/`)**:
-  * `user/`: `manage_profile.py` (client and seller registration).
+  * `user/`: `manage_profile.py` (client and tailor registration, profile retrieval, measurements).
   * `shop/`: `manage_shop.py` (create, update, fetch, search near location).
-  * `order/`: `manage_order.py` (create requests, submit bids, accept bids, transition order states, process payments, submit ratings).
-  * `rbac/`: `manage_rbac.py` (manage roles, sections, user role assignments).
+  * `order/`: `manage_order.py` (create requests, cancel requests, submit bids, accept bids, transition order states, process payments, submit ratings).
+  * `rbac/`: `manage_rbac.py` (manage roles, sections, user role assignments, verify access).
   * `support/`: `manage_support.py` (manage notifications, favorite shops).
 
 ---
@@ -99,31 +116,34 @@ Orchestrates domain entities to execute application use cases.
 Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent storage.
 
 * **Database Models (`app/infrastructure/db/models/`)**:
-  * `user_model.py`: SQLAlchemy mapped models for `users`, `measurement_profile`, `clients`, `sellers`.
-  * `shop_model.py`: Mapped models for `shops`, `shop_images`, `favorite_shops`.
+  * `user_model.py`: SQLAlchemy mapped models for `measurement_profile`, `clients`, `sellers` (mapped to Tailor domain entity).
+  * `shop_model.py`: Mapped models for `shops`, `shop_images`.
   * `order_model.py`: Mapped models for `clothing_requests`, `clothing_request_images`, `measurements`, `shop_requests`, `bids`, `orders`, `payments`, `ratings`.
   * `rbac_model.py`: Mapped models for `roles`, `user_roles`, `sections`, `role_section_grants`, `sub_sections`, `section_sub_sections`.
-  * `support_model.py`: Mapped models for `notifications`.
+  * `support_model.py`: Mapped models for `notifications`, `favorite_shops`.
 
 * **Repositories (`app/infrastructure/db/repositories/`)**:
-  * `sqlalchemy_user_repository.py`
+  * `sqlalchemy_profile_repository.py`
   * `sqlalchemy_shop_repository.py`
   * `sqlalchemy_order_repository.py`
   * `sqlalchemy_rbac_repository.py`
   * `sqlalchemy_support_repository.py`
-
-* **Security (`app/infrastructure/security/`)**:
-  * `hashing.py`: Password hashing/verification logic.
 
 ---
 
 ### 4. Presentation / API Layer (`app/api/`) — *HTTP & REST Controllers*
 
 * **Dependencies (`app/api/dependencies.py`)**: Dependency injection factory for database sessions, repositories, and use case services.
-* **Schemas (`app/api/schemas/`)**: Pydantic V2 request & response validation models (`user_schema.py`, `shop_schema.py`, `order_schema.py`).
+* **Schemas (`app/api/schemas/`)**: Pydantic V2 request & response validation models.
+  * `user_schema.py`
+  * `shop_schema.py`
+  * `order_schema.py`
+  * `rbac_schema.py`
+  * `support_schema.py`
 * **Endpoints (`app/api/v1/endpoints/`)**:
+  * `auth.py`: Post-login gateway (`/api/v1/auth/me/role`).
   * `health.py`: Application health check endpoint (`/api/v1/health`).
-  * `profiles.py`: Client and seller registration/profiles (`/api/v1/profiles`).
+  * `profiles.py`: Client and tailor registration/profiles (`/api/v1/profiles`).
   * `shops.py`: Tailor shop registration, updates, and geospatial discovery (`/api/v1/shops`).
   * `orders.py`: Clothing requests, bids, orders, mock payments, ratings (`/api/v1/orders`).
   * `rbac.py`: Role assignments and route access verification (`/api/v1/rbac`).
@@ -132,23 +152,8 @@ Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent 
 
 ---
 
-### 5. Configuration & Lifespan (`app/core/` & `app/main.py`)
+### 5. Configuration & Security (`app/core/` & `app/main.py`)
 * `app/core/config.py`: Environment configuration via `pydantic-settings`.
 * `app/core/database.py`: SQLAlchemy async engine (`create_async_engine`) and session sessionmaker.
-* `app/main.py`: FastAPI app initialization, CORS middleware, API router inclusion, and lifespan DB schema creation.
-
----
-
-## 🧪 Test Suite (`tests/`)
-
-* `tests/test_api.py`: Async HTTP integration tests verifying end-to-end marketplace flows (Client/Seller creation -> Shop setup -> Request creation with voice notes & design images -> Bidding -> Order completion -> Mock payment -> Rating).
-* `tests/test_use_cases.py`: Unit tests for domain logic and use case exception handling.
-
----
-
-## 🛠️ Code Quality & Typing
-
-This project strictly adheres to modern Python standards:
-* **Python 3.12+ Typing**: Uses built-in `list` and union operators `| None` in place of legacy `typing` constructs (`List`, `Optional`).
-* **Static Analysis**: Enforced by `mypy` for strict type checking across the entire domain, use cases, and infrastructure.
-* **Linting & Formatting**: Maintained by `ruff` for consistent style and auto-fixing of syntax conventions.
+* `app/core/security.py`: Firebase token verification and `require_role` guard factory.
+* `app/main.py`: FastAPI app initialization, CORS middleware, API router inclusion.

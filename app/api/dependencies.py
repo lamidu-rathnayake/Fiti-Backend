@@ -10,7 +10,7 @@ from app.domain.repositories.order_repository import AbstractOrderRepository
 from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
     AbstractMeasurementProfileRepository,
-    AbstractSellerRepository,
+    AbstractTailorRepository,
 )
 from app.domain.repositories.rbac_repository import AbstractRBACRepository
 from app.domain.repositories.shop_repository import AbstractShopRepository
@@ -20,7 +20,7 @@ from app.infrastructure.db.repositories.sqlalchemy_order_repository import (
 from app.infrastructure.db.repositories.sqlalchemy_profile_repository import (
     SQLAlchemyClientRepository,
     SQLAlchemyMeasurementProfileRepository,
-    SQLAlchemySellerRepository,
+    SQLAlchemyTailorRepository,
 )
 from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import (
     SQLAlchemyRBACRepository,
@@ -44,8 +44,8 @@ def get_client_repository(session: AsyncSession = Depends(get_db_session)) -> Ab
     return SQLAlchemyClientRepository(session=session)
 
 
-def get_seller_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractSellerRepository:
-    return SQLAlchemySellerRepository(session=session)
+def get_tailor_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractTailorRepository:
+    return SQLAlchemyTailorRepository(session=session)
 
 
 def get_measurement_repository(
@@ -78,12 +78,12 @@ def get_favorite_shop_repository(session: AsyncSession = Depends(get_db_session)
 
 def get_manage_profile_use_case(
     client_repo: AbstractClientRepository = Depends(get_client_repository),
-    seller_repo: AbstractSellerRepository = Depends(get_seller_repository),
+    tailor_repo: AbstractTailorRepository = Depends(get_tailor_repository),
     meas_repo: AbstractMeasurementProfileRepository = Depends(get_measurement_repository),
 ) -> ManageProfileUseCase:
     return ManageProfileUseCase(
         client_repository=client_repo,
-        seller_repository=seller_repo,
+        tailor_repository=tailor_repo,
         measurement_repository=meas_repo,
     )
 
@@ -115,3 +115,4 @@ def get_manage_support_use_case(
         notification_repository=notification_repo,
         favorite_shop_repository=favorite_shop_repo,
     )
+

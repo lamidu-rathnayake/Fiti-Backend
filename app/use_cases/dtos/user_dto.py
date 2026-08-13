@@ -16,15 +16,15 @@ class ClientOutputDTO:
 
 
 @dataclass
-class SellerRegisterDTO:
-    """Input DTO for registering a new seller profile after Firebase Auth sign-up."""
+class TailorRegisterDTO:
+    """Input DTO for registering a new tailor profile after Firebase Auth sign-up."""
     id: str           # Firebase Auth UID
     nic_front: str | None = None   # Cloud storage URL
     nic_rear: str | None = None    # Cloud storage URL
 
 
 @dataclass
-class SellerOutputDTO:
+class TailorOutputDTO:
     id: str
     nic_front: str | None = None
     nic_rear: str | None = None

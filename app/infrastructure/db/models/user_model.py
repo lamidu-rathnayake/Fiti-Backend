@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.domain.entities.user import Client, MeasurementProfile, Seller
+from app.domain.entities.user import Client, MeasurementProfile, Tailor
 from app.infrastructure.db.base import Base
 
 
@@ -30,11 +30,12 @@ class ClientModel(Base):
         return Client(id=self.id, created_at=self.created_at, updated_at=self.updated_at)
 
 
-class SellerModel(Base):
+class TailorModel(Base):
     """
-    Stores Firebase-backed seller/tailor profile data.
+    Stores Firebase-backed tailor profile data.
     The `id` column holds the Firebase Auth UID — no FK to a users table.
     NIC image URLs point to cloud storage (Firebase Storage / Azure Blob).
+    Table name 'sellers' is kept for DB compatibility — only Python class is renamed.
     """
     __tablename__ = "sellers"
 
@@ -52,8 +53,8 @@ class SellerModel(Base):
         nullable=False,
     )
 
-    def to_domain(self) -> Seller:
-        return Seller(
+    def to_domain(self) -> Tailor:
+        return Tailor(
             id=self.id,
             nic_front=self.nic_front,
             nic_rear=self.nic_rear,

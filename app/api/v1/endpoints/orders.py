@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.api.dependencies import get_manage_order_use_case
+from app.core.security import get_current_user_uid, require_role
 from app.use_cases.order.manage_order import ManageOrderUseCase
 from app.api.schemas.order_schema import (
     BidCreateRequest,
@@ -32,12 +33,36 @@ router = APIRouter(prefix="/orders", tags=["Orders & Requests"])
 
 
 # ── Clothing Requests ──────────────────────────────────────────────────
+# IMPORTANT: Static routes (open, client/{id}) MUST be declared before
+# the wildcard /{request_id} route, otherwise FastAPI will try to parse
+# string path segments as integers and return 422.
+
+@router.get("/requests/open", response_model=list[ClothingRequestResponse])
+async def list_open_clothing_requests(
+    skip: int = 0,
+    limit: int = 100,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all open clothing requests (marketplace view for tailors). Declared before /{request_id}."""
+    return await use_case.list_open_clothing_requests(skip=skip, limit=limit)
+
+
+@router.get("/requests/client/{client_id}", response_model=list[ClothingRequestResponse])
+async def list_clothing_requests_by_client(
+    client_id: str,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all clothing requests for a specific client. Declared before /{request_id}."""
+    return await use_case.list_clothing_requests_by_client(client_id)
+
 
 @router.post("/requests", response_model=ClothingRequestResponse, status_code=status.HTTP_201_CREATED)
 async def create_clothing_request(
     request: ClothingRequestCreateRequest,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Submit a new clothing request. Requires client role."""
     meas_dto = None
     if request.measurement:
         meas_dto = MeasurementDTO(
@@ -74,29 +99,28 @@ async def get_clothing_request(
     request_id: int,
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Get a specific clothing request by ID."""
     try:
         return await use_case.get_clothing_request(request_id)
     except ClothingRequestNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
-@router.get("/requests/client/{client_id}", response_model=list[ClothingRequestResponse])
-async def list_clothing_requests_by_client(
-    client_id: str,
+@router.patch("/requests/{request_id}/cancel", response_model=ClothingRequestResponse)
+async def cancel_clothing_request(
+    request_id: int,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
-    """List all clothing requests for a specific client."""
-    return await use_case.list_clothing_requests_by_client(client_id)
-
-
-@router.get("/requests/open", response_model=list[ClothingRequestResponse])
-async def list_open_clothing_requests(
-    skip: int = 0,
-    limit: int = 100,
-    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
-):
-    """List all open clothing requests (marketplace view for sellers)."""
-    return await use_case.list_open_clothing_requests(skip=skip, limit=limit)
+    """Cancel an open clothing request. Requires client role and must be the request owner."""
+    try:
+        return await use_case.cancel_clothing_request(request_id, authenticated_uid)
+    except ClothingRequestNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
 # ── Shop Requests ──────────────────────────────────────────────────────
@@ -110,13 +134,25 @@ async def list_shop_requests_by_shop(
     return await use_case.list_shop_requests_by_shop(shop_id)
 
 
+@router.get("/shop-requests/{shop_request_id}/bids", response_model=list[BidResponse])
+async def list_bids_by_shop_request(
+    shop_request_id: int,
+    authenticated_uid: str = Depends(require_role("tailor")),
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all bids on a specific shop request. Requires tailor role."""
+    return await use_case.list_bids_by_shop_request(shop_request_id)
+
+
 # ── Bids ───────────────────────────────────────────────────────────────
 
 @router.post("/bids", response_model=BidResponse, status_code=status.HTTP_201_CREATED)
 async def submit_bid(
     request: BidCreateRequest,
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Submit a bid on a shop request. Requires tailor role."""
     try:
         dto = BidCreateDTO(
             shop_request_id=request.shop_request_id,
@@ -129,12 +165,33 @@ async def submit_bid(
 
 
 # ── Orders ─────────────────────────────────────────────────────────────
+# Static paths (shop/{id}, client/{id}) MUST be before /{order_id}
+
+@router.get("/shop/{shop_id}", response_model=list[OrderResponse])
+async def list_orders_by_shop(
+    shop_id: int,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all orders for a specific shop. Declared before /{order_id}."""
+    return await use_case.list_orders_by_shop(shop_id)
+
+
+@router.get("/client/{client_id}", response_model=list[OrderResponse])
+async def list_orders_by_client(
+    client_id: str,
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """List all orders for a specific client. Declared before /{order_id}."""
+    return await use_case.list_orders_by_client(client_id)
+
 
 @router.post("/accept-bid", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
 async def accept_bid_and_create_order(
     request: OrderCreateRequest,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Accept a bid and create an order. Requires client role."""
     try:
         dto = OrderCreateDTO(
             shop_request_id=request.shop_request_id,
@@ -148,38 +205,24 @@ async def accept_bid_and_create_order(
 @router.get("/{order_id}", response_model=OrderResponse)
 async def get_order(
     order_id: int,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Get a specific order by ID."""
     try:
         return await use_case.get_order(order_id)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
-@router.get("/shop/{shop_id}", response_model=list[OrderResponse])
-async def list_orders_by_shop(
-    shop_id: int,
-    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
-):
-    """List all orders for a specific shop."""
-    return await use_case.list_orders_by_shop(shop_id)
-
-
-@router.get("/client/{client_id}", response_model=list[OrderResponse])
-async def list_orders_by_client(
-    client_id: str,
-    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
-):
-    """List all orders for a specific client."""
-    return await use_case.list_orders_by_client(client_id)
-
-
 @router.patch("/{order_id}/status", response_model=OrderResponse)
 async def update_order_status(
     order_id: int,
     order_status: str,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Update order status."""
     try:
         return await use_case.update_order_status(order_id, order_status)
     except OrderNotFoundError as exc:
@@ -190,11 +233,26 @@ async def update_order_status(
 
 # ── Payments ───────────────────────────────────────────────────────────
 
+@router.get("/{order_id}/payment", response_model=PaymentResponse | None)
+async def get_order_payment(
+    order_id: int,
+    authenticated_uid: str = Depends(get_current_user_uid),
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """Get payment status for an order. Returns null if not yet paid."""
+    try:
+        return await use_case.get_order_payment(order_id)
+    except OrderNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
 @router.post("/payments/mock", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
 async def process_mock_payment(
     request: MockPaymentRequest,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Process a mock payment for an order. Requires client role."""
     try:
         dto = MockPaymentDTO(
             order_id=request.order_id,
@@ -211,8 +269,10 @@ async def process_mock_payment(
 @router.post("/ratings", response_model=RatingResponse, status_code=status.HTTP_201_CREATED)
 async def submit_rating(
     request: RatingCreateRequest,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
+    """Submit a rating for a completed order. Requires client role."""
     try:
         dto = RatingCreateDTO(
             order_id=request.order_id,
@@ -224,3 +284,4 @@ async def submit_rating(
         return await use_case.submit_rating(dto)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+

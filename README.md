@@ -1,67 +1,88 @@
-# FastAPI Backend Application with Clean Architecture & SQLAlchemy
+# Fiti Backend — Smart Tailoring Platform
 
 Production-ready backend application built with **FastAPI**, **SQLAlchemy 2.0 (Async)**, and **Clean Architecture** principles.
 
 ---
 
-## 🏛️ Clean Architecture Layers
+## 📖 Project Overview
 
-This project follows Uncle Bob's **Clean Architecture** guidelines, maintaining strict separation of concerns and dependency rules (dependencies point inward).
+Fiti is a Smart Tailoring and Custom Fashion Platform connecting **Clients** with **Tailors**. 
 
-```
-                      +-----------------------------------+
-                      |      Presentation / API Layer     |
-                      |   (FastAPI Routers, Schemas, DI)  |
-                      +-----------------+-----------------+
-                                        |
-                                        v
-                      +-----------------+-----------------+
-                      |     Application / Use Cases       |
-                      |   (Services, DTOs, Workflows)     |
-                      +-----------------+-----------------+
-                                        |
-                                        v
-                      +-----------------+-----------------+
-                      |       Domain Layer (Core)         |
-                      | (Entities, Exceptions, Interfaces)|
-                      +-----------------+-----------------+
-                                        ^
-                                        |
-                      +-----------------+-----------------+
-                      |       Infrastructure Layer        |
-                      | (SQLAlchemy Models & Repos, DB)   |
-                      +-----------------------------------+
-```
+This backend service handles all core business logic for clients and tailors, including:
+- Profile management & body measurements
+- Tailor shop discovery (GPS-based) and management
+- Clothing requests (marketplace) and bidding
+- Order lifecycle, mock payments, and ratings
 
-### Layer Breakdown
+### Post-Login Gateway Role
+This backend serves as the **single post-login gateway** for all Fiti user types (Clients, Tailors, and Admins). 
+Because Fiti currently uses a single unified frontend for authentication, the frontend makes its very first post-login request to **this backend** to determine the user's role and routing destination.
 
-1. **Domain Layer (`app/domain/`)**
-   - **Pure Python core business logic**. Zero dependencies on FastAPI, SQLAlchemy, or external libraries.
-   - `entities/`: Dataclasses representing core business objects (e.g., `User`).
-   - `exceptions/`: Domain-specific exceptions (`UserNotFoundError`, `UserAlreadyExistsError`).
-   - `repositories/`: Abstract repository interfaces (`AbstractUserRepository`).
+### Admin Redirect Design
+While this backend handles the initial role check for all users, it **does not** contain the Admin Backend logic. 
+When an admin user signs in and calls the gateway endpoint (`GET /api/v1/auth/me/role`), this backend simply responds with a redirect URL instructing the frontend to send the user to the separate Admin Backend project (`ADMIN_BACKEND_URL`).
 
-2. **Use Cases / Application Layer (`app/use_cases/`)**
-   - Implements application-specific business rules and operations.
-   - `dtos/`: Input/Output Data Transfer Objects.
-   - `user/`: Use case implementations (`CreateUserUseCase`, `GetUserUseCase`, `ListUsersUseCase`).
+---
 
-3. **Infrastructure Layer (`app/infrastructure/`)**
-   - Contains details about external tools, frameworks, databases, and third-party libraries.
-   - `db/models/`: SQLAlchemy 2.0 ORM Mapped Classes (`UserModel`) with domain mapping.
-   - `db/repositories/`: Concrete implementations of domain repository interfaces using SQLAlchemy `AsyncSession`.
-   - `security/`: Password hashing and authentication mechanisms.
+## 🏛️ Architecture & RBAC
 
-4. **Presentation / API Layer (`app/api/`)**
-   - Handles HTTP endpoints and validation.
-   - `schemas/`: Pydantic V2 Request & Response models.
-   - `dependencies.py`: Dependency injection container using FastAPI `Depends` to wire abstractions to concrete implementations.
-   - `v1/endpoints/`: REST API controllers (`health.py`, `users.py`).
+### Firebase Authentication
+Fiti relies on **Firebase Authentication** for identity management. The backend does not store passwords or manage sessions. Instead:
+1. The frontend obtains a Firebase ID Token upon sign-in.
+2. The token is sent as a `Bearer` token in the `Authorization` header.
+3. The backend verifies the token and extracts the `firebase_uid`.
 
-5. **Core Configuration & Entrypoint (`app/core/`, `app/main.py`)**
-   - `core/config.py`: Environment settings management using `pydantic-settings`.
-   - `core/database.py`: Async engine and session factory configuration.
-   - `main.py`: Application entry point and lifespan event handlers.
+### Role-Based Access Control (RBAC)
+Endpoints are protected using a strict RBAC system. The `require_role("role_name")` dependency ensures that a user has the appropriate role (`client` or `tailor`) before granting access to specific operations.
+
+---
+
+## ⚙️ Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+| Variable | Description | Default |
+|---|---|---|
+| `CONNECTION_STRING` | PostgreSQL database connection URL | (Required) |
+| `MOCK_FIREBASE_AUTH` | Set to `True` for local testing to bypass real Firebase token verification. **MUST be `False` in production.** | `False` |
+| `FIREBASE_CREDENTIALS_PATH` | Path to the Firebase Admin SDK service account JSON file. | `None` |
+| `ADMIN_BACKEND_URL` | The URL of the separate Admin Backend project for redirection (e.g., `https://admin.fiti.com`). | `""` |
+| `FRONTEND_ORIGINS` | Comma-separated list of allowed origins for CORS. | `*` |
+
+---
+
+## 🌐 Core API Endpoints
+
+### Authentication & Gateway
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/auth/me/role` | Valid Token | Verifies user and returns role + redirect URL. |
+
+### Profiles
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/v1/profiles/client` | Valid Token | Register a new client profile. |
+| GET | `/api/v1/profiles/client/{id}` | Client | Get a client's own profile. |
+| POST | `/api/v1/profiles/tailor` | Valid Token | Register a new tailor profile. |
+| GET | `/api/v1/profiles/tailor/{id}` | Public | Get a tailor's public profile. |
+| GET | `/api/v1/profiles/tailor/{id}/verification` | Public | Check if a tailor is verified. |
+
+### Shops
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/shops/nearby` | Public | Search tailors by GPS radius. |
+| GET | `/api/v1/shops/tailor/{id}` | Public | List all shops owned by a tailor. |
+| POST | `/api/v1/shops/` | Tailor | Register a new shop. |
+
+### Orders & Requests
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| POST | `/api/v1/orders/requests` | Client | Submit a new clothing request. |
+| GET | `/api/v1/orders/requests/open` | Public | List all open requests (marketplace). |
+| PATCH| `/api/v1/orders/requests/{id}/cancel` | Client | Cancel an open request. |
+| POST | `/api/v1/orders/bids` | Tailor | Submit a bid on a shop request. |
+| GET | `/api/v1/orders/shop-requests/{id}/bids`| Tailor | View bids on a shop request. |
+| POST | `/api/v1/orders/accept-bid` | Client | Accept a bid and create an order. |
 
 ---
 
@@ -71,62 +92,28 @@ This project follows Uncle Bob's **Clean Architecture** guidelines, maintaining 
 .
 ├── app/
 │   ├── api/                    # Presentation Layer (HTTP / REST)
-│   │   ├── dependencies.py     # FastAPI Dependency Injection Container
-│   │   ├── schemas/            # Pydantic Request/Response Models
-│   │   │   ├── user_schema.py
-│   │   │   ├── shop_schema.py
-│   │   │   ├── order_schema.py
-│   │   │   ├── rbac_schema.py
-│   │   │   └── support_schema.py
+│   │   ├── dependencies.py     # FastAPI Dependency Injection
+│   │   ├── schemas/            # Pydantic Models (DTOs)
 │   │   └── v1/
-│   │       ├── router.py       # Central API v1 Router
-│   │       └── endpoints/
-│   │           ├── health.py
-│   │           ├── profiles.py
-│   │           ├── shops.py
-│   │           ├── orders.py
-│   │           ├── rbac.py
-│   │           └── support.py
-│   ├── core/                   # Core Infrastructure & Configuration
-│   │   ├── config.py           # App Settings (Pydantic BaseSettings)
-│   │   └── database.py         # Async SQLAlchemy Engine & Session setup
+│   │       ├── router.py       # API v1 Router
+│   │       └── endpoints/      # API Route Controllers (auth, profiles, shops, orders)
+│   ├── core/                   # Infrastructure & Config
+│   │   ├── config.py           # App Settings
+│   │   ├── database.py         # SQLAlchemy Engine
+│   │   └── security.py         # Firebase Auth & RBAC Guards
 │   ├── domain/                 # Domain Layer (Enterprise Rules)
 │   │   ├── entities/           # Pure Domain Entities
 │   │   ├── exceptions/         # Domain Exceptions
-│   │   └── repositories/       # Abstract Repository Contracts
-│   ├── infrastructure/         # Infrastructure Layer (Data & Framework Adapters)
-│   │   ├── db/
-│   │   │   ├── base.py         # SQLAlchemy Base
-│   │   │   ├── models/         # SQLAlchemy ORM Models
-│   │   │   └── repositories/   # SQLAlchemy Repository Implementations
-│   │   └── security/           # Hashing & Auth utilities
-│   ├── use_cases/              # Application Layer (Use Cases)
-│   │   ├── dtos/               # Application DTOs
-│   │   ├── user/               # User Use Cases
-│   │   ├── shop/               # Shop Use Cases
-│   │   ├── order/              # Order Use Cases
-│   │   ├── rbac/               # RBAC Use Cases
-│   │   └── support/            # Support Use Cases
-│   └── main.py                 # Application Lifespan & FastAPI Factory
-├── .env                        # Environment variables
-├── pyproject.toml              # Project dependencies
-└── main.py                     # Entrypoint script
-```
-
----
-
-## 🛠️ Code Quality & Testing
-
-The project enforces strict code quality and modern Python typing:
-- **Type Checking**: Uses `mypy` for strict type checking. The codebase leverages modern Python 3.12 type annotations (`list` instead of `List`, `| None` instead of `Optional`).
-- **Linting**: Uses `ruff` for fast linting, formatting, and auto-fixing modern syntax conventions.
-- **Testing**: Uses `pytest` and `pytest-asyncio` for unit and integration testing.
-
-Run tests and linters via `uv`:
-```bash
-uv run pytest tests/
-uvx ruff check .
-uvx mypy .
+│   │   └── repositories/       # Abstract Interfaces
+│   ├── infrastructure/         # DB & External Adapters
+│   │   └── db/
+│   │       ├── models/         # SQLAlchemy ORM Models
+│   │       └── repositories/   # SQLAlchemy Implementations
+│   ├── use_cases/              # Application Business Logic
+│   └── main.py                 # Application Entrypoint
+├── schema.sql                  # PostgreSQL Schema & Seed Data
+├── pyproject.toml              # Dependencies (uv)
+└── .env                        # Environment Configuration
 ```
 
 ---
@@ -138,22 +125,15 @@ Using `uv`:
 ```bash
 uv sync
 ```
-Or using standard `pip`:
-```bash
-pip install -e .
-```
 
-### 2. Run the Application
-```bash
-uv run python main.py
-```
-Or using uvicorn directly:
+### 2. Database Setup
+Execute the `schema.sql` file against your local PostgreSQL instance to create tables and seed default roles.
+
+### 3. Run the Application
 ```bash
 uv run uvicorn app.main:app --reload
 ```
 
-### 3. API Documentation
-Once running, open your browser at:
-- **Interactive Swagger UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
-- **ReDoc Documentation**: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-- **Health Check**: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
+### 4. Documentation
+Visit the interactive Swagger UI:
+- **Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)

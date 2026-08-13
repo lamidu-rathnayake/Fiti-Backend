@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.core.security import get_current_user_uid
 from app.api.dependencies import get_manage_rbac_use_case
 from app.api.schemas.rbac_schema import (
     RoleAssignRequest,
@@ -15,6 +16,7 @@ router = APIRouter(prefix="/rbac", tags=["RBAC"])
 @router.post("/assign-role", status_code=status.HTTP_204_NO_CONTENT)
 async def assign_role(
     request: RoleAssignRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageRBACUseCase = Depends(get_manage_rbac_use_case),
 ):
     """Assign a role to a user by Firebase UID."""

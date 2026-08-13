@@ -4,6 +4,8 @@ import firebase_admin
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from firebase_admin import auth, credentials
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -36,12 +38,15 @@ async def get_current_user_uid(
     """
     Statelessly verifies the Firebase ID Token from the 'Authorization: Bearer <token>' header.
 
-    Option 2 Architecture Flow:
+    Architecture Flow:
     1. Client signs in directly with Firebase Auth on the web browser.
     2. Client receives a Firebase ID Token.
     3. Client sends request to FastAPI with header: Authorization: Bearer <token>.
     4. Backend cryptographically verifies the token signature using Firebase Admin SDK.
     5. Returns the verified Firebase UID.
+
+    MOCK mode: Only active when MOCK_FIREBASE_AUTH=true is explicitly set in .env (local dev only).
+    Never enable in production — all authentication checks will be bypassed.
     """
     if auth_header and auth_header.credentials:
         token = auth_header.credentials
@@ -56,8 +61,9 @@ async def get_current_user_uid(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    # Fallback mode for testing/local dev when no token is passed in header
-    if settings.MOCK_FIREBASE_AUTH or settings.ENVIRONMENT in ("development", "testing"):
+    # Mock mode — ONLY when explicitly enabled in .env for local development
+    if settings.MOCK_FIREBASE_AUTH:
+        logger.warning("MOCK_FIREBASE_AUTH is enabled — bypassing token verification.")
         return "mock_firebase_uid"
 
     raise HTTPException(
@@ -65,3 +71,38 @@ async def get_current_user_uid(
         detail="Authentication token required in Authorization header (Bearer <token>).",
         headers={"WWW-Authenticate": "Bearer"},
     )
+
+
+def require_role(role_name: str):
+    """
+    Dependency factory that verifies a Firebase token AND checks the user holds the required role.
+
+    Usage:
+        @router.post("/shops/")
+        async def create_shop(uid: str = Depends(require_role("tailor"))):
+            ...
+
+    The role check queries the user_roles and roles tables in PostgreSQL.
+    Raises HTTP 401 if the token is invalid, HTTP 403 if the role is not assigned.
+    """
+    async def _check_role(
+        uid: str = Depends(get_current_user_uid),
+        # Import here to avoid circular imports
+    ) -> str:
+        from app.core.database import AsyncSessionFactory
+        from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import SQLAlchemyRBACRepository
+
+        async with AsyncSessionFactory() as session:
+            rbac_repo = SQLAlchemyRBACRepository(session)
+            user_roles = await rbac_repo.get_user_roles(uid)
+            role_names = [r.name for r in user_roles]
+
+        if role_name not in role_names:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Access denied. Required role: '{role_name}'. Your roles: {role_names or ['none']}.",
+            )
+        return uid
+
+    return _check_role
+

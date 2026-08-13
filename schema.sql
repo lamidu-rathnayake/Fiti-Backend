@@ -72,7 +72,7 @@ $$ LANGUAGE plpgsql;
 -- ---------------------------------------------------------
 -- NOTE: Full user identity (name, email, password, auth provider) lives in
 -- Firebase Auth. PostgreSQL only stores role-specific profile extensions.
--- The `id` column in clients/sellers holds the Firebase Auth UID directly
+-- The `id` column in clients/sellers(tailors) holds the Firebase Auth UID directly
 -- with NO foreign key to a users table (there is no users table).
 
 CREATE TABLE IF NOT EXISTS clients (
@@ -147,7 +147,7 @@ CREATE TABLE IF NOT EXISTS section_sub_sections (
 );
 
 -- ---------------------------------------------------------
--- 5. SHOP / SELLER DOMAIN
+-- 5. SHOP / TAILOR DOMAIN
 -- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS shops (
     shop_id              SERIAL PRIMARY KEY,
@@ -345,3 +345,15 @@ INSERT INTO sections (name, route_name) VALUES
   ('Seller Dashboard', '/seller/dashboard'),
   ('Admin Console', '/admin/console')
 ON CONFLICT (name) DO NOTHING;
+
+-- Seed role_section_grants mapping
+INSERT INTO role_section_grants (role_id, section_id)
+SELECT r.id, s.id
+FROM roles r
+CROSS JOIN sections s
+WHERE (r.name = 'client' AND s.name IN ('Home', 'Client Dashboard'))
+   OR (r.name = 'tailor' AND s.name IN ('Home', 'Seller Dashboard'))
+   OR (r.name = 'seller' AND s.name IN ('Home', 'Seller Dashboard'))
+   OR (r.name = 'admin' AND s.name IN ('Home', 'Admin Console'))
+ON CONFLICT (role_id, section_id) DO NOTHING;
+

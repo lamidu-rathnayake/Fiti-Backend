@@ -10,7 +10,7 @@ class ShopImageSchema(BaseModel):
 
 
 class ShopCreateRequest(BaseModel):
-    seller_id: str = Field(..., description="Firebase UID of seller")
+    tailor_id: str = Field(..., description="Firebase UID of the tailor who owns this shop")
     shop_name: str = Field(..., min_length=2, max_length=150)
     shop_bio: str | None = None
     shop_address: str | None = None
@@ -36,7 +36,7 @@ class ShopResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     shop_id: int
-    seller_id: str
+    tailor_id: str
     shop_name: str
     shop_bio: str | None = None
     shop_address: str | None = None

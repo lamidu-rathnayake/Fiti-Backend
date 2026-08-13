@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.domain.entities.user import Client, MeasurementProfile, Seller
+from app.domain.entities.user import Client, MeasurementProfile, Tailor
 
 
 class AbstractClientRepository(ABC):
@@ -15,19 +15,19 @@ class AbstractClientRepository(ABC):
         pass
 
 
-class AbstractSellerRepository(ABC):
-    """Contract for persisting Seller profile records (Firebase UID as PK)."""
+class AbstractTailorRepository(ABC):
+    """Contract for persisting Tailor profile records (Firebase UID as PK). Maps to the 'sellers' table."""
 
     @abstractmethod
-    async def create(self, seller: Seller) -> Seller:
+    async def create(self, tailor: Tailor) -> Tailor:
         pass
 
     @abstractmethod
-    async def get_by_id(self, seller_id: str) -> Seller | None:
+    async def get_by_id(self, tailor_id: str) -> Tailor | None:
         pass
 
     @abstractmethod
-    async def update_verification(self, seller_id: str, is_verified: bool) -> Seller:
+    async def update_verification(self, tailor_id: str, is_verified: bool) -> Tailor:
         pass
 
 
@@ -45,3 +45,4 @@ class AbstractMeasurementProfileRepository(ABC):
     @abstractmethod
     async def update(self, profile: MeasurementProfile) -> MeasurementProfile:
         pass
+

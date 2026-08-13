@@ -20,11 +20,12 @@ class Client:
 
 
 @dataclass
-class Seller:
+class Tailor:
     """
-    Firebase-backed seller/tailor profile extension.
+    Firebase-backed tailor profile extension.
     The Firebase UID is the primary key — full user identity lives in Firebase Auth.
     NIC images are stored as cloud storage URLs.
+    Maps to the 'sellers' PostgreSQL table (table name unchanged for DB compatibility).
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
     nic_front: str | None = None   # Cloud storage URL (Firebase Storage / Azure Blob)
@@ -40,7 +41,7 @@ class MeasurementProfile:
     Reusable standard body measurements saved for a client.
     References the client's Firebase UID directly.
     """
-    client_id: str               # Firebase Auth UID referencing clients.id
+    client_id: str  # Firebase Auth UID referencing clients.id
     measurement_id: int | None = None
     chest: float | None = None
     waist: float | None = None

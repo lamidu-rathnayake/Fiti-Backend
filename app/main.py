@@ -28,10 +28,13 @@ def create_application() -> FastAPI:
     )
 
     # Configure CORS
+    # NOTE: allow_credentials=True cannot be used with allow_origins=["*"].
+    # Browsers reject credentialed requests to wildcard origins (CORS spec violation).
+    # To enable credentials (cookies/auth headers), restrict origins to specific domains.
     application.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
-        allow_credentials=True,
+        allow_credentials=False,
         allow_methods=["*"],
         allow_headers=["*"],
     )

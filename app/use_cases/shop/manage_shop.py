@@ -16,7 +16,7 @@ class ManageShopUseCase:
 
     async def create_shop(self, dto: ShopCreateDTO) -> ShopOutputDTO:
         shop_entity = Shop(
-            seller_id=dto.seller_id,
+            tailor_id=dto.tailor_id,
             shop_name=dto.shop_name,
             shop_bio=dto.shop_bio,
             shop_address=dto.shop_address,
@@ -35,8 +35,8 @@ class ManageShopUseCase:
             raise ShopNotFoundError(shop_id)
         return self._to_dto(shop)
 
-    async def get_shops_by_seller(self, seller_id: str) -> list[ShopOutputDTO]:
-        shops = await self.shop_repository.get_by_seller_id(seller_id)
+    async def get_shops_by_tailor(self, tailor_id: str) -> list[ShopOutputDTO]:
+        shops = await self.shop_repository.get_by_seller_id(tailor_id)
         return [self._to_dto(s) for s in shops]
 
     async def list_shops(self, skip: int = 0, limit: int = 100, city: str | None = None) -> list[ShopOutputDTO]:
@@ -57,7 +57,7 @@ class ManageShopUseCase:
             raise ShopNotFoundError(dto.shop_id)
         shop_entity = Shop(
             shop_id=dto.shop_id,
-            seller_id=existing.seller_id,
+            tailor_id=existing.tailor_id,
             shop_name=dto.shop_name,
             shop_bio=dto.shop_bio,
             shop_address=dto.shop_address,
@@ -85,7 +85,7 @@ class ManageShopUseCase:
     def _to_dto(self, shop: Shop) -> ShopOutputDTO:
         return ShopOutputDTO(
             shop_id=shop.shop_id,  # type: ignore
-            seller_id=shop.seller_id,
+            tailor_id=shop.tailor_id,
             shop_name=shop.shop_name,
             shop_bio=shop.shop_bio,
             shop_address=shop.shop_address,

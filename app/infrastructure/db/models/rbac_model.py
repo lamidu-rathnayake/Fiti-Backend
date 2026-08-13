@@ -63,6 +63,9 @@ class SubSectionModel(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
 
     def to_domain(self) -> SubSection:
+        # NOTE: section_id is stubbed to 0 here because SubSectionModel does not have a direct
+        # section_id column (it uses the section_sub_sections junction table). This method is
+        # currently a stub for standalone queries and should be joined to get the real section_id.
         return SubSection(id=self.id, section_id=0, name=self.name, component_id=self.component_id)
 
 

@@ -18,9 +18,9 @@ class ClientResponse(BaseModel):
     updated_at: datetime | None = None
 
 
-class SellerRegisterRequest(BaseModel):
+class TailorRegisterRequest(BaseModel):
     """
-    Sent by the web frontend after Firebase Auth sign-up to register a seller profile.
+    Sent by the web frontend after Firebase Auth sign-up to register a tailor profile.
     If 'id' is omitted, the backend will automatically extract the verified Firebase UID from the Bearer Token.
     NIC image URLs should point to files already uploaded to cloud storage.
     """
@@ -29,7 +29,7 @@ class SellerRegisterRequest(BaseModel):
     nic_rear: str | None = Field(None, description="Cloud storage URL for NIC rear photo")
 
 
-class SellerResponse(BaseModel):
+class TailorResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
     nic_front: str | None = None

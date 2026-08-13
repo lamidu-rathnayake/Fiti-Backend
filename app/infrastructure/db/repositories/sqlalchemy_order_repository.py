@@ -302,3 +302,28 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [m.to_domain() for m in models]
+
+    async def cancel_clothing_request(self, request_id: int) -> ClothingRequest | None:
+        """Set the clothing request status to CANCELLED and return the updated entity."""
+        stmt = select(ClothingRequestModel).where(ClothingRequestModel.request_id == request_id)
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if not model:
+            return None
+        model.status = ClothingRequestStatusEnum.CANCELLED
+        await self.session.commit()
+        return await self.get_clothing_request(request_id)
+
+    async def list_bids_by_shop_request(self, shop_request_id: int) -> list[Bid]:
+        """Return all bids submitted for a specific shop request."""
+        stmt = select(BidModel).where(BidModel.shop_request_id == shop_request_id)
+        result = await self.session.execute(stmt)
+        models = result.scalars().all()
+        return [m.to_domain() for m in models]
+
+    async def get_payment_by_order(self, order_id: int) -> Payment | None:
+        """Return the payment record associated with an order."""
+        stmt = select(PaymentModel).where(PaymentModel.order_id == order_id)
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return model.to_domain() if model else None

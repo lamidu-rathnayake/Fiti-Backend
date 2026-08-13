@@ -11,7 +11,7 @@ class ShopModel(Base):
     __tablename__ = "shops"
 
     shop_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    seller_id: Mapped[str] = mapped_column(String(128), ForeignKey("sellers.id", ondelete="CASCADE"), nullable=False)
+    tailor_id: Mapped[str] = mapped_column("seller_id", String(128), ForeignKey("sellers.id", ondelete="CASCADE"), nullable=False)
     shop_name: Mapped[str] = mapped_column(String(150), nullable=False)
     shop_bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     shop_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -38,7 +38,7 @@ class ShopModel(Base):
     def to_domain(self) -> Shop:
         return Shop(
             shop_id=self.shop_id,
-            seller_id=self.seller_id,
+            tailor_id=self.tailor_id,
             shop_name=self.shop_name,
             shop_bio=self.shop_bio,
             shop_address=self.shop_address,

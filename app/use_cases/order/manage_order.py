@@ -4,6 +4,7 @@ from app.domain.entities.order import (
     Bid,
     ClothingRequest,
     ClothingRequestImage,
+    ClothingRequestStatusEnum,
     Measurement,
     Order,
     OrderStatusEnum,
@@ -219,9 +220,53 @@ class ManageOrderUseCase:
             created_at=saved_rating.created_at,
         )
 
+    async def cancel_clothing_request(self, request_id: int, client_id: str) -> ClothingRequestOutputDTO:
+        """Cancel an open clothing request. Only the owning client may cancel."""
+        req = await self.order_repository.get_clothing_request(request_id)
+        if not req:
+            raise ClothingRequestNotFoundError(request_id)
+        if req.client_id != client_id:
+            raise PermissionError(f"Client '{client_id}' does not own request {request_id}.")
+        if req.status != ClothingRequestStatusEnum.OPEN:
+            raise ValueError(f"Only OPEN requests can be cancelled. Current status: {req.status.value}")
+        updated = await self.order_repository.cancel_clothing_request(request_id)
+        return self._to_clothing_request_dto(updated or req)
+
+    async def list_bids_by_shop_request(self, shop_request_id: int) -> list[BidDTO]:
+        """Return all bids submitted for a specific shop request."""
+        bids = await self.order_repository.list_bids_by_shop_request(shop_request_id)
+        return [
+            BidDTO(
+                bid_id=b.bid_id,
+                shop_request_id=b.shop_request_id,
+                bid_amount=b.bid_amount,
+                message=b.message,
+                created_at=b.created_at,
+            )
+            for b in bids
+        ]
+
+    async def get_order_payment(self, order_id: int) -> PaymentOutputDTO | None:
+        """Return the payment record for an order, or None if not yet paid."""
+        order = await self.order_repository.get_order(order_id)
+        if not order:
+            raise OrderNotFoundError(order_id)
+        payment = await self.order_repository.get_payment_by_order(order_id)
+        if not payment:
+            return None
+        return PaymentOutputDTO(
+            payment_id=payment.payment_id,  # type: ignore
+            order_id=payment.order_id,
+            amount=payment.amount,
+            payment_method=payment.payment_method,
+            payment_status=payment.payment_status,
+            payment_date=payment.payment_date,
+        )
+
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
 
     def _to_clothing_request_dto(self, req: ClothingRequest) -> ClothingRequestOutputDTO:
         meas_dto = None

@@ -83,3 +83,18 @@ class AbstractOrderRepository(ABC):
     @abstractmethod
     async def get_ratings_by_shop(self, shop_id: int) -> list[Rating]:
         pass
+
+    @abstractmethod
+    async def cancel_clothing_request(self, request_id: int) -> ClothingRequest | None:
+        """Set a clothing request status to CANCELLED. Returns updated entity or None if not found."""
+        pass
+
+    @abstractmethod
+    async def list_bids_by_shop_request(self, shop_request_id: int) -> list[Bid]:
+        """List all bids submitted for a specific shop request."""
+        pass
+
+    @abstractmethod
+    async def get_payment_by_order(self, order_id: int) -> Payment | None:
+        """Get the payment record associated with an order."""
+        pass

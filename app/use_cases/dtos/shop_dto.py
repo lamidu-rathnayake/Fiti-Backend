@@ -11,7 +11,7 @@ class ShopImageDTO:
 
 @dataclass
 class ShopCreateDTO:
-    seller_id: str
+    tailor_id: str
     shop_name: str
     shop_bio: str | None = None
     shop_address: str | None = None
@@ -38,7 +38,7 @@ class ShopUpdateDTO:
 @dataclass
 class ShopOutputDTO:
     shop_id: int
-    seller_id: str
+    tailor_id: str
     shop_name: str
     shop_bio: str | None = None
     shop_address: str | None = None

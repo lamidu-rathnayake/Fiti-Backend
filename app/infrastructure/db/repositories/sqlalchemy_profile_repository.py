@@ -2,16 +2,16 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domain.entities.user import Client, MeasurementProfile, Seller
+from app.domain.entities.user import Client, MeasurementProfile, Tailor
 from app.domain.repositories.profile_repository import (
     AbstractClientRepository,
     AbstractMeasurementProfileRepository,
-    AbstractSellerRepository,
+    AbstractTailorRepository,
 )
 from app.infrastructure.db.models.user_model import (
     ClientModel,
     MeasurementProfileModel,
-    SellerModel,
+    TailorModel,
 )
 
 
@@ -33,29 +33,29 @@ class SQLAlchemyClientRepository(AbstractClientRepository):
         return model.to_domain() if model else None
 
 
-class SQLAlchemySellerRepository(AbstractSellerRepository):
+class SQLAlchemyTailorRepository(AbstractTailorRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create(self, seller: Seller) -> Seller:
-        model = SellerModel(
-            id=seller.id,
-            nic_front=seller.nic_front,
-            nic_rear=seller.nic_rear,
+    async def create(self, tailor: Tailor) -> Tailor:
+        model = TailorModel(
+            id=tailor.id,
+            nic_front=tailor.nic_front,
+            nic_rear=tailor.nic_rear,
         )
         self.session.add(model)
         await self.session.commit()
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def get_by_id(self, seller_id: str) -> Seller | None:
-        stmt = select(SellerModel).where(SellerModel.id == seller_id)
+    async def get_by_id(self, tailor_id: str) -> Tailor | None:
+        stmt = select(TailorModel).where(TailorModel.id == tailor_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def update_verification(self, seller_id: str, is_verified: bool) -> Seller:
-        stmt = select(SellerModel).where(SellerModel.id == seller_id)
+    async def update_verification(self, tailor_id: str, is_verified: bool) -> Tailor:
+        stmt = select(TailorModel).where(TailorModel.id == tailor_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one()
         model.is_verified = is_verified
