@@ -16,7 +16,7 @@ class AbstractClientRepository(ABC):
 
 
 class AbstractTailorRepository(ABC):
-    """Contract for persisting Tailor profile records (Firebase UID as PK). Maps to the 'sellers' table."""
+    """Contract for persisting Tailor profile records (Firebase UID as PK). Maps to the 'tailors' table."""
 
     @abstractmethod
     async def create(self, tailor: Tailor) -> Tailor:

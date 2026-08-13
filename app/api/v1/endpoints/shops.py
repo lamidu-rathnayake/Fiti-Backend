@@ -1,14 +1,13 @@
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_manage_shop_use_case
-from app.core.security import get_current_user_uid, require_role
 from app.api.schemas.shop_schema import (
     ShopCreateRequest,
     ShopImageSchema,
     ShopResponse,
     ShopUpdateRequest,
 )
+from app.core.security import require_role
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.use_cases.dtos.shop_dto import ShopCreateDTO, ShopUpdateDTO
 from app.use_cases.shop.manage_shop import ManageShopUseCase
@@ -17,6 +16,7 @@ router = APIRouter(prefix="/shops", tags=["Shops"])
 
 
 # ── List & Search (static paths must come before /{shop_id}) ───────────
+
 
 @router.get("/", response_model=list[ShopResponse])
 async def list_shops(
@@ -51,6 +51,7 @@ async def get_shops_by_tailor(
 
 # ── Single Shop by ID ───────────────────────────────────────────────────
 
+
 @router.get("/{shop_id}", response_model=ShopResponse)
 async def get_shop(
     shop_id: int,
@@ -64,6 +65,7 @@ async def get_shop(
 
 
 # ── Write Operations (tailor role required) ────────────────────────────
+
 
 @router.post("/", response_model=ShopResponse, status_code=status.HTTP_201_CREATED)
 async def create_shop(
@@ -124,7 +126,11 @@ async def delete_shop(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
-@router.post("/{shop_id}/images", response_model=ShopImageSchema, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/{shop_id}/images",
+    response_model=ShopImageSchema,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_shop_image(
     shop_id: int,
     image_url: str,
@@ -136,4 +142,3 @@ async def add_shop_image(
         return await use_case.add_shop_image(shop_id=shop_id, image_url=image_url)
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-

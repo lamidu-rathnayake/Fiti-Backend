@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -87,7 +86,9 @@ class SQLAlchemyMeasurementProfileRepository(AbstractMeasurementProfileRepositor
         return model.to_domain()
 
     async def get_by_client_id(self, client_id: str) -> MeasurementProfile | None:
-        stmt = select(MeasurementProfileModel).where(MeasurementProfileModel.client_id == client_id)
+        stmt = select(MeasurementProfileModel).where(
+            MeasurementProfileModel.client_id == client_id
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
@@ -98,7 +99,17 @@ class SQLAlchemyMeasurementProfileRepository(AbstractMeasurementProfileRepositor
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one()
-        for field in ["chest", "waist", "shoulder", "sleeve", "neck", "hip", "inseam", "length", "notes"]:
+        for field in [
+            "chest",
+            "waist",
+            "shoulder",
+            "sleeve",
+            "neck",
+            "hip",
+            "inseam",
+            "length",
+            "notes",
+        ]:
             value = getattr(profile, field)
             if value is not None:
                 setattr(model, field, value)

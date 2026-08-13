@@ -11,7 +11,11 @@ class ShopModel(Base):
     __tablename__ = "shops"
 
     shop_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    tailor_id: Mapped[str] = mapped_column("seller_id", String(128), ForeignKey("sellers.id", ondelete="CASCADE"), nullable=False)
+    tailor_id: Mapped[str] = mapped_column(
+        String(128),
+        ForeignKey("tailors.id", ondelete="CASCADE"),
+        nullable=False,
+    )
     shop_name: Mapped[str] = mapped_column(String(150), nullable=False)
     shop_bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     shop_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -32,7 +36,10 @@ class ShopModel(Base):
     )
 
     images: Mapped[list["ShopImageModel"]] = relationship(
-        "ShopImageModel", back_populates="shop", cascade="all, delete-orphan", lazy="selectin"
+        "ShopImageModel",
+        back_populates="shop",
+        cascade="all, delete-orphan",
+        lazy="selectin",
     )
 
     def to_domain(self) -> Shop:
@@ -58,7 +65,9 @@ class ShopImageModel(Base):
     __tablename__ = "shop_images"
 
     image_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
+    )
     image_url: Mapped[str] = mapped_column(String(500), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False

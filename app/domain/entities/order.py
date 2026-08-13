@@ -13,6 +13,7 @@ class FabricStatusEnum(str, Enum):
 class ServiceTypeEnum(str, Enum):
     """Operational toggle: client chooses between online processing or
     physically visiting the tailor's shop."""
+
     ONLINE = "online"
     PHYSICAL_VISIT = "physical_visit"
 
@@ -55,6 +56,7 @@ class PaymentStatusEnum(str, Enum):
 @dataclass
 class Measurement:
     """Per-request body measurements attached to a ClothingRequest."""
+
     measurement_id: int | None = None
     request_id: int | None = None
     chest: float | None = None
@@ -73,6 +75,7 @@ class Measurement:
 @dataclass
 class ClothingRequestImage:
     """Design-inspiration image uploaded to cloud storage and linked to a request."""
+
     request_id: int
     image_url: str
     image_id: int | None = None

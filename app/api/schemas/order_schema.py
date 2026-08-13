@@ -17,6 +17,7 @@ from app.domain.entities.user import GenderEnum
 
 class ClothingRequestImageResponse(BaseModel):
     """Design inspiration image linked to a clothing request."""
+
     image_id: int | None = None
     request_id: int | None = None
     image_url: str
@@ -32,14 +33,23 @@ class ClothingRequestCreateRequest(BaseModel):
     fabric_status: FabricStatusEnum | None = None
     description: str | None = None
     # NEW: Cloud-storage URL for voice-note audio (upload to Firebase Storage first)
-    voice_note_url: str | None = Field(None, description="Cloud-storage URL for voice instruction audio")
+    voice_note_url: str | None = Field(
+        None, description="Cloud-storage URL for voice instruction audio"
+    )
     # NEW: Workflow toggle — 'online' or 'physical_visit'
-    service_type: ServiceTypeEnum = Field(ServiceTypeEnum.ONLINE, description="Online or physical-visit workflow")
+    service_type: ServiceTypeEnum = Field(
+        ServiceTypeEnum.ONLINE, description="Online or physical-visit workflow"
+    )
     request_location: str | None = None
     measurement: MeasurementProfileRequest | None = None
     # NEW: Cloud-storage URLs for design inspiration screenshots
-    design_image_urls: list[str] = Field(default_factory=list, description="Cloud-storage URLs for design inspiration images")
-    target_shop_ids: list[int] | None = Field(None, description="Optional list of specific Shop IDs to invite")
+    design_image_urls: list[str] = Field(
+        default_factory=list,
+        description="Cloud-storage URLs for design inspiration images",
+    )
+    target_shop_ids: list[int] | None = Field(
+        None, description="Optional list of specific Shop IDs to invite"
+    )
 
 
 class BidCreateRequest(BaseModel):

@@ -35,22 +35,28 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         return refetched if refetched else model.to_domain()
 
     async def get_by_id(self, shop_id: int) -> Shop | None:
-        stmt = select(ShopModel).options(selectinload(ShopModel.images)).where(ShopModel.shop_id == shop_id)
+        stmt = (
+            select(ShopModel)
+            .options(selectinload(ShopModel.images))
+            .where(ShopModel.shop_id == shop_id)
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def get_by_seller_id(self, seller_id: str) -> list[Shop]:
+    async def get_by_tailor_id(self, tailor_id: str) -> list[Shop]:
         stmt = (
             select(ShopModel)
             .options(selectinload(ShopModel.images))
-            .where(ShopModel.seller_id == seller_id)
+            .where(ShopModel.tailor_id == tailor_id)
         )
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def list_all(self, skip: int = 0, limit: int = 100, city: str | None = None) -> list[Shop]:
+    async def list_all(
+        self, skip: int = 0, limit: int = 100, city: str | None = None
+    ) -> list[Shop]:
         stmt = select(ShopModel).options(selectinload(ShopModel.images))
         if city:
             stmt = stmt.where(ShopModel.city == city)
@@ -75,7 +81,11 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
             await self.session.commit()
 
     async def update_shop(self, shop: Shop) -> Shop | None:
-        stmt = select(ShopModel).options(selectinload(ShopModel.images)).where(ShopModel.shop_id == shop.shop_id)
+        stmt = (
+            select(ShopModel)
+            .options(selectinload(ShopModel.images))
+            .where(ShopModel.shop_id == shop.shop_id)
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:
@@ -103,7 +113,9 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         await self.session.commit()
         return True
 
-    async def search_near_location(self, lat: float, lng: float, radius_km: float = 10.0) -> list[Shop]:
+    async def search_near_location(
+        self, lat: float, lng: float, radius_km: float = 10.0
+    ) -> list[Shop]:
         # Approximate bounding box using degrees (1 degree lat ~ 111 km)
         lat_delta = radius_km / 111.0
         # avoid division by zero for cos

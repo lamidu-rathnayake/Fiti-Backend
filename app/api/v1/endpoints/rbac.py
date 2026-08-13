@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.security import get_current_user_uid
 from app.api.dependencies import get_manage_rbac_use_case
 from app.api.schemas.rbac_schema import (
     RoleAssignRequest,
     UserAccessOverviewResponse,
 )
+from app.core.security import get_current_user_uid
 from app.domain.exceptions.rbac import AccessDeniedError, RoleNotFoundError
 from app.use_cases.dtos.rbac_dto import RoleAssignDTO
 from app.use_cases.rbac.manage_rbac import ManageRBACUseCase

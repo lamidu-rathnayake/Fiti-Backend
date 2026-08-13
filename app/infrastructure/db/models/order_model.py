@@ -40,12 +40,18 @@ from app.infrastructure.db.models.user_model import MeasurementProfileModel
 class ClothingRequestModel(Base):
     __tablename__ = "clothing_requests"
 
-    request_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    client_id: Mapped[str] = mapped_column(String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
+    request_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    client_id: Mapped[str] = mapped_column(
+        String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
+    )
     target_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     target_budget: Mapped[float | None] = mapped_column(Float, nullable=True)
     clothing_category: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    gender: Mapped[GenderEnum | None] = mapped_column(Enum(GenderEnum, native_enum=False), nullable=True)
+    gender: Mapped[GenderEnum | None] = mapped_column(
+        Enum(GenderEnum, native_enum=False), nullable=True
+    )
     fabric_status: Mapped[FabricStatusEnum | None] = mapped_column(
         Enum(FabricStatusEnum, native_enum=False), nullable=True
     )
@@ -75,11 +81,16 @@ class ClothingRequestModel(Base):
     )
 
     measurement: Mapped[Optional["MeasurementModel"]] = relationship(
-        "MeasurementModel", back_populates="request", uselist=False, cascade="all, delete-orphan"
+        "MeasurementModel",
+        back_populates="request",
+        uselist=False,
+        cascade="all, delete-orphan",
     )
     # Optional reference to the client's saved MeasurementProfile (reusable)
     measurement_profile_id: Mapped[int | None] = mapped_column(
-        Integer, ForeignKey("measurement_profile.measurement_id", ondelete="SET NULL"), nullable=True
+        Integer,
+        ForeignKey("measurement_profile.measurement_id", ondelete="SET NULL"),
+        nullable=True,
     )
     measurement_profile: Mapped[Optional["MeasurementProfileModel"]] = relationship(
         "MeasurementProfileModel",
@@ -89,10 +100,14 @@ class ClothingRequestModel(Base):
     )
     # NEW: Zero-to-many design inspiration images
     design_images: Mapped[list["ClothingRequestImageModel"]] = relationship(
-        "ClothingRequestImageModel", back_populates="request", cascade="all, delete-orphan"
+        "ClothingRequestImageModel",
+        back_populates="request",
+        cascade="all, delete-orphan",
     )
     shop_requests: Mapped[list["ShopRequestModel"]] = relationship(
-        "ShopRequestModel", back_populates="clothing_request", cascade="all, delete-orphan"
+        "ShopRequestModel",
+        back_populates="clothing_request",
+        cascade="all, delete-orphan",
     )
 
     def to_domain(self) -> ClothingRequest:
@@ -132,8 +147,12 @@ class ClothingRequestModel(Base):
                     else None
                 )
             ),
-            design_images=[img.to_domain() for img in self.design_images] if self.design_images else [],
-            shop_requests=[sr.to_domain() for sr in self.shop_requests] if self.shop_requests else [],
+            design_images=[img.to_domain() for img in self.design_images]
+            if self.design_images
+            else [],
+            shop_requests=[sr.to_domain() for sr in self.shop_requests]
+            if self.shop_requests
+            else [],
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -141,18 +160,23 @@ class ClothingRequestModel(Base):
 
 class ClothingRequestImageModel(Base):
     """Stores design inspiration image URLs — files live in cloud storage."""
+
     __tablename__ = "clothing_request_images"
 
     image_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("clothing_requests.request_id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("clothing_requests.request_id", ondelete="CASCADE"),
+        nullable=False,
     )
     image_url: Mapped[str] = mapped_column(String(500), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
-    request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="design_images")
+    request: Mapped["ClothingRequestModel"] = relationship(
+        "ClothingRequestModel", back_populates="design_images"
+    )
 
     def to_domain(self) -> ClothingRequestImage:
         return ClothingRequestImage(
@@ -166,9 +190,14 @@ class ClothingRequestImageModel(Base):
 class MeasurementModel(Base):
     __tablename__ = "measurements"
 
-    measurement_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    measurement_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("clothing_requests.request_id", ondelete="CASCADE"), unique=True, nullable=False
+        Integer,
+        ForeignKey("clothing_requests.request_id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
     )
     chest: Mapped[float | None] = mapped_column(Float, nullable=True)
     waist: Mapped[float | None] = mapped_column(Float, nullable=True)
@@ -189,7 +218,9 @@ class MeasurementModel(Base):
         nullable=False,
     )
 
-    request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="measurement")
+    request: Mapped["ClothingRequestModel"] = relationship(
+        "ClothingRequestModel", back_populates="measurement"
+    )
 
     def to_domain(self) -> Measurement:
         return Measurement(
@@ -211,20 +242,32 @@ class MeasurementModel(Base):
 
 class ShopRequestModel(Base):
     __tablename__ = "shop_requests"
-    __table_args__ = (UniqueConstraint("request_id", "shop_id", name="uq_request_shop"),)
-
-    shop_request_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("clothing_requests.request_id", ondelete="CASCADE"), nullable=False
+    __table_args__ = (
+        UniqueConstraint("request_id", "shop_id", name="uq_request_shop"),
     )
-    shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
-    offered_price: Mapped[float | None] = mapped_column(Float, nullable=True) # latest bid amount
+
+    shop_request_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    request_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("clothing_requests.request_id", ondelete="CASCADE"),
+        nullable=False,
+    )
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
+    )
+    offered_price: Mapped[float | None] = mapped_column(
+        Float, nullable=True
+    )  # latest bid amount
     status: Mapped[ShopRequestStatusEnum] = mapped_column(
         Enum(ShopRequestStatusEnum, native_enum=False),
         default=ShopRequestStatusEnum.PENDING,
         nullable=False,
     )
-    response_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    response_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -235,7 +278,9 @@ class ShopRequestModel(Base):
         nullable=False,
     )
 
-    clothing_request: Mapped["ClothingRequestModel"] = relationship("ClothingRequestModel", back_populates="shop_requests")
+    clothing_request: Mapped["ClothingRequestModel"] = relationship(
+        "ClothingRequestModel", back_populates="shop_requests"
+    )
     bids: Mapped[list["BidModel"]] = relationship(
         "BidModel", back_populates="shop_request", cascade="all, delete-orphan"
     )
@@ -258,7 +303,9 @@ class BidModel(Base):
 
     bid_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     shop_request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"), nullable=False
+        Integer,
+        ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"),
+        nullable=False,
     )
     bid_amount: Mapped[float] = mapped_column(Float, nullable=False)
     message: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -266,7 +313,9 @@ class BidModel(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
-    shop_request: Mapped["ShopRequestModel"] = relationship("ShopRequestModel", back_populates="bids")
+    shop_request: Mapped["ShopRequestModel"] = relationship(
+        "ShopRequestModel", back_populates="bids"
+    )
 
     def to_domain(self) -> Bid:
         return Bid(
@@ -283,7 +332,10 @@ class OrderModel(Base):
 
     order_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     shop_request_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"), unique=True, nullable=False
+        Integer,
+        ForeignKey("shop_requests.shop_request_id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
     )
     order_status: Mapped[OrderStatusEnum] = mapped_column(
         Enum(OrderStatusEnum, native_enum=False),
@@ -319,9 +371,14 @@ class OrderModel(Base):
 class PaymentModel(Base):
     __tablename__ = "payments"
 
-    payment_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    payment_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     order_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("orders.order_id", ondelete="CASCADE"), unique=True, nullable=False
+        Integer,
+        ForeignKey("orders.order_id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
     )
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     payment_method: Mapped[PaymentMethodEnum | None] = mapped_column(
@@ -332,7 +389,9 @@ class PaymentModel(Base):
         default=PaymentStatusEnum.PENDING,
         nullable=False,
     )
-    payment_date: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    payment_date: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -352,12 +411,21 @@ class PaymentModel(Base):
 class RatingModel(Base):
     __tablename__ = "ratings"
 
-    rating_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    order_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("orders.order_id", ondelete="CASCADE"), unique=True, nullable=False
+    rating_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
     )
-    client_id: Mapped[str] = mapped_column(String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
-    shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
+    order_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("orders.order_id", ondelete="CASCADE"),
+        unique=True,
+        nullable=False,
+    )
+    client_id: Mapped[str] = mapped_column(
+        String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
+    )
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
+    )
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
     review: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

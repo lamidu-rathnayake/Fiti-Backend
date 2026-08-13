@@ -71,7 +71,7 @@ SQLAlchemy converts these calculated numbers into a single SQL statement sent to
 ```sql
 SELECT 
     shops.shop_id, 
-    shops.seller_id, 
+    shops.tailor_id, 
     shops.shop_name, 
     shops.latitude, 
     shops.longitude, 
@@ -219,7 +219,7 @@ class ShopModel(Base):
     __tablename__ = "shops"
 
     shop_id = Column(Integer, primary_key=True, index=True)
-    seller_id = Column(String(128), Nullable=False)
+    tailor_id = Column(String(128), Nullable=False)
     shop_name = Column(String(255), Nullable=False)
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)

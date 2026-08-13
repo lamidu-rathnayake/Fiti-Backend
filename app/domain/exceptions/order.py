@@ -24,4 +24,6 @@ class InvalidOrderStateError(OrderDomainException):
 
 class InvalidOrderStateTransitionError(OrderDomainException):
     def __init__(self, current_status: str, target_status: str):
-        super().__init__(f"Cannot transition order from '{current_status}' to '{target_status}'.")
+        super().__init__(
+            f"Cannot transition order from '{current_status}' to '{target_status}'."
+        )

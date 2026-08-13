@@ -8,7 +8,12 @@ class ClientRegisterRequest(BaseModel):
     Sent by the web frontend after Firebase Auth sign-up to register a client profile.
     If 'id' is omitted, the backend will automatically extract the verified Firebase UID from the Bearer Token.
     """
-    id: str | None = Field(None, description="Firebase Auth UID (optional if Bearer Token is supplied)", json_schema_extra={"example": "firebase_uid_abc123"})
+
+    id: str | None = Field(
+        None,
+        description="Firebase Auth UID (optional if Bearer Token is supplied)",
+        json_schema_extra={"example": "firebase_uid_abc123"},
+    )
 
 
 class ClientResponse(BaseModel):
@@ -24,9 +29,18 @@ class TailorRegisterRequest(BaseModel):
     If 'id' is omitted, the backend will automatically extract the verified Firebase UID from the Bearer Token.
     NIC image URLs should point to files already uploaded to cloud storage.
     """
-    id: str | None = Field(None, description="Firebase Auth UID (optional if Bearer Token is supplied)", json_schema_extra={"example": "firebase_uid_xyz789"})
-    nic_front: str | None = Field(None, description="Cloud storage URL for NIC front photo")
-    nic_rear: str | None = Field(None, description="Cloud storage URL for NIC rear photo")
+
+    id: str | None = Field(
+        None,
+        description="Firebase Auth UID (optional if Bearer Token is supplied)",
+        json_schema_extra={"example": "firebase_uid_xyz789"},
+    )
+    nic_front: str | None = Field(
+        None, description="Cloud storage URL for NIC front photo"
+    )
+    nic_rear: str | None = Field(
+        None, description="Cloud storage URL for NIC rear photo"
+    )
 
 
 class TailorResponse(BaseModel):
@@ -41,6 +55,7 @@ class TailorResponse(BaseModel):
 
 class MeasurementProfileRequest(BaseModel):
     """Body measurements used in both profile storage and order clothing requests."""
+
     chest: float | None = None
     waist: float | None = None
     shoulder: float | None = None

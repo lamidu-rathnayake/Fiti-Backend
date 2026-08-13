@@ -40,11 +40,16 @@ from app.use_cases.user.manage_profile import ManageProfileUseCase
 
 # ── Repository Factories ──────────────────────────────────────────────────────
 
-def get_client_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractClientRepository:
+
+def get_client_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractClientRepository:
     return SQLAlchemyClientRepository(session=session)
 
 
-def get_tailor_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractTailorRepository:
+def get_tailor_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractTailorRepository:
     return SQLAlchemyTailorRepository(session=session)
 
 
@@ -54,32 +59,45 @@ def get_measurement_repository(
     return SQLAlchemyMeasurementProfileRepository(session=session)
 
 
-def get_rbac_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractRBACRepository:
+def get_rbac_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractRBACRepository:
     return SQLAlchemyRBACRepository(session=session)
 
 
-def get_shop_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractShopRepository:
+def get_shop_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractShopRepository:
     return SQLAlchemyShopRepository(session=session)
 
 
-def get_order_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractOrderRepository:
+def get_order_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractOrderRepository:
     return SQLAlchemyOrderRepository(session=session)
 
 
-def get_notification_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractNotificationRepository:
+def get_notification_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractNotificationRepository:
     return SQLAlchemyNotificationRepository(session=session)
 
 
-def get_favorite_shop_repository(session: AsyncSession = Depends(get_db_session)) -> AbstractFavoriteShopRepository:
+def get_favorite_shop_repository(
+    session: AsyncSession = Depends(get_db_session),
+) -> AbstractFavoriteShopRepository:
     return SQLAlchemyFavoriteShopRepository(session=session)
 
 
 # ── Use Case Factories ────────────────────────────────────────────────────────
 
+
 def get_manage_profile_use_case(
     client_repo: AbstractClientRepository = Depends(get_client_repository),
     tailor_repo: AbstractTailorRepository = Depends(get_tailor_repository),
-    meas_repo: AbstractMeasurementProfileRepository = Depends(get_measurement_repository),
+    meas_repo: AbstractMeasurementProfileRepository = Depends(
+        get_measurement_repository
+    ),
 ) -> ManageProfileUseCase:
     return ManageProfileUseCase(
         client_repository=client_repo,
@@ -108,11 +126,14 @@ def get_manage_order_use_case(
 
 
 def get_manage_support_use_case(
-    notification_repo: AbstractNotificationRepository = Depends(get_notification_repository),
-    favorite_shop_repo: AbstractFavoriteShopRepository = Depends(get_favorite_shop_repository),
+    notification_repo: AbstractNotificationRepository = Depends(
+        get_notification_repository
+    ),
+    favorite_shop_repo: AbstractFavoriteShopRepository = Depends(
+        get_favorite_shop_repository
+    ),
 ) -> ManageSupportUseCase:
     return ManageSupportUseCase(
         notification_repository=notification_repo,
         favorite_shop_repository=favorite_shop_repo,
     )
-

@@ -4,7 +4,6 @@ import firebase_admin
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from firebase_admin import auth, credentials
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 
@@ -29,7 +28,9 @@ def init_firebase_admin():
             _firebase_app_initialized = True
             logger.info("Firebase Admin SDK initialized successfully.")
         except Exception as exc:
-            logger.warning(f"Could not initialize Firebase Admin SDK automatically: {exc}")
+            logger.warning(
+                f"Could not initialize Firebase Admin SDK automatically: {exc}"
+            )
 
 
 async def get_current_user_uid(
@@ -85,12 +86,15 @@ def require_role(role_name: str):
     The role check queries the user_roles and roles tables in PostgreSQL.
     Raises HTTP 401 if the token is invalid, HTTP 403 if the role is not assigned.
     """
+
     async def _check_role(
         uid: str = Depends(get_current_user_uid),
         # Import here to avoid circular imports
     ) -> str:
         from app.core.database import AsyncSessionFactory
-        from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import SQLAlchemyRBACRepository
+        from app.infrastructure.db.repositories.sqlalchemy_rbac_repository import (
+            SQLAlchemyRBACRepository,
+        )
 
         async with AsyncSessionFactory() as session:
             rbac_repo = SQLAlchemyRBACRepository(session)
@@ -105,4 +109,3 @@ def require_role(role_name: str):
         return uid
 
     return _check_role
-

@@ -13,6 +13,7 @@ class ClientModel(Base):
     The `id` column holds the Firebase Auth UID — there is no FK to a users table
     because user identity is fully managed by Firebase Auth.
     """
+
     __tablename__ = "clients"
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
@@ -27,7 +28,9 @@ class ClientModel(Base):
     )
 
     def to_domain(self) -> Client:
-        return Client(id=self.id, created_at=self.created_at, updated_at=self.updated_at)
+        return Client(
+            id=self.id, created_at=self.created_at, updated_at=self.updated_at
+        )
 
 
 class TailorModel(Base):
@@ -35,9 +38,9 @@ class TailorModel(Base):
     Stores Firebase-backed tailor profile data.
     The `id` column holds the Firebase Auth UID — no FK to a users table.
     NIC image URLs point to cloud storage (Firebase Storage / Azure Blob).
-    Table name 'sellers' is kept for DB compatibility — only Python class is renamed.
     """
-    __tablename__ = "sellers"
+
+    __tablename__ = "tailors"
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     nic_front: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -69,9 +72,12 @@ class MeasurementProfileModel(Base):
     Stores a client's reusable standard body measurements.
     References `clients.id` (Firebase UID) — no dependency on a users table.
     """
+
     __tablename__ = "measurement_profile"
 
-    measurement_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    measurement_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     client_id: Mapped[str] = mapped_column(String(128), nullable=False, unique=True)
     chest: Mapped[float | None] = mapped_column(Float, nullable=True)
     waist: Mapped[float | None] = mapped_column(Float, nullable=True)

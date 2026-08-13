@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 class RoleAssignRequest(BaseModel):
     user_id: str = Field(..., description="Firebase Auth UID of the user")
-    role_name: str = Field(..., description="Name of the role to assign (e.g. 'client', 'seller', 'admin')")
+    role_name: str = Field(..., description="Name of the role to assign (e.g. 'client', 'tailor', 'admin')")
 
 
 class SectionResponse(BaseModel):

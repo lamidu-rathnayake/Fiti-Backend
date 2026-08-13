@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+
 from app.api.dependencies import get_manage_order_use_case
-from app.core.security import get_current_user_uid, require_role
-from app.use_cases.order.manage_order import ManageOrderUseCase
 from app.api.schemas.order_schema import (
     BidCreateRequest,
     BidResponse,
@@ -15,10 +14,10 @@ from app.api.schemas.order_schema import (
     RatingResponse,
     ShopRequestResponse,
 )
+from app.core.security import get_current_user_uid, require_role
 from app.domain.exceptions.order import (
     ClothingRequestNotFoundError,
     OrderNotFoundError,
-    ShopRequestNotFoundError,
 )
 from app.use_cases.dtos.order_dto import (
     BidCreateDTO,
@@ -28,6 +27,7 @@ from app.use_cases.dtos.order_dto import (
     OrderCreateDTO,
     RatingCreateDTO,
 )
+from app.use_cases.order.manage_order import ManageOrderUseCase
 
 router = APIRouter(prefix="/orders", tags=["Orders & Requests"])
 
@@ -36,6 +36,7 @@ router = APIRouter(prefix="/orders", tags=["Orders & Requests"])
 # IMPORTANT: Static routes (open, client/{id}) MUST be declared before
 # the wildcard /{request_id} route, otherwise FastAPI will try to parse
 # string path segments as integers and return 422.
+
 
 @router.get("/requests/open", response_model=list[ClothingRequestResponse])
 async def list_open_clothing_requests(
@@ -47,7 +48,9 @@ async def list_open_clothing_requests(
     return await use_case.list_open_clothing_requests(skip=skip, limit=limit)
 
 
-@router.get("/requests/client/{client_id}", response_model=list[ClothingRequestResponse])
+@router.get(
+    "/requests/client/{client_id}", response_model=list[ClothingRequestResponse]
+)
 async def list_clothing_requests_by_client(
     client_id: str,
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
@@ -56,7 +59,11 @@ async def list_clothing_requests_by_client(
     return await use_case.list_clothing_requests_by_client(client_id)
 
 
-@router.post("/requests", response_model=ClothingRequestResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/requests",
+    response_model=ClothingRequestResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_clothing_request(
     request: ClothingRequestCreateRequest,
     authenticated_uid: str = Depends(require_role("client")),
@@ -91,7 +98,9 @@ async def create_clothing_request(
         measurement=meas_dto,
         design_image_urls=request.design_image_urls,
     )
-    return await use_case.create_clothing_request(dto, target_shop_ids=request.target_shop_ids)
+    return await use_case.create_clothing_request(
+        dto, target_shop_ids=request.target_shop_ids
+    )
 
 
 @router.get("/requests/{request_id}", response_model=ClothingRequestResponse)
@@ -125,6 +134,7 @@ async def cancel_clothing_request(
 
 # ── Shop Requests ──────────────────────────────────────────────────────
 
+
 @router.get("/shop-requests/shop/{shop_id}", response_model=list[ShopRequestResponse])
 async def list_shop_requests_by_shop(
     shop_id: int,
@@ -145,6 +155,7 @@ async def list_bids_by_shop_request(
 
 
 # ── Bids ───────────────────────────────────────────────────────────────
+
 
 @router.post("/bids", response_model=BidResponse, status_code=status.HTTP_201_CREATED)
 async def submit_bid(
@@ -167,6 +178,7 @@ async def submit_bid(
 # ── Orders ─────────────────────────────────────────────────────────────
 # Static paths (shop/{id}, client/{id}) MUST be before /{order_id}
 
+
 @router.get("/shop/{shop_id}", response_model=list[OrderResponse])
 async def list_orders_by_shop(
     shop_id: int,
@@ -185,7 +197,9 @@ async def list_orders_by_client(
     return await use_case.list_orders_by_client(client_id)
 
 
-@router.post("/accept-bid", response_model=OrderResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/accept-bid", response_model=OrderResponse, status_code=status.HTTP_201_CREATED
+)
 async def accept_bid_and_create_order(
     request: OrderCreateRequest,
     authenticated_uid: str = Depends(require_role("client")),
@@ -233,6 +247,7 @@ async def update_order_status(
 
 # ── Payments ───────────────────────────────────────────────────────────
 
+
 @router.get("/{order_id}/payment", response_model=PaymentResponse | None)
 async def get_order_payment(
     order_id: int,
@@ -246,7 +261,11 @@ async def get_order_payment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
-@router.post("/payments/mock", response_model=PaymentResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/payments/mock",
+    response_model=PaymentResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def process_mock_payment(
     request: MockPaymentRequest,
     authenticated_uid: str = Depends(require_role("client")),
@@ -266,7 +285,10 @@ async def process_mock_payment(
 
 # ── Ratings ────────────────────────────────────────────────────────────
 
-@router.post("/ratings", response_model=RatingResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/ratings", response_model=RatingResponse, status_code=status.HTTP_201_CREATED
+)
 async def submit_rating(
     request: RatingCreateRequest,
     authenticated_uid: str = Depends(require_role("client")),
@@ -284,4 +306,3 @@ async def submit_rating(
         return await use_case.submit_rating(dto)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
-

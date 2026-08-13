@@ -17,11 +17,19 @@ from app.infrastructure.db.base import Base
 
 class FavoriteShopModel(Base):
     __tablename__ = "favorite_shops"
-    __table_args__ = (UniqueConstraint("client_id", "shop_id", name="uq_client_shop_fav"),)
+    __table_args__ = (
+        UniqueConstraint("client_id", "shop_id", name="uq_client_shop_fav"),
+    )
 
-    favorite_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    client_id: Mapped[str] = mapped_column(String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False)
-    shop_id: Mapped[int] = mapped_column(Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False)
+    favorite_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
+    client_id: Mapped[str] = mapped_column(
+        String(128), ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
+    )
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -38,7 +46,9 @@ class FavoriteShopModel(Base):
 class NotificationModel(Base):
     __tablename__ = "notifications"
 
-    notification_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    notification_id: Mapped[int] = mapped_column(
+        Integer, primary_key=True, autoincrement=True
+    )
     # firebase_uid holds the Firebase Auth UID — no FK to a users table
     firebase_uid: Mapped[str] = mapped_column(String(128), nullable=False)
     title: Mapped[str] = mapped_column(String(150), nullable=False)

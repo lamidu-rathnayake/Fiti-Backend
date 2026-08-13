@@ -12,7 +12,7 @@ class ShopImage:
 
 @dataclass
 class Shop:
-    tailor_id: str        # Firebase Auth UID of the tailor who owns this shop
+    tailor_id: str  # Firebase Auth UID of the tailor who owns this shop
     shop_name: str
     shop_id: int | None = None
     shop_bio: str | None = None

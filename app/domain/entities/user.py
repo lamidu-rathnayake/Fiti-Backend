@@ -25,7 +25,7 @@ class Tailor:
     Firebase-backed tailor profile extension.
     The Firebase UID is the primary key — full user identity lives in Firebase Auth.
     NIC images are stored as cloud storage URLs.
-    Maps to the 'sellers' PostgreSQL table (table name unchanged for DB compatibility).
+    Maps to the 'tailors' PostgreSQL table (table name unchanged for DB compatibility).
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
     nic_front: str | None = None   # Cloud storage URL (Firebase Storage / Azure Blob)

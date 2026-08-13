@@ -10,7 +10,9 @@ class ShopImageSchema(BaseModel):
 
 
 class ShopCreateRequest(BaseModel):
-    tailor_id: str = Field(..., description="Firebase UID of the tailor who owns this shop")
+    tailor_id: str = Field(
+        ..., description="Firebase UID of the tailor who owns this shop"
+    )
     shop_name: str = Field(..., min_length=2, max_length=150)
     shop_bio: str | None = None
     shop_address: str | None = None

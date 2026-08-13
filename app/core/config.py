@@ -1,10 +1,10 @@
 from pathlib import Path
-from typing import Optional
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+
 
 class Settings(BaseSettings):
     PROJECT_NAME: str = "Fiti — Smart Tailoring Platform API"
@@ -29,7 +29,7 @@ class Settings(BaseSettings):
     # IMPORTANT: Default is False — set MOCK_FIREBASE_AUTH=true in .env for local dev only.
     # Never set this to True in production — all endpoints will bypass auth checks.
     MOCK_FIREBASE_AUTH: bool = False
-    FIREBASE_CREDENTIALS_PATH: Optional[str] = None
+    FIREBASE_CREDENTIALS_PATH: str | None = None
 
     # Admin Backend — used by GET /auth/me/role to redirect admin users
     # In Phase 1 (shared frontend), admin redirects to an internal route.
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
         env_file=ENV_FILE,
         env_file_encoding="utf-8",
         case_sensitive=True,
-        extra="ignore"
+        extra="ignore",
     )
 
 

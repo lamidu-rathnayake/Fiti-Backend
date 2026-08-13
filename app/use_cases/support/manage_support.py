@@ -1,4 +1,3 @@
-
 from app.domain.entities.support import FavoriteShop, Notification
 from app.domain.repositories.notification_repository import (
     AbstractFavoriteShopRepository,
@@ -25,7 +24,9 @@ class ManageSupportUseCase:
 
     # ── Notifications ──────────────────────────────────────────────────
 
-    async def create_notification(self, dto: NotificationCreateDTO) -> NotificationOutputDTO:
+    async def create_notification(
+        self, dto: NotificationCreateDTO
+    ) -> NotificationOutputDTO:
         entity = Notification(
             notification_id=None,
             user_id=dto.user_id,
@@ -57,7 +58,9 @@ class ManageSupportUseCase:
         return await self.favorite_shop_repository.remove_favorite(client_id, shop_id)
 
     async def list_favorites(self, client_id: str) -> list[FavoriteShopOutputDTO]:
-        favorites = await self.favorite_shop_repository.list_favorites_by_client(client_id)
+        favorites = await self.favorite_shop_repository.list_favorites_by_client(
+            client_id
+        )
         return [self._to_favorite_dto(f) for f in favorites]
 
     # ── Private Helpers ────────────────────────────────────────────────

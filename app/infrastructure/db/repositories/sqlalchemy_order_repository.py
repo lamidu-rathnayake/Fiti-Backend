@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -33,7 +32,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_clothing_request(self, request: ClothingRequest) -> ClothingRequest:
+    async def create_clothing_request(
+        self, request: ClothingRequest
+    ) -> ClothingRequest:
         model = ClothingRequestModel(
             client_id=request.client_id,
             target_date=request.target_date,
@@ -68,7 +69,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             await self.session.commit()
         else:
             # If no per-request measurements provided, reference client's saved profile if exists
-            stmt = select(MeasurementProfileModel).where(MeasurementProfileModel.client_id == request.client_id)
+            stmt = select(MeasurementProfileModel).where(
+                MeasurementProfileModel.client_id == request.client_id
+            )
             res = await self.session.execute(stmt)
             profile = res.scalar_one_or_none()
             if profile:
@@ -86,7 +89,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             .options(
                 selectinload(ClothingRequestModel.measurement),
                 selectinload(ClothingRequestModel.design_images),
-                selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
+                selectinload(ClothingRequestModel.shop_requests).selectinload(
+                    ShopRequestModel.bids
+                ),
             )
             .where(ClothingRequestModel.request_id == request_id)
         )
@@ -94,13 +99,17 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
-    async def list_clothing_requests_by_client(self, client_id: str) -> list[ClothingRequest]:
+    async def list_clothing_requests_by_client(
+        self, client_id: str
+    ) -> list[ClothingRequest]:
         stmt = (
             select(ClothingRequestModel)
             .options(
                 selectinload(ClothingRequestModel.measurement),
                 selectinload(ClothingRequestModel.design_images),
-                selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
+                selectinload(ClothingRequestModel.shop_requests).selectinload(
+                    ShopRequestModel.bids
+                ),
             )
             .where(ClothingRequestModel.client_id == client_id)
         )
@@ -108,13 +117,17 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def list_open_clothing_requests(self, skip: int = 0, limit: int = 100) -> list[ClothingRequest]:
+    async def list_open_clothing_requests(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[ClothingRequest]:
         stmt = (
             select(ClothingRequestModel)
             .options(
                 selectinload(ClothingRequestModel.measurement),
                 selectinload(ClothingRequestModel.design_images),
-                selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
+                selectinload(ClothingRequestModel.shop_requests).selectinload(
+                    ShopRequestModel.bids
+                ),
             )
             .where(ClothingRequestModel.status == ClothingRequestStatusEnum.OPEN)
             .offset(skip)
@@ -124,7 +137,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def add_design_image(self, image: ClothingRequestImage) -> ClothingRequestImage:
+    async def add_design_image(
+        self, image: ClothingRequestImage
+    ) -> ClothingRequestImage:
         model = ClothingRequestImageModel(
             request_id=image.request_id,
             image_url=image.image_url,
@@ -145,22 +160,26 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         await self.session.commit()
         await self.session.refresh(model)
         fetched = await self.get_shop_request(model.shop_request_id)
-        return fetched if fetched else ShopRequest(shop_id=model.shop_id, shop_request_id=model.shop_request_id, request_id=model.request_id)
+        return (
+            fetched
+            if fetched
+            else ShopRequest(
+                shop_id=model.shop_id,
+                shop_request_id=model.shop_request_id,
+                request_id=model.request_id,
+            )
+        )
 
     async def get_shop_request(self, shop_request_id: int) -> ShopRequest | None:
-        stmt = (
-            select(ShopRequestModel)
-            .where(ShopRequestModel.shop_request_id == shop_request_id)
+        stmt = select(ShopRequestModel).where(
+            ShopRequestModel.shop_request_id == shop_request_id
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
     async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequest]:
-        stmt = (
-            select(ShopRequestModel)
-            .where(ShopRequestModel.shop_id == shop_id)
-        )
+        stmt = select(ShopRequestModel).where(ShopRequestModel.shop_id == shop_id)
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [m.to_domain() for m in models]
@@ -206,7 +225,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         if sr_model:
             sr_model.status = ShopRequestStatusEnum.ACCEPTED
             # Mark parent clothing request in_progress
-            cr_stmt = select(ClothingRequestModel).where(ClothingRequestModel.request_id == sr_model.request_id)
+            cr_stmt = select(ClothingRequestModel).where(
+                ClothingRequestModel.request_id == sr_model.request_id
+            )
             cr_res = await self.session.execute(cr_stmt)
             cr_model = cr_res.scalar_one_or_none()
             if cr_model:
@@ -225,7 +246,10 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
     async def list_orders_by_shop(self, shop_id: int) -> list[Order]:
         stmt = (
             select(OrderModel)
-            .join(ShopRequestModel, ShopRequestModel.shop_request_id == OrderModel.shop_request_id)
+            .join(
+                ShopRequestModel,
+                ShopRequestModel.shop_request_id == OrderModel.shop_request_id,
+            )
             .where(ShopRequestModel.shop_id == shop_id)
         )
         result = await self.session.execute(stmt)
@@ -235,8 +259,14 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
     async def list_orders_by_client(self, client_id: str) -> list[Order]:
         stmt = (
             select(OrderModel)
-            .join(ShopRequestModel, ShopRequestModel.shop_request_id == OrderModel.shop_request_id)
-            .join(ClothingRequestModel, ClothingRequestModel.request_id == ShopRequestModel.request_id)
+            .join(
+                ShopRequestModel,
+                ShopRequestModel.shop_request_id == OrderModel.shop_request_id,
+            )
+            .join(
+                ClothingRequestModel,
+                ClothingRequestModel.request_id == ShopRequestModel.request_id,
+            )
             .where(ClothingRequestModel.client_id == client_id)
         )
         result = await self.session.execute(stmt)
@@ -251,11 +281,15 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             model.order_status = OrderStatusEnum(status)
             if status == OrderStatusEnum.COMPLETED.value:
                 # Update clothing request status to COMPLETED
-                sr_stmt = select(ShopRequestModel).where(ShopRequestModel.shop_request_id == model.shop_request_id)
+                sr_stmt = select(ShopRequestModel).where(
+                    ShopRequestModel.shop_request_id == model.shop_request_id
+                )
                 sr_res = await self.session.execute(sr_stmt)
                 sr_model = sr_res.scalar_one_or_none()
                 if sr_model:
-                    cr_stmt = select(ClothingRequestModel).where(ClothingRequestModel.request_id == sr_model.request_id)
+                    cr_stmt = select(ClothingRequestModel).where(
+                        ClothingRequestModel.request_id == sr_model.request_id
+                    )
                     cr_res = await self.session.execute(cr_stmt)
                     cr_model = cr_res.scalar_one_or_none()
                     if cr_model:
@@ -305,7 +339,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
 
     async def cancel_clothing_request(self, request_id: int) -> ClothingRequest | None:
         """Set the clothing request status to CANCELLED and return the updated entity."""
-        stmt = select(ClothingRequestModel).where(ClothingRequestModel.request_id == request_id)
+        stmt = select(ClothingRequestModel).where(
+            ClothingRequestModel.request_id == request_id
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:

@@ -5,7 +5,8 @@ from datetime import datetime
 @dataclass
 class ClientRegisterDTO:
     """Input DTO for registering a new client profile after Firebase Auth sign-up."""
-    id: str   # Firebase Auth UID passed from the frontend after authentication
+
+    id: str  # Firebase Auth UID passed from the frontend after authentication
 
 
 @dataclass
@@ -18,9 +19,10 @@ class ClientOutputDTO:
 @dataclass
 class TailorRegisterDTO:
     """Input DTO for registering a new tailor profile after Firebase Auth sign-up."""
-    id: str           # Firebase Auth UID
-    nic_front: str | None = None   # Cloud storage URL
-    nic_rear: str | None = None    # Cloud storage URL
+
+    id: str  # Firebase Auth UID
+    nic_front: str | None = None  # Cloud storage URL
+    nic_rear: str | None = None  # Cloud storage URL
 
 
 @dataclass
@@ -36,6 +38,7 @@ class TailorOutputDTO:
 @dataclass
 class MeasurementProfileDTO:
     """Input DTO for saving or updating a client's body measurement profile."""
+
     client_id: str
     chest: float | None = None
     waist: float | None = None

@@ -116,7 +116,7 @@ Orchestrates domain entities to execute application use cases.
 Handles technical details, external services, and SQLAlchemy 2.0 ORM persistent storage.
 
 * **Database Models (`app/infrastructure/db/models/`)**:
-  * `user_model.py`: SQLAlchemy mapped models for `measurement_profile`, `clients`, `sellers` (mapped to Tailor domain entity).
+  * `user_model.py`: SQLAlchemy mapped models for `measurement_profile`, `clients`, `tailors` (mapped to Tailor domain entity).
   * `shop_model.py`: Mapped models for `shops`, `shop_images`.
   * `order_model.py`: Mapped models for `clothing_requests`, `clothing_request_images`, `measurements`, `shop_requests`, `bids`, `orders`, `payments`, `ratings`.
   * `rbac_model.py`: Mapped models for `roles`, `user_roles`, `sections`, `role_section_grants`, `sub_sections`, `section_sub_sections`.

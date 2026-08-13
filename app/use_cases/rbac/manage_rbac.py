@@ -31,7 +31,9 @@ class ManageRBACUseCase:
         )
 
     async def verify_user_route_access(self, user_id: str, route_name: str) -> bool:
-        has_access = await self.rbac_repository.check_user_access_to_route(user_id, route_name)
+        has_access = await self.rbac_repository.check_user_access_to_route(
+            user_id, route_name
+        )
         if not has_access:
             raise AccessDeniedError(user_id=user_id, section_name=route_name)
         return True

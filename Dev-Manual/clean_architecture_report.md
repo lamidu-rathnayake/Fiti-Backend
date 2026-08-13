@@ -17,7 +17,7 @@ The application is structured into strict concentric layers according to **Clean
 │  [ManageProfileUseCase, ManageShopUseCase, ManageOrderUseCase]           │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                          DOMAIN LAYER (Pure Python)                     │
-│  [Entities: Client, Seller, Shop, Order] [Abstract Repositories]         │
+│  [Entities: Client, Tailor, Shop, Order] [Abstract Repositories]         │
 ├─────────────────────────────────────────────────────────────────────────┤
 │                    INFRASTRUCTURE LAYER (Database & External)           │
 │  [SQLAlchemy Models & Repositories] [Firebase Admin SDK Security]       │
@@ -49,14 +49,14 @@ The application is structured into strict concentric layers according to **Clean
 ### 🧠 `app/domain/` — The Core Business Domain (Pure Python)
 
 #### 🔹 Entities (`app/domain/entities/`)
-- `user.py`: Defines `Client`, `Seller`, and `MeasurementProfile` domain entities.
+- `user.py`: Defines `Client`, `Tailor`, and `MeasurementProfile` domain entities.
 - `shop.py`: Defines the `Shop` entity representing a tailor shop.
 - `order.py`: Defines marketplace order entities: `ClothingRequest`, `ShopRequest`, `Bid`, `Order`, `Payment`, and `Rating`.
 - `rbac.py`: Defines `Role`, `Permission`, and `UserRole` entities.
 - `support.py`: Defines notification and support entities.
 
 #### 🔹 Repository Contracts (`app/domain/repositories/`)
-- `profile_repository.py`: Abstract Base Classes (`AbstractClientRepository`, `AbstractSellerRepository`, `AbstractMeasurementProfileRepository`) defining required database operations.
+- `profile_repository.py`: Abstract Base Classes (`AbstractClientRepository`, `AbstractTailorRepository`, `AbstractMeasurementProfileRepository`) defining required database operations.
 - `shop_repository.py`: Interface (`AbstractShopRepository`) for shop persistence.
 - `order_repository.py`: Interface (`AbstractOrderRepository`) for clothing requests, bids, orders, payments, and ratings.
 - `rbac_repository.py`: Interface (`AbstractRBACRepository`) for roles and permissions.
@@ -73,14 +73,14 @@ The application is structured into strict concentric layers according to **Clean
 ### ⚙️ `app/use_cases/` — Application Business Workflows
 
 #### 🔹 DTOs (`app/use_cases/dtos/`)
-- `user_dto.py`: Data Transfer Objects for client/seller registration and body measurements.
+- `user_dto.py`: Data Transfer Objects for client/tailor registration and body measurements.
 - `shop_dto.py`: DTOs for shop creation and updates.
 - `order_dto.py`: DTOs for custom clothing requests, bidding, order creation, payments, and reviews.
 - `rbac_dto.py`: DTOs for role assignment.
 
 #### 🔹 Workflows
-- `user/manage_profile.py`: `ManageProfileUseCase` handles client/seller profile creation and measurement profile upserts.
-- `shop/manage_shop.py`: `ManageShopUseCase` manages shop creation, seller shop lookup, and verification toggles.
+- `user/manage_profile.py`: `ManageProfileUseCase` handles client/tailor profile creation and measurement profile upserts.
+- `shop/manage_shop.py`: `ManageShopUseCase` manages shop creation, tailor shop lookup, and verification toggles.
 - `order/manage_order.py`: `ManageOrderUseCase` orchestrates the complete marketplace flow (request creation → shop distribution → bid submission → bid acceptance & order creation → payment → completion → rating).
 - `rbac/manage_rbac.py`: `ManageRBACUseCase` assigns and verifies fine-grained permissions.
 
@@ -89,14 +89,14 @@ The application is structured into strict concentric layers according to **Clean
 ### 🗄️ `app/infrastructure/` — Database Models & Implementations
 
 #### 🔹 ORM Database Models (`app/infrastructure/db/models/`)
-- `user_model.py`: SQLAlchemy models (`ClientModel`, `SellerModel`, `MeasurementProfileModel`) mapping to PostgreSQL `clients`, `sellers`, and `measurement_profile` tables.
+- `user_model.py`: SQLAlchemy models (`ClientModel`, `TailorModel`, `MeasurementProfileModel`) mapping to PostgreSQL `clients`, `tailors`, and `measurement_profile` tables.
 - `shop_model.py`: `ShopModel` mapping to `shops` table.
 - `order_model.py`: SQLAlchemy models (`ClothingRequestModel`, `ShopRequestModel`, `BidModel`, `OrderModel`, `PaymentModel`, `RatingModel`).
 - `rbac_model.py`: `RoleModel`, `PermissionModel`, `UserRoleModel`.
 - `support_model.py`: `NotificationModel`.
 
 #### 🔹 Repository Implementations (`app/infrastructure/db/repositories/`)
-- `sqlalchemy_profile_repository.py`: Concrete SQLAlchemy implementation of client, seller, and measurement repositories.
+- `sqlalchemy_profile_repository.py`: Concrete SQLAlchemy implementation of client, tailor, and measurement repositories.
 - `sqlalchemy_shop_repository.py`: Concrete implementation for shop queries.
 - `sqlalchemy_order_repository.py`: Concrete implementation handling complex relational queries and status updates for orders.
 - `sqlalchemy_rbac_repository.py`: Concrete implementation for role assignments.
@@ -107,12 +107,12 @@ The application is structured into strict concentric layers according to **Clean
 ### 🌐 `app/api/` — FastAPI Delivery Layer
 
 #### 🔹 Request / Response Schemas (`app/api/schemas/`)
-- `user_schema.py`: Pydantic validation schemas (`ClientRegisterRequest`, `SellerRegisterRequest`, `MeasurementProfileRequest`, etc.).
+- `user_schema.py`: Pydantic validation schemas (`ClientRegisterRequest`, `TailorRegisterRequest`, `MeasurementProfileRequest`, etc.).
 - `shop_schema.py`: `ShopCreateRequest`, `ShopResponse`.
 - `order_schema.py`: `ClothingRequestCreate`, `BidSubmitRequest`, `AcceptBidRequest`, `MockPaymentRequest`, `RatingCreateRequest`.
 
 #### 🔹 HTTP Endpoints (`app/api/v1/endpoints/`)
-- `profiles.py`: Routes for client/seller profile onboarding and body measurements (`/profiles/client`, `/profiles/seller`).
+- `profiles.py`: Routes for client/tailor profile onboarding and body measurements (`/profiles/client`, `/profiles/tailor`).
 - `shops.py`: Routes for tailor shop creation and search (`/shops/`).
 - `orders.py`: Routes for marketplace interactions (`/orders/requests`, `/orders/bids`, `/orders/accept-bid`, `/orders/payments/mock`, `/orders/ratings`).
 - `health.py`: Liveness check endpoint (`/health`).
@@ -128,8 +128,8 @@ The application is structured into strict concentric layers according to **Clean
 Let's walk through how data moves through these exact files during a complete transaction on **Fiti**.
 
 ### Scenario Narrative:
-1. **User Sign-up**: Tailor *"Kamal"* signs up using Firebase Web Auth on the frontend (`uid = "seller_kamal_123"`).
-2. **Seller Onboarding**: Web app calls `POST /api/v1/profiles/seller`.
+1. **User Sign-up**: Tailor *"Kamal"* signs up using Firebase Web Auth on the frontend (`uid = "tailor_kamal_123"`).
+2. **Tailor Onboarding**: Web app calls `POST /api/v1/profiles/tailor`.
 3. **Shop Creation**: Tailor Kamal creates *"Kamal Royal Tailors"* via `POST /api/v1/shops/`.
 4. **Client Request**: Client *"Nimal"* requests a custom 3-piece suit with voice note instructions via `POST /api/v1/orders/requests`.
 5. **Tailor Bidding**: Kamal submits a bid of LKR 25,000 via `POST /api/v1/orders/bids`.

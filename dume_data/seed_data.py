@@ -1,8 +1,6 @@
 import asyncio
 from datetime import UTC, date, datetime, timedelta
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.core.database import AsyncSessionFactory, engine
 from app.domain.entities.order import (
     ClothingRequestStatusEnum,
@@ -29,7 +27,7 @@ from app.infrastructure.db.models.shop_model import ShopImageModel, ShopModel
 from app.infrastructure.db.models.user_model import (
     ClientModel,
     MeasurementProfileModel,
-    SellerModel,
+    TailorModel,
 )
 
 
@@ -68,25 +66,25 @@ async def seed_database():
         )
         session.add(meas_profile1)
 
-        # 3. Create Dummy Sellers
-        seller1 = SellerModel(
-            id="seller_demo_001",
-            nic_front="https://storage.googleapis.com/fiti/nic/seller1_front.jpg",
-            nic_rear="https://storage.googleapis.com/fiti/nic/seller1_rear.jpg",
+        # 3. Create Dummy Tailors
+        tailor1 = TailorModel(
+            id="tailor_demo_001",
+            nic_front="https://storage.googleapis.com/fiti/nic/tailor1_front.jpg",
+            nic_rear="https://storage.googleapis.com/fiti/nic/tailor1_rear.jpg",
             is_verified=True,
         )
-        seller2 = SellerModel(
-            id="seller_demo_002",
-            nic_front="https://storage.googleapis.com/fiti/nic/seller2_front.jpg",
-            nic_rear="https://storage.googleapis.com/fiti/nic/seller2_rear.jpg",
+        tailor2 = TailorModel(
+            id="tailor_demo_002",
+            nic_front="https://storage.googleapis.com/fiti/nic/tailor2_front.jpg",
+            nic_rear="https://storage.googleapis.com/fiti/nic/tailor2_rear.jpg",
             is_verified=True,
         )
-        session.add_all([seller1, seller2])
-        await session.flush()
+        session.add_all([tailor1, tailor2])
+        await session.commit()
 
         # 4. Create Dummy Shops
         shop1 = ShopModel(
-            seller_id=seller1.id,
+            tailor_id=tailor1.id,
             shop_name="Royal Tailors Colombo",
             shop_bio="Bespoke luxury suits and traditional formal attire crafted with Italian wool.",
             shop_address="123 Galle Road, Colombo 03",
@@ -98,7 +96,7 @@ async def seed_database():
             average_rating=4.8,
         )
         shop2 = ShopModel(
-            seller_id=seller2.id,
+            tailor_id=tailor2.id,
             shop_name="Kandy Heritage Custom Apparel",
             shop_bio="Expert tailoring for weddings, ceremonies, and modern casual shirts.",
             shop_address="45 Peradeniya Road, Kandy",
@@ -113,9 +111,18 @@ async def seed_database():
         await session.flush()
 
         # Add Shop Images
-        shop1_img1 = ShopImageModel(shop_id=shop1.shop_id, image_url="https://images.unsplash.com/photo-1594938298603-c8148c4dae35")
-        shop1_img2 = ShopImageModel(shop_id=shop1.shop_id, image_url="https://images.unsplash.com/photo-1598033129183-c4f50c736f10")
-        shop2_img1 = ShopImageModel(shop_id=shop2.shop_id, image_url="https://images.unsplash.com/photo-1507679799987-c73779587ccf")
+        shop1_img1 = ShopImageModel(
+            shop_id=shop1.shop_id,
+            image_url="https://images.unsplash.com/photo-1594938298603-c8148c4dae35",
+        )
+        shop1_img2 = ShopImageModel(
+            shop_id=shop1.shop_id,
+            image_url="https://images.unsplash.com/photo-1598033129183-c4f50c736f10",
+        )
+        shop2_img1 = ShopImageModel(
+            shop_id=shop2.shop_id,
+            image_url="https://images.unsplash.com/photo-1507679799987-c73779587ccf",
+        )
         session.add_all([shop1_img1, shop1_img2, shop2_img1])
 
         # 5. Create Clothing Request
@@ -198,9 +205,13 @@ async def seed_database():
         await session.commit()
         print("✅ Dummy data successfully seeded into database!")
         print("   - 2 Clients created (client_demo_001, client_demo_002)")
-        print("   - 2 Sellers created (seller_demo_001, seller_demo_002)")
-        print("   - 2 Shops created ('Royal Tailors Colombo', 'Kandy Heritage Custom Apparel')")
-        print("   - 1 Clothing Request with measurement, bid, completed order, payment & rating")
+        print("   - 2 Tailors created (tailor_demo_001, tailor_demo_002)")
+        print(
+            "   - 2 Shops created ('Royal Tailors Colombo', 'Kandy Heritage Custom Apparel')"
+        )
+        print(
+            "   - 1 Clothing Request with measurement, bid, completed order, payment & rating"
+        )
 
     await engine.dispose()
 

@@ -29,6 +29,7 @@ class MeasurementDTO:
 @dataclass
 class ClothingRequestImageDTO:
     """Carries the cloud-storage URL for a design inspiration image."""
+
     image_url: str
     image_id: int | None = None
     request_id: int | None = None

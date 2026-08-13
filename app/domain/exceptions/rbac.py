@@ -14,4 +14,6 @@ class SectionNotFoundError(RBACDomainException):
 
 class AccessDeniedError(RBACDomainException):
     def __init__(self, user_id: str, section_name: str):
-        super().__init__(f"Access denied for user '{user_id}' to section '{section_name}'.")
+        super().__init__(
+            f"Access denied for user '{user_id}' to section '{section_name}'."
+        )

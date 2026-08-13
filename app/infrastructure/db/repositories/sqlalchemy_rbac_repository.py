@@ -1,4 +1,3 @@
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +23,7 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
 
     async def assign_role_to_user(self, user_id: str, role_id: int) -> None:
         stmt = select(UserRoleModel).where(
-              UserRoleModel.firebase_uid == user_id, UserRoleModel.role_id == role_id
+            UserRoleModel.firebase_uid == user_id, UserRoleModel.role_id == role_id
         )
         res = await self.session.execute(stmt)
         if not res.scalar_one_or_none():
@@ -36,7 +35,7 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
         stmt = (
             select(RoleModel)
             .join(UserRoleModel, UserRoleModel.role_id == RoleModel.id)
-              .where(UserRoleModel.firebase_uid == user_id)
+            .where(UserRoleModel.firebase_uid == user_id)
         )
         result = await self.session.execute(stmt)
         models = result.scalars().all()
@@ -45,9 +44,12 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
     async def get_accessible_sections_for_user(self, user_id: str) -> list[Section]:
         stmt = (
             select(SectionModel)
-            .join(RoleSectionGrantModel, RoleSectionGrantModel.section_id == SectionModel.id)
+            .join(
+                RoleSectionGrantModel,
+                RoleSectionGrantModel.section_id == SectionModel.id,
+            )
             .join(UserRoleModel, UserRoleModel.role_id == RoleSectionGrantModel.role_id)
-                .where(UserRoleModel.firebase_uid == user_id)
+            .where(UserRoleModel.firebase_uid == user_id)
             .distinct()
         )
         result = await self.session.execute(stmt)
@@ -57,9 +59,15 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
     async def check_user_access_to_route(self, user_id: str, route_name: str) -> bool:
         stmt = (
             select(SectionModel)
-            .join(RoleSectionGrantModel, RoleSectionGrantModel.section_id == SectionModel.id)
+            .join(
+                RoleSectionGrantModel,
+                RoleSectionGrantModel.section_id == SectionModel.id,
+            )
             .join(UserRoleModel, UserRoleModel.role_id == RoleSectionGrantModel.role_id)
-              .where(UserRoleModel.firebase_uid == user_id, SectionModel.route_name == route_name)
+            .where(
+                UserRoleModel.firebase_uid == user_id,
+                SectionModel.route_name == route_name,
+            )
         )
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none() is not None

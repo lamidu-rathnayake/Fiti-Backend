@@ -1,4 +1,3 @@
-
 from app.domain.entities.shop import Shop, ShopImage
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.domain.repositories.shop_repository import AbstractShopRepository
@@ -36,10 +35,12 @@ class ManageShopUseCase:
         return self._to_dto(shop)
 
     async def get_shops_by_tailor(self, tailor_id: str) -> list[ShopOutputDTO]:
-        shops = await self.shop_repository.get_by_seller_id(tailor_id)
+        shops = await self.shop_repository.get_by_tailor_id(tailor_id)
         return [self._to_dto(s) for s in shops]
 
-    async def list_shops(self, skip: int = 0, limit: int = 100, city: str | None = None) -> list[ShopOutputDTO]:
+    async def list_shops(
+        self, skip: int = 0, limit: int = 100, city: str | None = None
+    ) -> list[ShopOutputDTO]:
         shops = await self.shop_repository.list_all(skip=skip, limit=limit, city=city)
         return [self._to_dto(s) for s in shops]
 
@@ -49,7 +50,9 @@ class ManageShopUseCase:
             raise ShopNotFoundError(shop_id)
         img = ShopImage(shop_id=shop_id, image_url=image_url)
         saved = await self.shop_repository.add_image(img)
-        return ShopImageDTO(image_id=saved.image_id, shop_id=saved.shop_id, image_url=saved.image_url)
+        return ShopImageDTO(
+            image_id=saved.image_id, shop_id=saved.shop_id, image_url=saved.image_url
+        )
 
     async def update_shop(self, dto: ShopUpdateDTO) -> ShopOutputDTO:
         existing = await self.shop_repository.get_by_id(dto.shop_id)
@@ -78,8 +81,12 @@ class ManageShopUseCase:
             raise ShopNotFoundError(shop_id)
         return await self.shop_repository.delete_shop(shop_id)
 
-    async def search_near_location(self, lat: float, lng: float, radius_km: float = 10.0) -> list[ShopOutputDTO]:
-        shops = await self.shop_repository.search_near_location(lat=lat, lng=lng, radius_km=radius_km)
+    async def search_near_location(
+        self, lat: float, lng: float, radius_km: float = 10.0
+    ) -> list[ShopOutputDTO]:
+        shops = await self.shop_repository.search_near_location(
+            lat=lat, lng=lng, radius_km=radius_km
+        )
         return [self._to_dto(s) for s in shops]
 
     def _to_dto(self, shop: Shop) -> ShopOutputDTO:
@@ -96,7 +103,9 @@ class ManageShopUseCase:
             longitude=shop.longitude,
             average_rating=shop.average_rating,
             images=[
-                ShopImageDTO(image_id=img.image_id, shop_id=img.shop_id, image_url=img.image_url)
+                ShopImageDTO(
+                    image_id=img.image_id, shop_id=img.shop_id, image_url=img.image_url
+                )
                 for img in shop.images
             ],
             created_at=shop.created_at,

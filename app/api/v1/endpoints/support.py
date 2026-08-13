@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import get_manage_support_use_case
@@ -19,7 +18,12 @@ router = APIRouter(prefix="/support", tags=["Support"])
 
 # ── Notifications ──────────────────────────────────────────────────────
 
-@router.post("/notifications", response_model=NotificationResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/notifications",
+    response_model=NotificationResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def create_notification(
     request: NotificationCreateRequest,
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
@@ -41,7 +45,9 @@ async def list_notifications(
     return await use_case.list_notifications(user_id)
 
 
-@router.patch("/notifications/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch(
+    "/notifications/{notification_id}/read", status_code=status.HTTP_204_NO_CONTENT
+)
 async def mark_notification_read(
     notification_id: int,
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
@@ -56,7 +62,12 @@ async def mark_notification_read(
 
 # ── Favorite Shops ─────────────────────────────────────────────────────
 
-@router.post("/favorites", response_model=FavoriteShopResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/favorites",
+    response_model=FavoriteShopResponse,
+    status_code=status.HTTP_201_CREATED,
+)
 async def add_favorite(
     request: FavoriteShopRequest,
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
@@ -65,7 +76,9 @@ async def add_favorite(
     return await use_case.add_favorite(dto)
 
 
-@router.delete("/favorites/{client_id}/{shop_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/favorites/{client_id}/{shop_id}", status_code=status.HTTP_204_NO_CONTENT
+)
 async def remove_favorite(
     client_id: str,
     shop_id: int,

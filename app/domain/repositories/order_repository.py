@@ -13,7 +13,9 @@ from app.domain.entities.order import (
 
 class AbstractOrderRepository(ABC):
     @abstractmethod
-    async def create_clothing_request(self, request: ClothingRequest) -> ClothingRequest:
+    async def create_clothing_request(
+        self, request: ClothingRequest
+    ) -> ClothingRequest:
         pass
 
     @abstractmethod
@@ -21,15 +23,21 @@ class AbstractOrderRepository(ABC):
         pass
 
     @abstractmethod
-    async def list_clothing_requests_by_client(self, client_id: str) -> list[ClothingRequest]:
+    async def list_clothing_requests_by_client(
+        self, client_id: str
+    ) -> list[ClothingRequest]:
         pass
 
     @abstractmethod
-    async def list_open_clothing_requests(self, skip: int = 0, limit: int = 100) -> list[ClothingRequest]:
+    async def list_open_clothing_requests(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[ClothingRequest]:
         pass
 
     @abstractmethod
-    async def add_design_image(self, image: ClothingRequestImage) -> ClothingRequestImage:
+    async def add_design_image(
+        self, image: ClothingRequestImage
+    ) -> ClothingRequestImage:
         pass
 
     @abstractmethod
@@ -87,14 +95,11 @@ class AbstractOrderRepository(ABC):
     @abstractmethod
     async def cancel_clothing_request(self, request_id: int) -> ClothingRequest | None:
         """Set a clothing request status to CANCELLED. Returns updated entity or None if not found."""
-        pass
 
     @abstractmethod
     async def list_bids_by_shop_request(self, shop_request_id: int) -> list[Bid]:
         """List all bids submitted for a specific shop request."""
-        pass
 
     @abstractmethod
     async def get_payment_by_order(self, order_id: int) -> Payment | None:
         """Get the payment record associated with an order."""
-        pass

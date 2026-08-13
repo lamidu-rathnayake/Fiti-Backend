@@ -3,7 +3,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.dependencies import get_manage_profile_use_case
-from app.core.security import get_current_user_uid, require_role
 from app.api.schemas.user_schema import (
     ClientRegisterRequest,
     ClientResponse,
@@ -12,6 +11,7 @@ from app.api.schemas.user_schema import (
     TailorRegisterRequest,
     TailorResponse,
 )
+from app.core.security import get_current_user_uid, require_role
 from app.domain.exceptions.user import (
     ClientNotFoundError,
     ProfileAlreadyExistsError,
@@ -29,7 +29,10 @@ router = APIRouter(prefix="/profiles", tags=["Profiles"])
 
 # ── Client Registration ─────────────────────────────────────────────────
 
-@router.post("/client", response_model=ClientResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/client", response_model=ClientResponse, status_code=status.HTTP_201_CREATED
+)
 async def register_client(
     request: ClientRegisterRequest,
     authenticated_uid: str = Depends(get_current_user_uid),
@@ -64,7 +67,10 @@ async def get_client_profile(
 
 # ── Tailor Registration ─────────────────────────────────────────────────
 
-@router.post("/tailor", response_model=TailorResponse, status_code=status.HTTP_201_CREATED)
+
+@router.post(
+    "/tailor", response_model=TailorResponse, status_code=status.HTTP_201_CREATED
+)
 async def register_tailor(
     request: TailorRegisterRequest,
     authenticated_uid: str = Depends(get_current_user_uid),
@@ -116,7 +122,10 @@ async def get_tailor_verification_status(
 
 # ── Measurements ────────────────────────────────────────────────────────
 
-@router.put("/client/{client_id}/measurements", response_model=MeasurementProfileResponse)
+
+@router.put(
+    "/client/{client_id}/measurements", response_model=MeasurementProfileResponse
+)
 async def upsert_measurements(
     client_id: str,
     request: MeasurementProfileRequest,
@@ -140,7 +149,10 @@ async def upsert_measurements(
     return result
 
 
-@router.get("/client/{client_id}/measurements", response_model=Optional[MeasurementProfileResponse])
+@router.get(
+    "/client/{client_id}/measurements",
+    response_model=Optional[MeasurementProfileResponse],
+)
 async def get_measurements(
     client_id: str,
     authenticated_uid: str = Depends(require_role("client")),

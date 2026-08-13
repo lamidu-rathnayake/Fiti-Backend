@@ -100,6 +100,7 @@ class Bid:
     bid_amount: float
     ...
 
+
 @dataclass
 class Order:
     shop_request_id: int  # Central link

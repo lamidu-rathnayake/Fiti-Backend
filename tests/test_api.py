@@ -5,13 +5,25 @@ from httpx import ASGITransport, AsyncClient
 from app.core.database import engine
 from app.infrastructure.db.base import Base
 from app.main import app
+from app.core.security import get_current_user_uid
+
+app.dependency_overrides[get_current_user_uid] = lambda: "mock_firebase_uid"
 
 
 @pytest_asyncio.fixture(autouse=True)
 async def prepare_database():
     """Create DB tables for API tests."""
+    from sqlalchemy import insert
+    from app.infrastructure.db.models.rbac_model import RoleModel, UserRoleModel
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Seed mock roles for testing
+        await conn.execute(insert(RoleModel).values(id=1, name="client"))
+        await conn.execute(insert(RoleModel).values(id=2, name="tailor"))
+        await conn.execute(insert(RoleModel).values(id=3, name="admin"))
+        await conn.execute(insert(UserRoleModel).values(firebase_uid="mock_firebase_uid", role_id=1))
+        await conn.execute(insert(UserRoleModel).values(firebase_uid="mock_firebase_uid", role_id=2))
+        await conn.execute(insert(UserRoleModel).values(firebase_uid="mock_firebase_uid", role_id=3))
     yield
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
@@ -62,17 +74,17 @@ async def test_full_marketplace_workflow_api():
         assert client_resp.status_code == 201
         assert client_resp.json()["id"] == "client_fb_001"
 
-        # 2. Register Seller Profile
-        seller_resp = await ac.post(
-            "/api/v1/profiles/seller",
+        # 2. Register Tailor Profile
+        tailor_resp = await ac.post(
+            "/api/v1/profiles/tailor",
             json={
-                "id": "seller_fb_001",
+                "id": "tailor_fb_001",
                 "nic_front": "https://storage.googleapis.com/fiti/nic/front.jpg",
                 "nic_rear": "https://storage.googleapis.com/fiti/nic/rear.jpg",
             },
         )
-        assert seller_resp.status_code == 201
-        assert seller_resp.json()["is_verified"] is False
+        assert tailor_resp.status_code == 201
+        assert tailor_resp.json()["is_verified"] is False
 
         # 3. Duplicate client profile registration should return 409
         dup_resp = await ac.post("/api/v1/profiles/client", json={"id": "client_fb_001"})
@@ -87,11 +99,11 @@ async def test_full_marketplace_workflow_api():
         assert meas_resp.json()["client_id"] == "client_fb_001"
         assert meas_resp.json()["chest"] == 40.5
 
-        # 5. Create Shop for Seller
+        # 5. Create Shop for Tailor
         shop_resp = await ac.post(
             "/api/v1/shops/",
             json={
-                "seller_id": "seller_fb_001",
+                "tailor_id": "tailor_fb_001",
                 "shop_name": "Royal Tailors",
                 "city": "Colombo",
                 "contact_number": "+94770001122",
@@ -179,11 +191,6 @@ async def test_full_marketplace_workflow_api():
 
 @pytest.mark.asyncio
 async def test_rbac_endpoints():
-    # Seed the "client" role in the test database directly
-    from app.infrastructure.db.models.rbac_model import RoleModel
-    async with engine.begin() as conn:
-        from sqlalchemy import insert
-        await conn.execute(insert(RoleModel).values(name="client"))
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         # 1. Assign role
@@ -222,15 +229,15 @@ async def test_support_endpoints():
         # 4. Create favorite
         # Note: requires a valid shop_id. Let's create a shop first.
         # But wait, foreign keys might fail if the shop doesn't exist.
-        # Wait, the sqlite db handles foreign keys if enabled. Let's create a dummy seller and shop.
+        # Wait, the sqlite db handles foreign keys if enabled. Let's create a dummy tailor and shop.
         client_res = await ac.post("/api/v1/profiles/client", json={"id": "client_1"})
         assert client_res.status_code == 201
 
-        seller_res = await ac.post("/api/v1/profiles/seller", json={"id": "seller_fav", "nic_front": "http://img.com/nic"})
-        assert seller_res.status_code == 201
+        tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_fav", "nic_front": "http://img.com/nic"})
+        assert tailor_res.status_code == 201
         
         shop_res = await ac.post("/api/v1/shops/", json={
-            "seller_id": "seller_fav", "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "123"
+            "tailor_id": "tailor_fav", "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "123"
         })
         assert shop_res.status_code == 201
         shop_id = shop_res.json()["shop_id"]
@@ -251,11 +258,11 @@ async def test_support_endpoints():
 @pytest.mark.asyncio
 async def test_shop_listing_and_update_endpoints():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-        seller_res = await ac.post("/api/v1/profiles/seller", json={"id": "seller_search", "nic_front": "http://img.com/nic"})
-        assert seller_res.status_code == 201
+        tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_search", "nic_front": "http://img.com/nic"})
+        assert tailor_res.status_code == 201
         
         shop_res = await ac.post("/api/v1/shops/", json={
-            "seller_id": "seller_search", "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
+            "tailor_id": "tailor_search", "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
         })
         assert shop_res.status_code == 201
         shop_id = shop_res.json()["shop_id"]
@@ -272,8 +279,8 @@ async def test_shop_listing_and_update_endpoints():
         assert res.status_code == 200
         assert type(res.json()) is list
         
-        # Get by seller
-        res = await ac.get("/api/v1/shops/seller/seller_search")
+        # Get by tailor
+        res = await ac.get("/api/v1/shops/tailor/tailor_search")
         assert res.status_code == 200
         assert len(res.json()) >= 1
         

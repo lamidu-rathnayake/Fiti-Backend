@@ -72,7 +72,7 @@ $$ LANGUAGE plpgsql;
 -- ---------------------------------------------------------
 -- NOTE: Full user identity (name, email, password, auth provider) lives in
 -- Firebase Auth. PostgreSQL only stores role-specific profile extensions.
--- The `id` column in clients/sellers(tailors) holds the Firebase Auth UID directly
+-- The `id` column in clients/tailors(tailors) holds the Firebase Auth UID directly
 -- with NO foreign key to a users table (there is no users table).
 
 CREATE TABLE IF NOT EXISTS clients (
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS clients (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS sellers (
+CREATE TABLE IF NOT EXISTS tailors (
     id           VARCHAR(128) PRIMARY KEY,              -- Firebase Auth UID
     nic_front    VARCHAR(500),                          -- Cloud storage URL
     nic_rear     VARCHAR(500),                          -- Cloud storage URL
@@ -151,7 +151,7 @@ CREATE TABLE IF NOT EXISTS section_sub_sections (
 -- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS shops (
     shop_id              SERIAL PRIMARY KEY,
-    seller_id            VARCHAR(128) NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
+    tailor_id            VARCHAR(128) NOT NULL REFERENCES tailors(id) ON DELETE CASCADE,
     shop_name            VARCHAR(150) NOT NULL,
     shop_bio             TEXT,
     shop_address         VARCHAR(255),
@@ -296,7 +296,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 -- ---------------------------------------------------------
 -- 8. INDEXES (FK columns not already indexed by a PK/UNIQUE)
 -- ---------------------------------------------------------
-CREATE INDEX IF NOT EXISTS idx_shops_seller_id                ON shops(seller_id);
+CREATE INDEX IF NOT EXISTS idx_shops_tailor_id                ON shops(tailor_id);
 CREATE INDEX IF NOT EXISTS idx_shop_images_shop_id            ON shop_images(shop_id);
 CREATE INDEX IF NOT EXISTS idx_clothing_requests_client       ON clothing_requests(client_id);
 CREATE INDEX IF NOT EXISTS idx_clothing_requests_status       ON clothing_requests(status);
@@ -315,8 +315,8 @@ CREATE INDEX IF NOT EXISTS idx_user_roles_role_id             ON user_roles(role
 DROP TRIGGER IF EXISTS trg_clients_updated_at ON clients;
 CREATE TRIGGER trg_clients_updated_at BEFORE UPDATE ON clients FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
-DROP TRIGGER IF EXISTS trg_sellers_updated_at ON sellers;
-CREATE TRIGGER trg_sellers_updated_at BEFORE UPDATE ON sellers FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+DROP TRIGGER IF EXISTS trg_tailors_updated_at ON tailors;
+CREATE TRIGGER trg_tailors_updated_at BEFORE UPDATE ON tailors FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 DROP TRIGGER IF EXISTS trg_shops_updated_at ON shops;
 CREATE TRIGGER trg_shops_updated_at BEFORE UPDATE ON shops FOR EACH ROW EXECUTE FUNCTION set_updated_at();
@@ -336,13 +336,13 @@ CREATE TRIGGER trg_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUT
 -- ---------------------------------------------------------
 -- 10. SEED DATA (Default Roles & Sections)
 -- ---------------------------------------------------------
-INSERT INTO roles (name) VALUES ('client'), ('seller'), ('admin'), ('tailor')
+INSERT INTO roles (name) VALUES ('client'), ('tailor'), ('admin'), ('tailor')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO sections (name, route_name) VALUES
   ('Home', '/home'),
   ('Client Dashboard', '/client/dashboard'),
-  ('Seller Dashboard', '/seller/dashboard'),
+  ('Tailor Dashboard', '/tailor/dashboard'),
   ('Admin Console', '/admin/console')
 ON CONFLICT (name) DO NOTHING;
 
@@ -352,8 +352,8 @@ SELECT r.id, s.id
 FROM roles r
 CROSS JOIN sections s
 WHERE (r.name = 'client' AND s.name IN ('Home', 'Client Dashboard'))
-   OR (r.name = 'tailor' AND s.name IN ('Home', 'Seller Dashboard'))
-   OR (r.name = 'seller' AND s.name IN ('Home', 'Seller Dashboard'))
+   OR (r.name = 'tailor' AND s.name IN ('Home', 'Tailor Dashboard'))
+   OR (r.name = 'tailor' AND s.name IN ('Home', 'Tailor Dashboard'))
    OR (r.name = 'admin' AND s.name IN ('Home', 'Admin Console'))
 ON CONFLICT (role_id, section_id) DO NOTHING;
 

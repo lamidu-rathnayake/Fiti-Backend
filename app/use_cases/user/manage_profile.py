@@ -1,4 +1,3 @@
-
 from app.domain.entities.user import Client, MeasurementProfile, Tailor
 from app.domain.exceptions.user import (
     ClientNotFoundError,
@@ -43,7 +42,9 @@ class ManageProfileUseCase:
             raise ProfileAlreadyExistsError(dto.id, role="client")
         client = Client(id=dto.id)
         saved = await self.client_repository.create(client)
-        return ClientOutputDTO(id=saved.id, created_at=saved.created_at, updated_at=saved.updated_at)
+        return ClientOutputDTO(
+            id=saved.id, created_at=saved.created_at, updated_at=saved.updated_at
+        )
 
     async def register_tailor(self, dto: TailorRegisterDTO) -> TailorOutputDTO:
         existing = await self.tailor_repository.get_by_id(dto.id)
@@ -64,7 +65,9 @@ class ManageProfileUseCase:
         client = await self.client_repository.get_by_id(client_id)
         if not client:
             raise ClientNotFoundError(client_id)
-        return ClientOutputDTO(id=client.id, created_at=client.created_at, updated_at=client.updated_at)
+        return ClientOutputDTO(
+            id=client.id, created_at=client.created_at, updated_at=client.updated_at
+        )
 
     async def get_tailor_profile(self, tailor_id: str) -> TailorOutputDTO:
         tailor = await self.tailor_repository.get_by_id(tailor_id)
@@ -79,7 +82,9 @@ class ManageProfileUseCase:
             updated_at=tailor.updated_at,
         )
 
-    async def upsert_measurement_profile(self, dto: MeasurementProfileDTO) -> MeasurementProfileOutputDTO:
+    async def upsert_measurement_profile(
+        self, dto: MeasurementProfileDTO
+    ) -> MeasurementProfileOutputDTO:
         existing = await self.measurement_repository.get_by_client_id(dto.client_id)
         profile = MeasurementProfile(
             client_id=dto.client_id,
@@ -100,11 +105,15 @@ class ManageProfileUseCase:
         )
         return self._to_measurement_output_dto(saved)
 
-    async def get_measurement_profile(self, client_id: str) -> MeasurementProfileOutputDTO | None:
+    async def get_measurement_profile(
+        self, client_id: str
+    ) -> MeasurementProfileOutputDTO | None:
         profile = await self.measurement_repository.get_by_client_id(client_id)
         return self._to_measurement_output_dto(profile) if profile else None
 
-    def _to_measurement_output_dto(self, p: MeasurementProfile) -> MeasurementProfileOutputDTO:
+    def _to_measurement_output_dto(
+        self, p: MeasurementProfile
+    ) -> MeasurementProfileOutputDTO:
         return MeasurementProfileOutputDTO(
             client_id=p.client_id,
             measurement_id=p.measurement_id,
@@ -120,4 +129,3 @@ class ManageProfileUseCase:
             created_at=p.created_at,
             updated_at=p.updated_at,
         )
-

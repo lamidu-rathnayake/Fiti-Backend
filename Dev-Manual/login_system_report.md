@@ -7,7 +7,7 @@ Fiti uses a **Hybrid Auth Architecture** designed for a **Web Application** (e.g
 | Responsibility | Owner |
 |---|---|
 | Password hashing, session tokens, Google/OAuth popups, email auth | **Firebase Auth** (Google Web JS SDK) |
-| Role profile (Client/Seller), measurements, shops, orders | **Fiti FastAPI Backend** (PostgreSQL) |
+| Role profile (Client/Tailor), measurements, shops, orders | **Fiti FastAPI Backend** (PostgreSQL) |
 
 The backend **never stores passwords or emails**. It receives a **Firebase UID** — a unique ID string that Firebase assigns to every authenticated user — and creates a role-specific profile record in PostgreSQL around it.
 
@@ -32,7 +32,7 @@ The backend **never stores passwords or emails**. It receives a **Firebase UID**
              │  FastAPI          │   │  FastAPI            │
              │                  │   │                     │
              │  POST /profiles/ │   │  GET /api/...       │
-             │  client OR seller│   │  (uses Firebase UID │
+             │  client OR tailor│   │  (uses Firebase UID │
              │  (first-time only)│   │  to fetch data)     │
              └────────┬──────────┘   └──────────┬──────────┘
                       │                          │
@@ -40,7 +40,7 @@ The backend **never stores passwords or emails**. It receives a **Firebase UID**
              ┌──────────────────────────────────────────────┐
              │               PostgreSQL                      │
              │                                              │
-             │   clients table         sellers table        │
+             │   clients table         tailors table        │
              │   ┌────────────────┐   ┌──────────────────┐  │
              │   │ id (Firebase   │   │ id (Firebase UID)│  │
              │   │     UID) PK    │   │ nic_front        │  │
@@ -207,26 +207,26 @@ async function handleGoogleLogin() {
 
 ---
 
-## Scenario 3: New Web Seller/Tailor Registration
+## Scenario 3: New Web Tailor/Tailor Registration
 
-> **Rasheed** (a tailor) opens `fiti.lk/seller/register` on his browser.
+> **Rasheed** (a tailor) opens `fiti.lk/tailor/register` on his browser.
 
 ```
 STEP 1: Firebase Auth sign-up in browser
-        Firebase UID assigned: "seller_uid_r99"
+        Firebase UID assigned: "tailor_uid_r99"
 
 STEP 2: Upload NIC images directly from browser to Firebase Storage / S3 / Cloud Storage
         Returns:
           nic_front: "https://storage.googleapis.com/fiti/nic/front_r99.jpg"
           nic_rear:  "https://storage.googleapis.com/fiti/nic/rear_r99.jpg"
 
-STEP 3: Register Seller Profile on FastAPI Backend
+STEP 3: Register Tailor Profile on FastAPI Backend
 
-fetch('/api/v1/profiles/seller', {
+fetch('/api/v1/profiles/tailor', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    id: "seller_uid_r99",
+    id: "tailor_uid_r99",
     nic_front: "https://storage.googleapis.com/fiti/nic/front_r99.jpg",
     nic_rear:  "https://storage.googleapis.com/fiti/nic/rear_r99.jpg"
   })
@@ -235,13 +235,13 @@ fetch('/api/v1/profiles/seller', {
         ▼
 Response 201:
 {
-  "id": "seller_uid_r99",
+  "id": "tailor_uid_r99",
   "is_verified": false,    ← Admin verifies before shop activation
   "nic_front": "https://...",
   "nic_rear":  "https://..."
 }
 
-STEP 4: Redirect tailor to `/seller/dashboard` (showing "Verification Pending" banner)
+STEP 4: Redirect tailor to `/tailor/dashboard` (showing "Verification Pending" banner)
 ```
 
 ---
@@ -253,7 +253,7 @@ STEP 4: Redirect tailor to `/seller/dashboard` (showing "Verification Pending" b
 | Email & Password | ✅ Yes | ❌ No |
 | Display Name & Photo | ✅ Yes | ❌ No |
 | Firebase UID | ✅ Yes | ✅ Yes (as Primary Key) |
-| Role (client/seller) | ❌ No | ✅ clients / sellers table |
+| Role (client/tailor) | ❌ No | ✅ clients / tailors table |
 | Measurements | ❌ No | ✅ measurement_profile table |
 | Shop details & location | ❌ No | ✅ shops table |
 | Voice Notes & Images | ❌ No | ✅ clothing_requests & images |
@@ -288,7 +288,7 @@ STEP 4: Redirect tailor to `/seller/dashboard` (showing "Verification Pending" b
 | Endpoint | Web Page / Trigger | Purpose |
 |---|---|---|
 | `POST /api/v1/profiles/client` | `/register` (First-time) | Register new client profile |
-| `POST /api/v1/profiles/seller` | `/seller/register` | Register seller profile + NIC |
+| `POST /api/v1/profiles/tailor` | `/tailor/register` | Register tailor profile + NIC |
 | `POST /api/v1/profiles/client` (returns 409) | `/login` (Returning) | Identifies returning client |
 | `PUT /api/v1/profiles/client/{id}/measurements` | `/onboarding/measurements` | Save client measurements |
 | `GET /api/v1/profiles/client/{id}/measurements` | `/profile` | Load client measurements |

@@ -16,7 +16,6 @@ from app.domain.entities.order import (
 from app.domain.exceptions.order import (
     ClothingRequestNotFoundError,
     OrderNotFoundError,
-    ShopRequestNotFoundError,
 )
 from app.domain.repositories.order_repository import AbstractOrderRepository
 from app.domain.repositories.shop_repository import AbstractShopRepository
@@ -82,7 +81,9 @@ class ManageOrderUseCase:
         # Persist design inspiration images (URLs only — files already in cloud storage)
         if dto.design_image_urls:
             for url in dto.design_image_urls:
-                img = ClothingRequestImage(request_id=saved_req.request_id, image_url=url)  # type: ignore
+                img = ClothingRequestImage(
+                    request_id=saved_req.request_id, image_url=url
+                )  # type: ignore
                 await self.order_repository.add_design_image(img)
 
         # Broadcast/Directly target shops by creating shop_requests
@@ -91,7 +92,9 @@ class ManageOrderUseCase:
                 shop_req = ShopRequest(request_id=saved_req.request_id, shop_id=shop_id)  # type: ignore
                 await self.order_repository.create_shop_request(shop_req)
 
-        refetched = await self.order_repository.get_clothing_request(saved_req.request_id)  # type: ignore
+        refetched = await self.order_repository.get_clothing_request(
+            saved_req.request_id
+        )  # type: ignore
         return self._to_clothing_request_dto(refetched or saved_req)
 
     async def get_clothing_request(self, request_id: int) -> ClothingRequestOutputDTO:
@@ -100,12 +103,20 @@ class ManageOrderUseCase:
             raise ClothingRequestNotFoundError(request_id)
         return self._to_clothing_request_dto(req)
 
-    async def list_clothing_requests_by_client(self, client_id: str) -> list[ClothingRequestOutputDTO]:
-        requests = await self.order_repository.list_clothing_requests_by_client(client_id)
+    async def list_clothing_requests_by_client(
+        self, client_id: str
+    ) -> list[ClothingRequestOutputDTO]:
+        requests = await self.order_repository.list_clothing_requests_by_client(
+            client_id
+        )
         return [self._to_clothing_request_dto(r) for r in requests]
 
-    async def list_open_clothing_requests(self, skip: int = 0, limit: int = 100) -> list[ClothingRequestOutputDTO]:
-        requests = await self.order_repository.list_open_clothing_requests(skip=skip, limit=limit)
+    async def list_open_clothing_requests(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[ClothingRequestOutputDTO]:
+        requests = await self.order_repository.list_open_clothing_requests(
+            skip=skip, limit=limit
+        )
         return [self._to_clothing_request_dto(r) for r in requests]
 
     async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequestDTO]:
@@ -145,7 +156,9 @@ class ManageOrderUseCase:
         saved_order = await self.order_repository.create_order(order)
         return self._to_order_dto(saved_order)
 
-    async def update_order_status(self, order_id: int, new_status: str) -> OrderOutputDTO:
+    async def update_order_status(
+        self, order_id: int, new_status: str
+    ) -> OrderOutputDTO:
         order = await self.order_repository.get_order(order_id)
         if not order:
             raise OrderNotFoundError(order_id)
@@ -208,7 +221,9 @@ class ManageOrderUseCase:
             all_ratings = await self.order_repository.get_ratings_by_shop(dto.shop_id)
             if all_ratings:
                 avg = sum(r.rating for r in all_ratings) / len(all_ratings)
-                await self.shop_repository.update_average_rating(dto.shop_id, round(avg, 2))
+                await self.shop_repository.update_average_rating(
+                    dto.shop_id, round(avg, 2)
+                )
 
         return RatingOutputDTO(
             rating_id=saved_rating.rating_id,  # type: ignore
@@ -220,15 +235,21 @@ class ManageOrderUseCase:
             created_at=saved_rating.created_at,
         )
 
-    async def cancel_clothing_request(self, request_id: int, client_id: str) -> ClothingRequestOutputDTO:
+    async def cancel_clothing_request(
+        self, request_id: int, client_id: str
+    ) -> ClothingRequestOutputDTO:
         """Cancel an open clothing request. Only the owning client may cancel."""
         req = await self.order_repository.get_clothing_request(request_id)
         if not req:
             raise ClothingRequestNotFoundError(request_id)
         if req.client_id != client_id:
-            raise PermissionError(f"Client '{client_id}' does not own request {request_id}.")
+            raise PermissionError(
+                f"Client '{client_id}' does not own request {request_id}."
+            )
         if req.status != ClothingRequestStatusEnum.OPEN:
-            raise ValueError(f"Only OPEN requests can be cancelled. Current status: {req.status.value}")
+            raise ValueError(
+                f"Only OPEN requests can be cancelled. Current status: {req.status.value}"
+            )
         updated = await self.order_repository.cancel_clothing_request(request_id)
         return self._to_clothing_request_dto(updated or req)
 
@@ -267,8 +288,9 @@ class ManageOrderUseCase:
     # Private helpers
     # ------------------------------------------------------------------
 
-
-    def _to_clothing_request_dto(self, req: ClothingRequest) -> ClothingRequestOutputDTO:
+    def _to_clothing_request_dto(
+        self, req: ClothingRequest
+    ) -> ClothingRequestOutputDTO:
         meas_dto = None
         if req.measurement:
             meas_dto = MeasurementDTO(
@@ -323,7 +345,8 @@ class ManageOrderUseCase:
                     message=b.message,
                     created_at=b.created_at,
                 )
-                for sr in req.shop_requests for b in sr.bids
+                for sr in req.shop_requests
+                for b in sr.bids
             ],
             created_at=req.created_at,
             updated_at=req.updated_at,
