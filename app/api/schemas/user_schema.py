@@ -55,7 +55,6 @@ class TailorResponse(BaseModel):
 
 class MeasurementProfileRequest(BaseModel):
     """Body measurements used in both profile storage and order clothing requests."""
-
     chest: float | None = None
     waist: float | None = None
     shoulder: float | None = None
