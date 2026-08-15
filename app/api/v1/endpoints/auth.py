@@ -1,48 +1,49 @@
 from fastapi import APIRouter, Depends
+from firebase_admin import firestore
 from pydantic import BaseModel
 
-from app.api.dependencies import get_manage_rbac_use_case
-from app.core.config import settings
-from app.core.security import get_current_user_uid
-from app.use_cases.rbac.manage_rbac import ManageRBACUseCase
+from app.core.security import get_current_user, init_firebase_admin
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 class RoleCheckResponse(BaseModel):
     uid: str
-    roles: list[str]
+    email: str | None
+    role: str
     redirect_to: str
 
 
 @router.get("/me/role", response_model=RoleCheckResponse)
 async def get_user_role(
-    authenticated_uid: str = Depends(get_current_user_uid),
-    rbac_use_case: ManageRBACUseCase = Depends(get_manage_rbac_use_case),
+    user_info: dict = Depends(get_current_user),
 ):
     """
     Gateway endpoint for post-login redirection.
-    Returns the user's role and the appropriate redirect URL.
+    Returns the user's UID, email, role, and the appropriate redirect URL.
     """
-    overview = await rbac_use_case.get_user_access_overview(authenticated_uid)
-    roles = overview.roles
+    uid = user_info["uid"]
+    email = user_info.get("email")
+    role = user_info.get("role")
 
-    if "admin" in roles:
-        # Redirect to the separate Admin Backend
-        redirect_to = (
-            f"{settings.ADMIN_BACKEND_URL}/dashboard"
-            if settings.ADMIN_BACKEND_URL
-            else "/admin/dashboard"
-        )
-    elif "tailor" in roles:
-        # Both tags supported for backward compatibility during transition
-        redirect_to = "/tailor/dashboard"
-    elif "client" in roles:
-        redirect_to = "/client/dashboard"
+    if not role:
+        try:
+            init_firebase_admin()
+            db = firestore.client()
+            user_doc = db.collection("users").document(uid).get()
+            if user_doc.exists:
+                user_data = user_doc.to_dict() or {}
+                role = user_data.get("role", "client")
+        except Exception:
+            role = "client"
+
+    if role == "seller" or role == "tailor":
+        redirect_to = "/seller/dashboard"
+    elif role == "client":
+        redirect_to = "/client/home"
     else:
-        # New users without a role yet go to onboarding
-        redirect_to = "/onboarding"
+        redirect_to = "/register"
 
     return RoleCheckResponse(
-        uid=authenticated_uid, roles=roles, redirect_to=redirect_to
+        uid=uid, email=email, role=role or "client", redirect_to=redirect_to
     )

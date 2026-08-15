@@ -31,11 +31,6 @@ class Settings(BaseSettings):
     MOCK_FIREBASE_AUTH: bool = False
     FIREBASE_CREDENTIALS_PATH: str | None = None
 
-    # Admin Backend — used by GET /auth/me/role to redirect admin users
-    # In Phase 1 (shared frontend), admin redirects to an internal route.
-    # Change to full URL (e.g. https://admin.fiti.com) when admin frontend is separated.
-    ADMIN_BACKEND_URL: str = ""
-
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
         env_file_encoding="utf-8",
@@ -45,3 +40,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
