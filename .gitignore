@@ -79,3 +79,5 @@ coverage.xml
 
 # Tooling & Agent Artifacts
 .gemini/
+
+fiti-frontend-test-1\dist
