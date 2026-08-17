@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from firebase_admin import firestore
 from pydantic import BaseModel
 
@@ -21,6 +21,7 @@ async def get_user_role(
     """
     Gateway endpoint for post-login redirection.
     Returns the user's UID, email, role, and the appropriate redirect URL.
+    Raises HTTP 404 if user has no role registered yet.
     """
     uid = user_info["uid"]
     email = user_info.get("email")
@@ -33,17 +34,24 @@ async def get_user_role(
             user_doc = db.collection("users").document(uid).get()
             if user_doc.exists:
                 user_data = user_doc.to_dict() or {}
-                role = user_data.get("role", "client")
+                role = user_data.get("role")
         except Exception:
-            role = "client"
+            pass
 
-    if role == "seller" or role == "tailor":
-        redirect_to = "/seller/dashboard"
+    if not role:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Role not found for user.",
+        )
+
+    if role == "tailor" or role == "seller":
+        redirect_to = "/tailor/home"
     elif role == "client":
         redirect_to = "/client/home"
     else:
-        redirect_to = "/register"
+        redirect_to = "/onboarding"
 
     return RoleCheckResponse(
-        uid=uid, email=email, role=role or "client", redirect_to=redirect_to
+        uid=uid, email=email, role=role, redirect_to=redirect_to
     )
+
