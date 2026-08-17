@@ -9,10 +9,11 @@ class ShopImageSchema(BaseModel):
     image_url: str
 
 
+class ShopImageCreateRequest(BaseModel):
+    image_url: str = Field(..., min_length=1, max_length=500)
+
+
 class ShopCreateRequest(BaseModel):
-    tailor_id: str = Field(
-        ..., description="Firebase UID of the tailor who owns this shop"
-    )
     shop_name: str = Field(..., min_length=2, max_length=150)
     shop_bio: str | None = None
     shop_address: str | None = None
@@ -48,6 +49,6 @@ class ShopResponse(BaseModel):
     latitude: float | None = None
     longitude: float | None = None
     average_rating: float = 0.0
-    images: list[ShopImageSchema] = []
+    images: list[ShopImageSchema] = Field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

@@ -3,11 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.api.dependencies import get_manage_shop_use_case
 from app.api.schemas.shop_schema import (
     ShopCreateRequest,
+    ShopImageCreateRequest,
     ShopImageSchema,
     ShopResponse,
     ShopUpdateRequest,
 )
-from app.core.security import require_role
+from app.core.security import get_current_user_uid
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.use_cases.dtos.shop_dto import ShopCreateDTO, ShopUpdateDTO
 from app.use_cases.shop.manage_shop import ManageShopUseCase
@@ -70,12 +71,12 @@ async def get_shop(
 @router.post("/", response_model=ShopResponse, status_code=status.HTTP_201_CREATED)
 async def create_shop(
     request: ShopCreateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
-    """Register a new tailor shop. Requires tailor role."""
+    """Register a shop owned by the authenticated tailor."""
     dto = ShopCreateDTO(
-        tailor_id=request.tailor_id,
+        tailor_id=authenticated_uid,
         shop_name=request.shop_name,
         shop_bio=request.shop_bio,
         shop_address=request.shop_address,
@@ -92,11 +93,17 @@ async def create_shop(
 async def update_shop(
     shop_id: int,
     request: ShopUpdateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
-    """Update shop details. Requires tailor role."""
+    """Update a shop owned by the authenticated tailor."""
     try:
+        shop = await use_case.get_shop_by_id(shop_id)
+        if shop.tailor_id != authenticated_uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this shop.",
+            )
         dto = ShopUpdateDTO(
             shop_id=shop_id,
             shop_name=request.shop_name,
@@ -116,11 +123,17 @@ async def update_shop(
 @router.delete("/{shop_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_shop(
     shop_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
-    """Delete a shop. Requires tailor role."""
+    """Delete a shop owned by the authenticated tailor."""
     try:
+        shop = await use_case.get_shop_by_id(shop_id)
+        if shop.tailor_id != authenticated_uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this shop.",
+            )
         await use_case.delete_shop(shop_id)
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
@@ -133,12 +146,21 @@ async def delete_shop(
 )
 async def add_shop_image(
     shop_id: int,
-    image_url: str,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    request: ShopImageCreateRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
-    """Add an image to a shop. Requires tailor role."""
+    """Add an image to a shop owned by the authenticated tailor."""
     try:
-        return await use_case.add_shop_image(shop_id=shop_id, image_url=image_url)
+        shop = await use_case.get_shop_by_id(shop_id)
+        if shop.tailor_id != authenticated_uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this shop.",
+            )
+        return await use_case.add_shop_image(
+            shop_id=shop_id,
+            image_url=request.image_url,
+        )
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
