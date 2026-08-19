@@ -52,10 +52,10 @@ The following matrix details the current status of all 14 requested pages:
 
 | # | Page Name | Current Implementation Status | Existing File Location | Notes & Missing Features |
 | :-: | :--- | :--- | :--- | :--- |
-| **1** | **LOGIN PAGE** | ✅ **Implemented** | `app/(auth)/login/page.tsx` | Complete with Email/Password, Google OAuth, error handling, backend role lookup, and redirect logic. |
-| **2** | **REGISTER SELECTION PAGE** | ✅ **Implemented** | `app/(auth)/register/page.tsx` | Complete with role selection cards (Client vs Tailor). |
-| **3** | **CLIENT REGISTER PAGE** | ✅ **Implemented** | `components/auth/register-forms.tsx`<br>`app/(auth)/register/[role]/page.tsx` | Complete form with name, email, phone, city, address, image placeholder, and backend `createClientProfile()` integration. |
-| **4** | **SELLER REGISTER PAGE** | ✅ **Implemented** | `components/auth/register-forms.tsx`<br>`app/(auth)/register/[role]/page.tsx` | Complete 2-step form: Personal details + Shop details, specialty, Leaflet map location picker (`LocationPicker`), NIC uploader, `createShop()` API. |
+| **1** | **LOGIN PAGE** | ✅ **Implemented[NOT UI]** | `app/(auth)/login/page.tsx` | Complete with Email/Password, Google OAuth, error handling, backend role lookup, and redirect logic. |
+| **2** | **REGISTER SELECTION PAGE** | ✅ **Implemented[NOT UI]** | `app/(auth)/register/page.tsx` | Complete with role selection cards (Client vs Tailor). |
+| **3** | **CLIENT REGISTER PAGE** | ✅ **Implemented[NOT UI]** | `components/auth/register-forms.tsx`<br>`app/(auth)/register/[role]/page.tsx` | Complete form with name, email, phone, city, address, image placeholder, and backend `createClientProfile()` integration. |
+| **4** | **SELLER REGISTER PAGE** | ✅ **Implemented[NOT UI]** | `components/auth/register-forms.tsx`<br>`app/(auth)/register/[role]/page.tsx` | Complete 2-step form: Personal details + Shop details, specialty, Leaflet map location picker (`LocationPicker`), NIC uploader, `createShop()` API. |
 | **5** | **ADD SHOP PAGE** | ⚠️ **Partially Implemented** | Embedded in `components/auth/register-forms.tsx` | Shop creation logic (`createShop` API) exists inside registration. **Needs standalone page** at `/tailor/shops/add` for existing tailors to add additional shops. |
 | **6** | **SELLER DASHBOARD** | 🔴 **Pending (Placeholder)** | `app/(protected)/tailor/home/page.tsx` | Currently shows basic placeholder text. Needs stats cards (Total Bids, Active Orders, Revenue, Pending Requests), quick action buttons, and order status charts. |
 | **7** | **SELLER HOME PAGE** | 🔴 **Pending (Placeholder)** | `app/(protected)/tailor/home/page.tsx` | Currently shares placeholder with Seller Dashboard. Needs live feed of nearby marketplace requests, quick bid launcher, and shop status toggles. |
