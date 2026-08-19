@@ -57,7 +57,7 @@ class ClothingRequestModel(Base):
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     # NEW: URL to audio file stored in Firebase Storage / Azure Blob
-    voice_note_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    voice_note_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     # NEW: Online vs. physical-visit workflow toggle
     service_type: Mapped[ServiceTypeEnum] = mapped_column(
         Enum(ServiceTypeEnum, native_enum=False),
@@ -169,7 +169,7 @@ class ClothingRequestImageModel(Base):
         ForeignKey("clothing_requests.request_id", ondelete="CASCADE"),
         nullable=False,
     )
-    image_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    image_url: Mapped[str] = mapped_column(String(2048), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )

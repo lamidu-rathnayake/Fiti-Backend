@@ -83,8 +83,8 @@ CREATE TABLE IF NOT EXISTS clients (
 
 CREATE TABLE IF NOT EXISTS tailors (
     id           VARCHAR(128) PRIMARY KEY,              -- Firebase Auth UID
-    nic_front    VARCHAR(500),                          -- Cloud storage URL
-    nic_rear     VARCHAR(500),                          -- Cloud storage URL
+    nic_front    VARCHAR(2048),                          -- Cloud storage URL
+    nic_rear     VARCHAR(2048),                          -- Cloud storage URL
     is_verified  BOOLEAN NOT NULL DEFAULT FALSE,
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS shops (
 CREATE TABLE IF NOT EXISTS shop_images (
     image_id    SERIAL PRIMARY KEY,
     shop_id     INT NOT NULL REFERENCES shops(shop_id) ON DELETE CASCADE,
-    image_url   VARCHAR(500) NOT NULL,
+    image_url   VARCHAR(2048) NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -185,7 +185,7 @@ CREATE TABLE IF NOT EXISTS clothing_requests (
     fabric_status       fabric_status_enum,
     description         TEXT,
     -- NEW: URL to Firebase Storage / Azure Blob for recorded voice instructions
-    voice_note_url      VARCHAR(500),
+    voice_note_url      VARCHAR(2048),
     -- NEW: Operational toggle — client chooses online or physical shop visit
     service_type        service_type_enum NOT NULL DEFAULT 'online',
     request_location    VARCHAR(255),
@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS clothing_requests (
 CREATE TABLE IF NOT EXISTS clothing_request_images (
     image_id    SERIAL PRIMARY KEY,
     request_id  INT NOT NULL REFERENCES clothing_requests(request_id) ON DELETE CASCADE,
-    image_url   VARCHAR(500) NOT NULL,
+    image_url   VARCHAR(2048) NOT NULL,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

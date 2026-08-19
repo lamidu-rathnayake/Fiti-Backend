@@ -10,7 +10,7 @@ class ShopImageSchema(BaseModel):
 
 
 class ShopImageCreateRequest(BaseModel):
-    image_url: str = Field(..., min_length=1, max_length=500)
+    image_url: str = Field(..., min_length=1, max_length=2048)
 
 
 class ShopCreateRequest(BaseModel):

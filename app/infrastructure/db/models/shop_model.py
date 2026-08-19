@@ -68,7 +68,7 @@ class ShopImageModel(Base):
     shop_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
     )
-    image_url: Mapped[str] = mapped_column(String(500), nullable=False)
+    image_url: Mapped[str] = mapped_column(String(2048), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
