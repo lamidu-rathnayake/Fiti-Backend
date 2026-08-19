@@ -103,13 +103,13 @@ async def test_full_marketplace_workflow_api():
         shop_resp = await ac.post(
             "/api/v1/shops/",
             json={
-                "tailor_id": "tailor_fb_001",
                 "shop_name": "Royal Tailors",
                 "city": "Colombo",
                 "contact_number": "+94770001122",
             },
         )
         assert shop_resp.status_code == 201
+        assert shop_resp.json()["tailor_id"] == "mock_firebase_uid"
         shop_id = shop_resp.json()["shop_id"]
 
         # 6. Client Creates Clothing Request with Voice Note, Design Images & Service Type
@@ -237,7 +237,7 @@ async def test_support_endpoints():
         assert tailor_res.status_code == 201
         
         shop_res = await ac.post("/api/v1/shops/", json={
-            "tailor_id": "tailor_fav", "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "123"
+            "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "123"
         })
         assert shop_res.status_code == 201
         shop_id = shop_res.json()["shop_id"]
@@ -262,10 +262,18 @@ async def test_shop_listing_and_update_endpoints():
         assert tailor_res.status_code == 201
         
         shop_res = await ac.post("/api/v1/shops/", json={
-            "tailor_id": "tailor_search", "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
+            "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
         })
         assert shop_res.status_code == 201
+        assert shop_res.json()["tailor_id"] == "mock_firebase_uid"
         shop_id = shop_res.json()["shop_id"]
+
+        image_res = await ac.post(
+            f"/api/v1/shops/{shop_id}/images",
+            json={"image_url": "https://example.com/shop.jpg"},
+        )
+        assert image_res.status_code == 201
+        assert image_res.json()["image_url"] == "https://example.com/shop.jpg"
 
         # Update
         res = await ac.put(f"/api/v1/shops/{shop_id}", json={
@@ -280,9 +288,16 @@ async def test_shop_listing_and_update_endpoints():
         assert type(res.json()) is list
         
         # Get by tailor
-        res = await ac.get("/api/v1/shops/tailor/tailor_search")
+        res = await ac.get("/api/v1/shops/tailor/mock_firebase_uid")
         assert res.status_code == 200
         assert len(res.json()) >= 1
+
+        app.dependency_overrides[get_current_user_uid] = lambda: "other_firebase_uid"
+        forbidden_res = await ac.put(f"/api/v1/shops/{shop_id}", json={
+            "shop_name": "Unauthorized Update", "city": "Galle", "contact_number": "123"
+        })
+        assert forbidden_res.status_code == 403
+        app.dependency_overrides[get_current_user_uid] = lambda: "mock_firebase_uid"
         
         # Delete
         res = await ac.delete(f"/api/v1/shops/{shop_id}")
