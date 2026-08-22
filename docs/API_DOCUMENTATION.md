@@ -22,7 +22,7 @@ The centralized gateway for post-login status verification. User profiles and ro
 Endpoints for managing client body measurements and public tailor profiles.
 
 > [!NOTE]
-> User onboarding registration (saving client and seller profile details & roles) is handled directly from the web frontend into **Firebase Firestore DB** (`users/{uid}`).
+> User onboarding registration (saving client and seller profile details & roles) is handled by the backend endpoints below, which persist the data to PostgreSQL.
 
 | Method | Endpoint | Auth Guard | Description |
 |---|---|---|---|

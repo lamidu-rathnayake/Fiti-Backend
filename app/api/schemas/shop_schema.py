@@ -15,6 +15,7 @@ class ShopImageCreateRequest(BaseModel):
 
 class ShopCreateRequest(BaseModel):
     shop_name: str = Field(..., min_length=2, max_length=150)
+    specialty: str | None = None
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None
@@ -26,6 +27,7 @@ class ShopCreateRequest(BaseModel):
 
 class ShopUpdateRequest(BaseModel):
     shop_name: str = Field(..., min_length=2, max_length=150)
+    specialty: str | None = None
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None
@@ -41,6 +43,7 @@ class ShopResponse(BaseModel):
     shop_id: int
     tailor_id: str
     shop_name: str
+    specialty: str | None = None
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None

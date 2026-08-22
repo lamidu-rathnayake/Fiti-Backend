@@ -14,6 +14,11 @@ class AbstractClientRepository(ABC):
     async def get_by_id(self, client_id: str) -> Client | None:
         pass
 
+    @abstractmethod
+    async def update(self, client: Client) -> Client:
+        """Partially update a client's contact fields."""
+        pass
+
 
 class AbstractTailorRepository(ABC):
     """Contract for persisting Tailor profile records (Firebase UID as PK). Maps to the 'tailors' table."""
@@ -28,6 +33,11 @@ class AbstractTailorRepository(ABC):
 
     @abstractmethod
     async def update_verification(self, tailor_id: str, is_verified: bool) -> Tailor:
+        pass
+
+    @abstractmethod
+    async def update(self, tailor: Tailor) -> Tailor:
+        """Partially update a tailor's contact fields."""
         pass
 
 

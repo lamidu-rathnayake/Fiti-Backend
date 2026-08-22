@@ -62,6 +62,10 @@ class InMemoryClientRepository(AbstractClientRepository):
     async def get_by_id(self, client_id: str) -> Client | None:
         return self._store.get(client_id)
 
+    async def update(self, client: Client) -> Client:
+        self._store[client.id] = client
+        return client
+
 
 class InMemoryTailorRepository(AbstractTailorRepository):
     def __init__(self):
@@ -77,6 +81,10 @@ class InMemoryTailorRepository(AbstractTailorRepository):
     async def update_verification(self, tailor_id: str, is_verified: bool) -> Tailor:
         tailor = self._store[tailor_id]
         tailor.is_verified = is_verified
+        return tailor
+
+    async def update(self, tailor: Tailor) -> Tailor:
+        self._store[tailor.id] = tailor
         return tailor
 
 

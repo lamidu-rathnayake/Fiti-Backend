@@ -78,6 +78,7 @@ async def create_shop(
     dto = ShopCreateDTO(
         tailor_id=authenticated_uid,
         shop_name=request.shop_name,
+        specialty=request.specialty,
         shop_bio=request.shop_bio,
         shop_address=request.shop_address,
         city=request.city,
@@ -107,6 +108,7 @@ async def update_shop(
         dto = ShopUpdateDTO(
             shop_id=shop_id,
             shop_name=request.shop_name,
+            specialty=request.specialty,
             shop_bio=request.shop_bio,
             shop_address=request.shop_address,
             city=request.city,

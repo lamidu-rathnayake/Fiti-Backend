@@ -17,6 +17,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         model = ShopModel(
             tailor_id=shop.tailor_id,
             shop_name=shop.shop_name,
+            specialty=shop.specialty,
             shop_bio=shop.shop_bio,
             shop_address=shop.shop_address,
             city=shop.city,
@@ -92,6 +93,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
             return None
         # update mutable fields
         model.shop_name = shop.shop_name
+        model.specialty = shop.specialty
         model.shop_bio = shop.shop_bio
         model.shop_address = shop.shop_address
         model.city = shop.city
