@@ -2,7 +2,7 @@ import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.pool import NullPool
 from collections.abc import AsyncGenerator
 
 from app.infrastructure.db.base import Base
@@ -14,11 +14,10 @@ from sqlalchemy import text
 from app.core.config import settings
 
 # Test Database Engine (Supabase PostgreSQL)
-# Using a specific 'test' schema to prevent wiping out data in the 'public' schema
 test_engine = create_async_engine(
     settings.DATABASE_URL,
     connect_args={"server_settings": {"search_path": "test"}},
-    poolclass=StaticPool,
+    poolclass=NullPool,
 )
 TestingSessionLocal = async_sessionmaker(
     autocommit=False, autoflush=False, expire_on_commit=False, bind=test_engine, class_=AsyncSession
