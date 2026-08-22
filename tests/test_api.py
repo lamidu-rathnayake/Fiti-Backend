@@ -1,11 +1,37 @@
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy.pool import StaticPool
+from collections.abc import AsyncGenerator
 
-from app.core.database import engine
 from app.infrastructure.db.base import Base
 from app.main import app
 from app.core.security import get_current_user_uid, get_current_user
+from app.core.database import get_db_session
+
+# Test Database Engine (In-Memory SQLite)
+test_engine = create_async_engine(
+    "sqlite+aiosqlite:///:memory:",
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
+TestingSessionLocal = async_sessionmaker(
+    autocommit=False, autoflush=False, expire_on_commit=False, bind=test_engine, class_=AsyncSession
+)
+
+async def override_get_db_session() -> AsyncGenerator[AsyncSession, None]:
+    async with TestingSessionLocal() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+app.dependency_overrides[get_db_session] = override_get_db_session
 
 # Global mock state for tests to easily swap active user
 current_mock_user = {
@@ -32,14 +58,14 @@ async def prepare_database():
     """Create DB tables for API tests."""
     from sqlalchemy import insert
     from app.infrastructure.db.models.rbac_model import RoleModel, UserRoleModel
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Seed mock roles for testing
         await conn.execute(insert(RoleModel).values(id=1, name="client"))
         await conn.execute(insert(RoleModel).values(id=2, name="tailor"))
         await conn.execute(insert(RoleModel).values(id=3, name="admin"))
     yield
-    async with engine.begin() as conn:
+    async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
         
     # Reset mock user after each test

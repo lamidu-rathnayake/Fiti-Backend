@@ -155,6 +155,15 @@ Execute the `schema.sql` file against your local PostgreSQL instance to create t
 uv run uvicorn app.main:app --reload
 ```
 
-### 4. Documentation
+### 4. Running Tests
+The project includes a comprehensive suite of automated tests (`tests/test_api.py` and `tests/test_use_cases.py`).
+Tests are configured to use an isolated in-memory SQLite database (`sqlite+aiosqlite:///:memory:`) to ensure they never mutate or delete your live development data.
+
+To run the tests:
+```bash
+uv run pytest -v
+```
+
+### 5. Documentation
 Visit the interactive Swagger UI:
 - **Docs**: [http://localhost:8000/docs](http://localhost:8000/docs)
