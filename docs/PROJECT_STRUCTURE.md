@@ -64,7 +64,7 @@ Fiti utilizes a **Hybrid Identity Architecture**:
    - The primary key for these tables is the Firebase `uid`.
 
 3. **Gateway Endpoint (`GET /api/v1/auth/me/role`)**:
-   - Accepts the Firebase Bearer token, verifies token validity, checks the user's role from the PostgreSQL database, and returns the appropriate client (`/client/home`) or seller (`/seller/dashboard`) route.
+   - Accepts the Firebase Bearer token, verifies token validity, checks the user's role from the PostgreSQL database, and returns the appropriate client (`/client/home`) or tailor (`/tailor/dashboard`) route.
 
 4. **Role Enforcement (`require_role`)**:
    - Protected endpoints are guarded by the `require_role("role_name")` dependency in `app/core/security.py`.

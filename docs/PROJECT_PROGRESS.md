@@ -30,6 +30,12 @@ We have completed a major backend refactoring initiative to decouple user profil
 *   **Standardization**: Capitalized all Markdown files for high visibility.
 *   **Content Updates**: Rewrote the `PROJECT_STRUCTURE.md` and `ENTITY_DICTIONARY.md` to perfectly reflect the new Hybrid Identity model and the PostgreSQL tables, removing all claims that the database contains "zero user tables".
 
+### 4. New Feature Additions
+*   **Enhanced Clothing Requests**: 
+    *   Added `service_type` to support a hybrid operational toggle (Online vs. Physical Shop Visit).
+    *   Added `voice_note_url` to allow clients to record and attach voice instructions via Cloud Storage.
+    *   Introduced `clothing_request_images` table to allow clients to attach multiple design inspiration images (e.g., Pinterest screenshots) per request.
+
 ## Next Steps
 *   **Supabase Database Rollout**: Execute the updated `ALTER TABLE` statements in the production Supabase instance to prepare for deployment.
 *   **Frontend Alignment**: Update the frontend Next.js application to remove its legacy `setDoc` Firestore calls and align its onboarding forms strictly with the new backend API endpoints (`POST /api/v1/profiles/client` and `POST /api/v1/profiles/tailor`).

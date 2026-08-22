@@ -49,8 +49,8 @@ This means a client and a shop can agree on a price verbally or through a chat i
 To fully understand how data moves through the Python Use Cases and SQLAlchemy Repositories, here is the exact step-by-step model creation flow for both scenarios:
 
 ### Case 1: The Bidding Process (Broadcast)
-1. **Client Creates Request**: Client calls `create_clothing_request` in `manage_order.py`, providing a list of `target_shop_ids`. 
-   - The Repository creates a single `ClothingRequestModel`.
+1. **Client Creates Request**: Client calls `create_clothing_request` in `manage_order.py`, providing a list of `target_shop_ids`, along with optional `voice_note_url`, `design_image_urls`, and a specific `service_type` (online/physical_visit).
+   - The Repository creates a single `ClothingRequestModel` (and associated `ClothingRequestImageModel`s).
    - The Repository iterates through `target_shop_ids` and creates multiple `ShopRequestModel` records.
 2. **Shop Submits Quote**: Tailor calls `submit_bid` providing a `shop_request_id` and `bid_amount`.
    - The Repository creates a `BidModel` linked to the `shop_request_id`.
