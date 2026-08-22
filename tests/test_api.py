@@ -10,10 +10,14 @@ from app.main import app
 from app.core.security import get_current_user_uid, get_current_user
 from app.core.database import get_db_session
 
-# Test Database Engine (In-Memory SQLite)
+from sqlalchemy import text
+from app.core.config import settings
+
+# Test Database Engine (Supabase PostgreSQL)
+# Using a specific 'test' schema to prevent wiping out data in the 'public' schema
 test_engine = create_async_engine(
-    "sqlite+aiosqlite:///:memory:",
-    connect_args={"check_same_thread": False},
+    settings.DATABASE_URL,
+    connect_args={"server_settings": {"search_path": "test"}},
     poolclass=StaticPool,
 )
 TestingSessionLocal = async_sessionmaker(
@@ -59,6 +63,7 @@ async def prepare_database():
     from sqlalchemy import insert
     from app.infrastructure.db.models.rbac_model import RoleModel, UserRoleModel
     async with test_engine.begin() as conn:
+        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS test"))
         await conn.run_sync(Base.metadata.create_all)
         # Seed mock roles for testing
         await conn.execute(insert(RoleModel).values(id=1, name="client"))
