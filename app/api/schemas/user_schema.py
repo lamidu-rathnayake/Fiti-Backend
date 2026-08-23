@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class ClientRegisterRequest(BaseModel):
@@ -10,24 +10,24 @@ class ClientRegisterRequest(BaseModel):
     Contact details were previously stored in Firestore; they now live in PostgreSQL.
     """
 
-    phone: str | None = Field(None, description="Contact phone number")
-    city: str | None = Field(None, description="City")
-    address: str | None = Field(None, description="Street address")
-    latitude: float | None = Field(None, description="Latitude")
-    longitude: float | None = Field(None, description="Longitude")
+    phone: str | None = Field(None, pattern=r"^(?:\+94|0)[0-9]{9}$", description="Contact phone number (Sri Lankan format: +94xxxxxxxxx or 0xxxxxxxxx)")
+    city: str | None = Field(None, min_length=2, max_length=100, description="City")
+    address: str | None = Field(None, min_length=5, max_length=255, description="Street address")
+    latitude: float | None = Field(None, ge=5.0, le=10.0, description="Latitude (Sri Lanka: ~5.0 to 10.0)")
+    longitude: float | None = Field(None, ge=79.0, le=82.0, description="Longitude (Sri Lanka: ~79.0 to 82.0)")
 
 
 class ClientUpdateRequest(BaseModel):
     """Partial update for a client's contact profile. All fields optional."""
 
-    display_name: str | None = Field(None, description="Display name")
-    email: str | None = Field(None, description="Email address")
-    photo_url: str | None = Field(None, description="Profile photo URL")
-    phone: str | None = Field(None, description="Contact phone number")
-    city: str | None = Field(None, description="City")
-    address: str | None = Field(None, description="Street address")
-    latitude: float | None = Field(None, description="Latitude")
-    longitude: float | None = Field(None, description="Longitude")
+    display_name: str | None = Field(None, min_length=2, max_length=150, description="Display name")
+    email: EmailStr | None = Field(None, description="Email address")
+    photo_url: str | None = Field(None, pattern=r"^https?://", max_length=2048, description="Profile photo URL")
+    phone: str | None = Field(None, pattern=r"^(?:\+94|0)[0-9]{9}$", description="Contact phone number")
+    city: str | None = Field(None, min_length=2, max_length=100, description="City")
+    address: str | None = Field(None, min_length=5, max_length=255, description="Street address")
+    latitude: float | None = Field(None, ge=5.0, le=10.0, description="Latitude")
+    longitude: float | None = Field(None, ge=79.0, le=82.0, description="Longitude")
 
 
 class ClientResponse(BaseModel):
@@ -54,34 +54,34 @@ class TailorRegisterRequest(BaseModel):
     """
 
     nic_front: str | None = Field(
-        None, description="Cloud storage URL for NIC front photo"
+        None, pattern=r"^https?://", max_length=2048, description="Cloud storage URL for NIC front photo"
     )
     nic_rear: str | None = Field(
-        None, description="Cloud storage URL for NIC rear photo"
+        None, pattern=r"^https?://", max_length=2048, description="Cloud storage URL for NIC rear photo"
     )
-    phone: str | None = Field(None, description="Contact phone number")
-    city: str | None = Field(None, description="City")
-    address: str | None = Field(None, description="Street address")
-    latitude: float | None = Field(None, description="Latitude")
-    longitude: float | None = Field(None, description="Longitude")
+    phone: str | None = Field(None, pattern=r"^(?:\+94|0)[0-9]{9}$", description="Contact phone number")
+    city: str | None = Field(None, min_length=2, max_length=100, description="City")
+    address: str | None = Field(None, min_length=5, max_length=255, description="Street address")
+    latitude: float | None = Field(None, ge=5.0, le=10.0, description="Latitude")
+    longitude: float | None = Field(None, ge=79.0, le=82.0, description="Longitude")
 
 
 class TailorUpdateRequest(BaseModel):
     """Partial update for a tailor's contact profile and NIC images. All fields optional."""
 
-    display_name: str | None = Field(None, description="Display name")
-    email: str | None = Field(None, description="Email address")
-    photo_url: str | None = Field(None, description="Profile photo URL")
-    phone: str | None = Field(None, description="Contact phone number")
-    city: str | None = Field(None, description="City")
-    address: str | None = Field(None, description="Street address")
-    latitude: float | None = Field(None, description="Latitude")
-    longitude: float | None = Field(None, description="Longitude")
+    display_name: str | None = Field(None, min_length=2, max_length=150, description="Display name")
+    email: EmailStr | None = Field(None, description="Email address")
+    photo_url: str | None = Field(None, pattern=r"^https?://", max_length=2048, description="Profile photo URL")
+    phone: str | None = Field(None, pattern=r"^(?:\+94|0)[0-9]{9}$", description="Contact phone number")
+    city: str | None = Field(None, min_length=2, max_length=100, description="City")
+    address: str | None = Field(None, min_length=5, max_length=255, description="Street address")
+    latitude: float | None = Field(None, ge=5.0, le=10.0, description="Latitude")
+    longitude: float | None = Field(None, ge=79.0, le=82.0, description="Longitude")
     nic_front: str | None = Field(
-        None, description="Cloud storage URL for NIC front photo"
+        None, pattern=r"^https?://", max_length=2048, description="Cloud storage URL for NIC front photo"
     )
     nic_rear: str | None = Field(
-        None, description="Cloud storage URL for NIC rear photo"
+        None, pattern=r"^https?://", max_length=2048, description="Cloud storage URL for NIC rear photo"
     )
 
 
@@ -105,15 +105,15 @@ class TailorResponse(BaseModel):
 
 class MeasurementProfileRequest(BaseModel):
     """Body measurements used in both profile storage and order clothing requests."""
-    chest: float | None = None
-    waist: float | None = None
-    shoulder: float | None = None
-    sleeve: float | None = None
-    neck: float | None = None
-    hip: float | None = None
-    inseam: float | None = None
-    length: float | None = None
-    notes: str | None = None
+    chest: float | None = Field(None, gt=0, description="Chest measurement")
+    waist: float | None = Field(None, gt=0, description="Waist measurement")
+    shoulder: float | None = Field(None, gt=0, description="Shoulder measurement")
+    sleeve: float | None = Field(None, gt=0, description="Sleeve measurement")
+    neck: float | None = Field(None, gt=0, description="Neck measurement")
+    hip: float | None = Field(None, gt=0, description="Hip measurement")
+    inseam: float | None = Field(None, gt=0, description="Inseam measurement")
+    length: float | None = Field(None, gt=0, description="Length measurement")
+    notes: str | None = Field(None, max_length=1000, description="Additional notes")
 
 
 class MeasurementProfileResponse(MeasurementProfileRequest):

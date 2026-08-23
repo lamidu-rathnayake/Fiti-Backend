@@ -27,20 +27,20 @@ class ClothingRequestImageResponse(BaseModel):
 class ClothingRequestCreateRequest(BaseModel):
     client_id: str = Field(..., description="Firebase Auth UID of Client")
     target_date: date | None = None
-    target_budget: float | None = None
-    clothing_category: str | None = None
+    target_budget: float | None = Field(None, gt=0, description="Target budget must be positive")
+    clothing_category: str | None = Field(None, min_length=2, max_length=100)
     gender: GenderEnum | None = None
     fabric_status: FabricStatusEnum | None = None
-    description: str | None = None
+    description: str | None = Field(None, max_length=2000)
     # NEW: Cloud-storage URL for voice-note audio (upload to Firebase Storage first)
     voice_note_url: str | None = Field(
-        None, description="Cloud-storage URL for voice instruction audio"
+        None, pattern=r"^https?://", max_length=2048, description="Cloud-storage URL for voice instruction audio"
     )
     # NEW: Workflow toggle — 'online' or 'physical_visit'
     service_type: ServiceTypeEnum = Field(
         ServiceTypeEnum.ONLINE, description="Online or physical-visit workflow"
     )
-    request_location: str | None = None
+    request_location: str | None = Field(None, min_length=2, max_length=255)
     measurement: MeasurementProfileRequest | None = None
     # NEW: Cloud-storage URLs for design inspiration screenshots
     design_image_urls: list[str] = Field(
@@ -55,7 +55,7 @@ class ClothingRequestCreateRequest(BaseModel):
 class BidCreateRequest(BaseModel):
     shop_request_id: int
     bid_amount: float = Field(..., gt=0)
-    message: str | None = None
+    message: str | None = Field(None, max_length=1000)
 
 
 class OrderCreateRequest(BaseModel):
@@ -74,7 +74,7 @@ class RatingCreateRequest(BaseModel):
     client_id: str
     shop_id: int
     rating: int = Field(..., ge=1, le=5)
-    review: str | None = None
+    review: str | None = Field(None, max_length=1000)
 
 
 class BidResponse(BaseModel):

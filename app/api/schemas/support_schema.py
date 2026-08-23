@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 class NotificationCreateRequest(BaseModel):
     user_id: str = Field(..., description="Firebase Auth UID of the recipient")
     title: str = Field(..., min_length=1, max_length=150)
-    message: str | None = None
+    message: str | None = Field(None, max_length=2000)
 
 
 class NotificationResponse(BaseModel):
