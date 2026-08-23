@@ -125,12 +125,8 @@ For deep technical insights, review the detailed reports and specs in the `docs/
 ### 🏗️ Architecture & Data Models
 - [Project Progress Report](./docs/PROJECT_PROGRESS.md)
 - [Project Structure & Layer Guide](./docs/PROJECT_STRUCTURE.md)
-- [Clean Architecture Report](./docs/CLEAN_ARCHITECTURE_REPORT.md)
 - [Entity Dictionary](./docs/ENTITY_DICTIONARY.md)
 
-### 🛠️ Core Features & Workflows
-- [Bidding System & Orders Report](./docs/BIDDING_SYSTEM_REPORT.md)
-- [Nearby Shops Geo-Search Report](./docs/NEARBY_SHOPS_REPORT.md)
 
 ### 🔌 API & Integrations
 - [API Endpoints Documentation](./docs/API_DOCUMENTATION.md)

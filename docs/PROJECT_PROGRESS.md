@@ -1,6 +1,6 @@
 # Fiti Backend — Project Progress Report
 
-**Date:** August 21, 2026
+**Date:** August 23, 2026
 
 ## Overview of Completed Work
 We have completed a major backend refactoring initiative to decouple user profile data from Firebase Firestore and centralize it within the PostgreSQL database. Alongside the architectural migration, the project documentation has been thoroughly standardized and updated.
@@ -39,3 +39,8 @@ We have completed a major backend refactoring initiative to decouple user profil
 ## Next Steps
 *   **Supabase Database Rollout**: Execute the updated `ALTER TABLE` statements in the production Supabase instance to prepare for deployment.
 *   **Frontend Alignment**: Update the frontend Next.js application to remove its legacy `setDoc` Firestore calls and align its onboarding forms strictly with the new backend API endpoints (`POST /api/v1/profiles/client` and `POST /api/v1/profiles/tailor`).
+
+### 5. Testing & Validation (Recent Updates)
+*   **Integration Tests (`test_api.py`)**: Added comprehensive API integration tests for the full marketplace workflow, support services, and shop interactions. Implemented dependency overrides for seamless testing.
+*   **Database Tooling**: Added a database connectivity test script (`test_db.py`) and an SQL script to truncate all tables with cascade support (`truncate_tables.sql`) for testing hygiene.
+*   **Pydantic Schemas**: Fully implemented and validated Pydantic schemas for shop, user, and support models, ensuring robust data validation across the API boundary.

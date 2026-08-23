@@ -237,11 +237,11 @@ async def test_support_endpoints():
 
         # 2. Create a tailor and shop to favorite
         set_mock_user("tailor_fav", "tailor")
-        tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_fav", "nic_front": "http://img.com/nic"})
+        tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_fav", "nic_front": "https://img.com/nic"})
         assert tailor_res.status_code == 201
         
         shop_res = await ac.post("/api/v1/shops/", json={
-            "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "123"
+            "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "+94770001133"
         })
         assert shop_res.status_code == 201
         shop_id = shop_res.json()["shop_id"]
@@ -274,11 +274,11 @@ async def test_support_endpoints():
 async def test_shop_listing_and_update_endpoints():
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         set_mock_user("tailor_search", "tailor")
-        tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_search", "nic_front": "http://img.com/nic"})
+        tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_search", "nic_front": "https://img.com/nic"})
         assert tailor_res.status_code == 201
         
         shop_res = await ac.post("/api/v1/shops/", json={
-            "shop_name": "Search Shop", "city": "Galle", "contact_number": "123"
+            "shop_name": "Search Shop", "city": "Galle", "contact_number": "+94770001144"
         })
         assert shop_res.status_code == 201
         shop_id = shop_res.json()["shop_id"]
@@ -291,7 +291,7 @@ async def test_shop_listing_and_update_endpoints():
 
         # Update
         res = await ac.put(f"/api/v1/shops/{shop_id}", json={
-            "shop_name": "Updated Shop", "city": "Galle", "contact_number": "123"
+            "shop_name": "Updated Shop", "city": "Galle", "contact_number": "+94770001144"
         })
         assert res.status_code == 200
         
@@ -307,7 +307,7 @@ async def test_shop_listing_and_update_endpoints():
         # Try to update shop as a completely different user
         set_mock_user("other_firebase_uid", "tailor")
         forbidden_res = await ac.put(f"/api/v1/shops/{shop_id}", json={
-            "shop_name": "Unauthorized Update", "city": "Galle", "contact_number": "123"
+            "shop_name": "Unauthorized Update", "city": "Galle", "contact_number": "+94770001144"
         })
         # Note: Depending on your exact implementation in the endpoints, 
         # this might return 403 or 404 (if shop is filtered by tailor_id). 
