@@ -3,7 +3,7 @@ import logging
 import firebase_admin
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from firebase_admin import auth, credentials, firestore
+from firebase_admin import auth, credentials
 
 from app.core.config import settings
 
@@ -49,6 +49,8 @@ async def get_current_user(
                 "uid": decoded_token["uid"],
                 "email": decoded_token.get("email"),
                 "role": decoded_token.get("role"),
+                "name": decoded_token.get("name"),
+                "picture": decoded_token.get("picture"),
             }
         except Exception as exc:
             raise HTTPException(
@@ -60,7 +62,13 @@ async def get_current_user(
     # Mock mode — ONLY when explicitly enabled in .env for local development
     if settings.MOCK_FIREBASE_AUTH:
         logger.warning("MOCK_FIREBASE_AUTH is enabled — bypassing token verification.")
-        return {"uid": "mock_firebase_uid", "email": "mock@example.com", "role": "client"}
+        return {
+            "uid": "mock_firebase_uid",
+            "email": "mock@example.com",
+            "role": "client",
+            "name": "Mock User",
+            "picture": None,
+        }
 
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -81,12 +89,16 @@ async def get_current_user_uid(
 def require_role(role_name: str):
     """
     Dependency factory that verifies a Firebase token AND checks the user holds the required role.
-    Role is verified either from JWT token custom claims or from Firestore DB ('users' collection).
-    No PostgreSQL user/role table is used.
+    Role is verified either from JWT token custom claims or from the PostgreSQL 'user_roles' table.
+    Firestore DB is no longer used for role checks.
     """
+    # Local import to avoid circular dependency
+    from app.api.dependencies import get_rbac_repository
+    from app.domain.repositories.rbac_repository import AbstractRBACRepository
 
     async def _check_role(
         user_info: dict = Depends(get_current_user),
+        rbac_repo: AbstractRBACRepository = Depends(get_rbac_repository)
     ) -> str:
         uid = user_info["uid"]
         token_role = user_info.get("role")
@@ -104,31 +116,21 @@ def require_role(role_name: str):
                     detail=f"Access denied. Required role: '{role_name}'. Your role: '{token_role}'.",
                 )
 
-        # 2. Fallback: Verify role from Firestore DB users collection
+        # 2. Fallback: Verify role from PostgreSQL user_roles table
         try:
-            init_firebase_admin()
-            db = firestore.client()
-            user_doc = db.collection("users").document(uid).get()
+            roles = await rbac_repo.get_user_roles(uid)
+            role_names = [r.name for r in roles]
 
-            if not user_doc.exists:
+            if role_name not in role_names:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"User profile for UID '{uid}' not found in Firestore DB.",
-                )
-
-            user_data = user_doc.to_dict() or {}
-            db_role = user_data.get("role")
-
-            if db_role != role_name:
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
-                    detail=f"Access denied. Required role: '{role_name}'. Your role: '{db_role or 'none'}'.",
+                    detail=f"Access denied. Required role: '{role_name}'. Your roles: {role_names or 'none'}.",
                 )
             return uid
         except HTTPException:
             raise
         except Exception as exc:
-            logger.error(f"Error checking Firestore role for UID {uid}: {exc}")
+            logger.error(f"Error checking PostgreSQL role for UID {uid}: {exc}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Role verification failed: {exc!s}",

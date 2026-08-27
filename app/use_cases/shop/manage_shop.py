@@ -17,6 +17,7 @@ class ManageShopUseCase:
         shop_entity = Shop(
             tailor_id=dto.tailor_id,
             shop_name=dto.shop_name,
+            specialty=dto.specialty,
             shop_bio=dto.shop_bio,
             shop_address=dto.shop_address,
             city=dto.city,
@@ -62,6 +63,7 @@ class ManageShopUseCase:
             shop_id=dto.shop_id,
             tailor_id=existing.tailor_id,
             shop_name=dto.shop_name,
+            specialty=dto.specialty,
             shop_bio=dto.shop_bio,
             shop_address=dto.shop_address,
             city=dto.city,
@@ -94,6 +96,7 @@ class ManageShopUseCase:
             shop_id=shop.shop_id,  # type: ignore
             tailor_id=shop.tailor_id,
             shop_name=shop.shop_name,
+            specialty=shop.specialty,
             shop_bio=shop.shop_bio,
             shop_address=shop.shop_address,
             city=shop.city,

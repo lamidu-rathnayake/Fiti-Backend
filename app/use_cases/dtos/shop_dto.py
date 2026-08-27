@@ -13,6 +13,7 @@ class ShopImageDTO:
 class ShopCreateDTO:
     tailor_id: str
     shop_name: str
+    specialty: str | None = None  # Migrated from Firestore
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None
@@ -26,6 +27,7 @@ class ShopCreateDTO:
 class ShopUpdateDTO:
     shop_id: int
     shop_name: str
+    specialty: str | None = None  # Migrated from Firestore
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None
@@ -40,6 +42,7 @@ class ShopOutputDTO:
     shop_id: int
     tailor_id: str
     shop_name: str
+    specialty: str | None = None
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None

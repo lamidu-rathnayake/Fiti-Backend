@@ -13,8 +13,17 @@ class Client:
     """
     Firebase-backed client profile extension.
     The Firebase UID is the primary key — full user identity lives in Firebase Auth.
+    Contact details (phone, city, address) migrated from the removed Firestore users collection.
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
+    display_name: str | None = None
+    email: str | None = None
+    photo_url: str | None = None
+    phone: str | None = None
+    city: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -25,12 +34,21 @@ class Tailor:
     Firebase-backed tailor profile extension.
     The Firebase UID is the primary key — full user identity lives in Firebase Auth.
     NIC images are stored as cloud storage URLs.
+    Contact details (phone, city, address) migrated from the removed Firestore users collection.
     Maps to the 'tailors' PostgreSQL table (table name unchanged for DB compatibility).
     """
     id: str  # Firebase Auth UID (PK — no FK to users table)
+    display_name: str | None = None
+    email: str | None = None
+    photo_url: str | None = None
     nic_front: str | None = None   # Cloud storage URL (Firebase Storage / Azure Blob)
     nic_rear: str | None = None    # Cloud storage URL
     is_verified: bool = False
+    phone: str | None = None
+    city: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 

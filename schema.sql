@@ -76,16 +76,32 @@ $$ LANGUAGE plpgsql;
 -- with NO foreign key to a users table (there is no users table).
 
 CREATE TABLE IF NOT EXISTS clients (
-    id          VARCHAR(128) PRIMARY KEY,               -- Firebase Auth UID
+    id            VARCHAR(128) PRIMARY KEY,               -- Firebase Auth UID
+    display_name  TEXT DEFAULT NULL,                      -- Extracted from JWT
+    email         TEXT DEFAULT NULL,                      -- Extracted from JWT
+    photo_url     TEXT DEFAULT NULL,                      -- Extracted from JWT
+    phone         TEXT DEFAULT NULL,                      -- Contact phone number (migrated from Firestore)
+    city          TEXT DEFAULT NULL,                      -- City (migrated from Firestore)
+    address       TEXT DEFAULT NULL,                      -- Street address (migrated from Firestore)
+    latitude      NUMERIC(9,6),
+    longitude     NUMERIC(9,6),
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE IF NOT EXISTS tailors (
     id           VARCHAR(128) PRIMARY KEY,              -- Firebase Auth UID
+    display_name TEXT DEFAULT NULL,                     -- Extracted from JWT
+    email        TEXT DEFAULT NULL,                     -- Extracted from JWT
+    photo_url    TEXT DEFAULT NULL,                     -- Extracted from JWT
     nic_front    VARCHAR(2048),                          -- Cloud storage URL
     nic_rear     VARCHAR(2048),                          -- Cloud storage URL
     is_verified  BOOLEAN NOT NULL DEFAULT FALSE,
+    phone        TEXT DEFAULT NULL,                      -- Contact phone number (migrated from Firestore)
+    city         TEXT DEFAULT NULL,                      -- City (migrated from Firestore)
+    address      TEXT DEFAULT NULL,                      -- Street address (migrated from Firestore)
+    latitude     NUMERIC(9,6),
+    longitude    NUMERIC(9,6),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -153,6 +169,7 @@ CREATE TABLE IF NOT EXISTS shops (
     shop_id              SERIAL PRIMARY KEY,
     tailor_id            VARCHAR(128) NOT NULL REFERENCES tailors(id) ON DELETE CASCADE,
     shop_name            VARCHAR(150) NOT NULL,
+    specialty            TEXT DEFAULT NULL,              -- Tailor specialty (migrated from Firestore)
     shop_bio             TEXT,
     shop_address         VARCHAR(255),
     city                 VARCHAR(100),
@@ -336,7 +353,7 @@ CREATE TRIGGER trg_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUT
 -- ---------------------------------------------------------
 -- 10. SEED DATA (Default Roles & Sections)
 -- ---------------------------------------------------------
-INSERT INTO roles (name) VALUES ('client'), ('tailor'), ('admin'), ('tailor')
+INSERT INTO roles (name) VALUES ('client'), ('tailor'), ('admin')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO sections (name, route_name) VALUES

@@ -17,6 +17,7 @@ class ShopModel(Base):
         nullable=False,
     )
     shop_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    specialty: Mapped[str | None] = mapped_column(Text, nullable=True)
     shop_bio: Mapped[str | None] = mapped_column(Text, nullable=True)
     shop_address: Mapped[str | None] = mapped_column(String(255), nullable=True)
     city: Mapped[str | None] = mapped_column(String(100), nullable=True)
@@ -47,6 +48,7 @@ class ShopModel(Base):
             shop_id=self.shop_id,
             tailor_id=self.tailor_id,
             shop_name=self.shop_name,
+            specialty=self.specialty,
             shop_bio=self.shop_bio,
             shop_address=self.shop_address,
             city=self.city,

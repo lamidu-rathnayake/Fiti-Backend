@@ -13,7 +13,7 @@ The centralized gateway for post-login status verification. User profiles and ro
 
 | Method | Endpoint | Auth Guard | Description |
 |---|---|---|---|
-| `GET` | `/auth/me/role` | Valid Token | Verifies user's Firebase token, reads role (`client` or `seller`) from JWT claims or Firestore DB, and returns `uid`, `email`, `role`, and target redirect URL (`/client/home`, `/seller/dashboard`, or `/register`). |
+| `GET` | `/auth/me/role` | Valid Token | Verifies user's Firebase token, reads role (`client` or `tailor`) from JWT claims or Firestore DB, and returns `uid`, `email`, `role`, and target redirect URL (`/client/home`, `/tailor/dashboard`, or `/register`). |
 
 ---
 
@@ -22,12 +22,12 @@ The centralized gateway for post-login status verification. User profiles and ro
 Endpoints for managing client body measurements and public tailor profiles.
 
 > [!NOTE]
-> User onboarding registration (saving client and seller profile details & roles) is handled directly from the web frontend into **Firebase Firestore DB** (`users/{uid}`).
+> User onboarding registration (saving client and tailor profile details & roles) is handled by the backend endpoints below, which persist the data to PostgreSQL.
 
 | Method | Endpoint | Auth Guard | Description |
 |---|---|---|---|
 | `GET` | `/profiles/client/{id}` | Client Role | Fetch a client's profile information. |
-| `GET` | `/profiles/tailor/{id}` | Public | View a tailor/seller's public profile. |
+| `GET` | `/profiles/tailor/{id}` | Public | View a tailor's public profile. |
 | `GET` | `/profiles/tailor/{id}/verification` | Public | Check if a tailor's profile has been verified. |
 | `PUT` | `/profiles/client/{id}/measurements` | Client Role | Save or update a client's standard body measurements. |
 | `GET` | `/profiles/client/{id}/measurements` | Client Role | Fetch a client's body measurements. |
@@ -42,12 +42,12 @@ Endpoints for managing physical and online tailoring shops.
 |---|---|---|---|
 | `GET` | `/shops/` | Public | List all shops, with optional pagination and city filters. |
 | `GET` | `/shops/nearby` | Public | Discover tailor shops within a specified GPS radius (lat, lng, radius). |
-| `GET` | `/shops/tailor/{tailor_id}` | Public | List all shops owned by a specific tailor/seller. |
+| `GET` | `/shops/tailor/{tailor_id}` | Public | List all shops owned by a specific tailor. |
 | `GET` | `/shops/{shop_id}` | Public | Get details of a specific shop by ID. |
-| `POST` | `/shops/` | Seller Role | Register a new tailor shop. |
-| `PUT` | `/shops/{shop_id}` | Seller Role | Update an existing shop's details. |
-| `DELETE`| `/shops/{shop_id}` | Seller Role | Delete a shop. |
-| `POST` | `/shops/{shop_id}/images` | Seller Role | Add a portfolio/shop image URL. |
+| `POST` | `/shops/` | Tailor Role | Register a new tailor shop. |
+| `PUT` | `/shops/{shop_id}` | Tailor Role | Update an existing shop's details. |
+| `DELETE`| `/shops/{shop_id}` | Tailor Role | Delete a shop. |
+| `POST` | `/shops/{shop_id}/images` | Tailor Role | Add a portfolio/shop image URL. |
 
 ---
 
@@ -58,18 +58,18 @@ Endpoints for managing the entire fashion creation lifecycle: Requests → Bids 
 ### Clothing Requests (Client's Need)
 | Method | Endpoint | Auth Guard | Description |
 |---|---|---|---|
-| `POST` | `/orders/requests` | Client Role | Submit a new clothing request (marketplace broadcast). |
-| `GET` | `/orders/requests/open` | Public | View all open marketplace requests (for sellers to browse). |
+| `POST` | `/orders/requests` | Client Role | Submit a new clothing request (supports online/physical_visit service types, voice notes, and multiple design inspiration images). |
+| `GET` | `/orders/requests/open` | Public | View all open marketplace requests (for tailors to browse). |
 | `GET` | `/orders/requests/client/{id}` | Public | View all requests made by a specific client. |
 | `GET` | `/orders/requests/{id}` | Public | Get details of a specific clothing request. |
 | `PATCH`| `/orders/requests/{id}/cancel` | Client Role | Cancel an open request before a bid is accepted. |
 
-### Bids & Shop Requests (Seller's Offer)
+### Bids & Shop Requests (Tailor's Offer)
 | Method | Endpoint | Auth Guard | Description |
 |---|---|---|---|
 | `GET` | `/orders/shop-requests/shop/{id}` | Public | View all requests assigned to a specific shop. |
-| `GET` | `/orders/shop-requests/{id}/bids` | Seller Role | List all bids placed on a shop request. |
-| `POST` | `/orders/bids` | Seller Role | Submit a bid (price & message) on a client's request. |
+| `GET` | `/orders/shop-requests/{id}/bids` | Tailor Role | List all bids placed on a shop request. |
+| `POST` | `/orders/bids` | Tailor Role | Submit a bid (price & message) on a client's request. |
 
 ### Orders & Payments (The Contract)
 | Method | Endpoint | Auth Guard | Description |

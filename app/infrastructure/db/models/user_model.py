@@ -12,11 +12,20 @@ class ClientModel(Base):
     Stores Firebase-backed client profile data.
     The `id` column holds the Firebase Auth UID — there is no FK to a users table
     because user identity is fully managed by Firebase Auth.
+    Contact fields (phone, city, address) migrated from the removed Firestore users collection.
     """
 
     __tablename__ = "clients"
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
+    phone: Mapped[str | None] = mapped_column(Text, nullable=True)
+    city: Mapped[str | None] = mapped_column(Text, nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -29,7 +38,17 @@ class ClientModel(Base):
 
     def to_domain(self) -> Client:
         return Client(
-            id=self.id, created_at=self.created_at, updated_at=self.updated_at
+            id=self.id,
+            display_name=self.display_name,
+            email=self.email,
+            photo_url=self.photo_url,
+            phone=self.phone,
+            city=self.city,
+            address=self.address,
+            latitude=self.latitude,
+            longitude=self.longitude,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
         )
 
 
@@ -38,14 +57,23 @@ class TailorModel(Base):
     Stores Firebase-backed tailor profile data.
     The `id` column holds the Firebase Auth UID — no FK to a users table.
     NIC image URLs point to cloud storage (Firebase Storage / Azure Blob).
+    Contact fields (phone, city, address) migrated from the removed Firestore users collection.
     """
 
     __tablename__ = "tailors"
 
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    display_name: Mapped[str | None] = mapped_column(Text, nullable=True)
+    email: Mapped[str | None] = mapped_column(Text, nullable=True)
+    photo_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     nic_front: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     nic_rear: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    phone: Mapped[str | None] = mapped_column(Text, nullable=True)
+    city: Mapped[str | None] = mapped_column(Text, nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
@@ -59,9 +87,17 @@ class TailorModel(Base):
     def to_domain(self) -> Tailor:
         return Tailor(
             id=self.id,
+            display_name=self.display_name,
+            email=self.email,
+            photo_url=self.photo_url,
             nic_front=self.nic_front,
             nic_rear=self.nic_rear,
             is_verified=self.is_verified,
+            phone=self.phone,
+            city=self.city,
+            address=self.address,
+            latitude=self.latitude,
+            longitude=self.longitude,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )

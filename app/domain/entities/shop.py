@@ -15,6 +15,7 @@ class Shop:
     tailor_id: str  # Firebase Auth UID of the tailor who owns this shop
     shop_name: str
     shop_id: int | None = None
+    specialty: str | None = None  # Tailor specialty (migrated from Firestore)
     shop_bio: str | None = None
     shop_address: str | None = None
     city: str | None = None

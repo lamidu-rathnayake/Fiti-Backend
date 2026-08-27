@@ -19,9 +19,19 @@ class SQLAlchemyClientRepository(AbstractClientRepository):
         self.session = session
 
     async def create(self, client: Client) -> Client:
-        model = ClientModel(id=client.id)
+        model = ClientModel(
+            id=client.id,
+            display_name=client.display_name,
+            email=client.email,
+            photo_url=client.photo_url,
+            phone=client.phone,
+            city=client.city,
+            address=client.address,
+            latitude=client.latitude,
+            longitude=client.longitude,
+        )
         self.session.add(model)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(model)
         return model.to_domain()
 
@@ -31,6 +41,23 @@ class SQLAlchemyClientRepository(AbstractClientRepository):
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
+    async def update(self, client: Client) -> Client:
+        """Partially update a client's contact fields."""
+        stmt = select(ClientModel).where(ClientModel.id == client.id)
+        result = await self.session.execute(stmt)
+        model = result.scalar_one()
+        model.display_name = client.display_name
+        model.email = client.email
+        model.photo_url = client.photo_url
+        model.phone = client.phone
+        model.city = client.city
+        model.address = client.address
+        model.latitude = client.latitude
+        model.longitude = client.longitude
+        await self.session.flush()
+        await self.session.refresh(model)
+        return model.to_domain()
+
 
 class SQLAlchemyTailorRepository(AbstractTailorRepository):
     def __init__(self, session: AsyncSession):
@@ -39,11 +66,19 @@ class SQLAlchemyTailorRepository(AbstractTailorRepository):
     async def create(self, tailor: Tailor) -> Tailor:
         model = TailorModel(
             id=tailor.id,
+            display_name=tailor.display_name,
+            email=tailor.email,
+            photo_url=tailor.photo_url,
             nic_front=tailor.nic_front,
             nic_rear=tailor.nic_rear,
+            phone=tailor.phone,
+            city=tailor.city,
+            address=tailor.address,
+            latitude=tailor.latitude,
+            longitude=tailor.longitude,
         )
         self.session.add(model)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(model)
         return model.to_domain()
 
@@ -58,7 +93,26 @@ class SQLAlchemyTailorRepository(AbstractTailorRepository):
         result = await self.session.execute(stmt)
         model = result.scalar_one()
         model.is_verified = is_verified
-        await self.session.commit()
+        await self.session.flush()
+        await self.session.refresh(model)
+        return model.to_domain()
+
+    async def update(self, tailor: Tailor) -> Tailor:
+        """Partially update a tailor's contact fields and NIC images."""
+        stmt = select(TailorModel).where(TailorModel.id == tailor.id)
+        result = await self.session.execute(stmt)
+        model = result.scalar_one()
+        model.display_name = tailor.display_name
+        model.email = tailor.email
+        model.photo_url = tailor.photo_url
+        model.phone = tailor.phone
+        model.city = tailor.city
+        model.address = tailor.address
+        model.latitude = tailor.latitude
+        model.longitude = tailor.longitude
+        model.nic_front = tailor.nic_front
+        model.nic_rear = tailor.nic_rear
+        await self.session.flush()
         await self.session.refresh(model)
         return model.to_domain()
 
@@ -81,7 +135,7 @@ class SQLAlchemyMeasurementProfileRepository(AbstractMeasurementProfileRepositor
             notes=profile.notes,
         )
         self.session.add(model)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(model)
         return model.to_domain()
 
@@ -113,6 +167,6 @@ class SQLAlchemyMeasurementProfileRepository(AbstractMeasurementProfileRepositor
             value = getattr(profile, field)
             if value is not None:
                 setattr(model, field, value)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(model)
         return model.to_domain()

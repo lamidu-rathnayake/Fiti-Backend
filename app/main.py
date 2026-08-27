@@ -11,9 +11,10 @@ from app.infrastructure.db.base import Base
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Lifespan startup: Create database tables (ideal for SQLite/dev setups)
+    # Lifespan startup: Create database tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        
     yield
     # Lifespan shutdown: dispose engine
     await engine.dispose()

@@ -9,13 +9,13 @@ This project is a **FastAPI Application** built with **Clean Architecture** (Dom
 ```
 .
 ├── app/                  # Main application package containing clean architecture layers
-├── fiti-front/           # Next.js frontend web application (Firebase Auth & Firestore DB client)
+├── fiti-front/           # Next.js frontend web application (Firebase Auth)
 ├── tests/                # Automated tests (API & Use case test suites)
 ├── main.py               # Root execution entrypoint script
-├── Dev-Manual/           # Architecture reports and API documentation
+├── docs/                 # Architecture reports and API documentation
 ├── schema.sql            # Raw PostgreSQL DDL for domain data tables
 ├── pyproject.toml        # Project metadata, dependencies (uv/pip), and pytest config
-└── PROJECT_STRUCTURE.md  # Clean Architecture documentation & directory layout
+└── README.md             # Project overview and getting started guide
 ```
 
 ---
@@ -53,19 +53,21 @@ Dependencies strictly flow **inward**: Presentation → Use Cases → Domain ←
 
 ## 🔐 Post-Login Architecture & Role Enforcement
 
-Fiti utilizes a **Firebase-Native Identity Architecture**:
+Fiti utilizes a **Hybrid Identity Architecture**:
 
-1. **Firebase Authentication & Firestore DB**:
+1. **Firebase Authentication (Identity)**:
    - All users authenticate via Google SSO or Email/Password directly on the web application.
-   - User profiles and role assignments (`client`, `seller`) are stored in the Firestore `users` collection (`users/{uid}`).
-   - PostgreSQL contains zero user/role tables.
+   - The resulting Firebase ID token contains the user's `uid`, `email`, `name`, and `picture`.
 
-2. **Gateway Endpoint (`GET /api/v1/auth/me/role`)**:
-   - Accepts the Firebase Bearer token, verifies token validity, checks the user's role from JWT claims or Firestore DB, and returns the appropriate client (`/client/home`) or seller (`/seller/dashboard`) route.
+2. **PostgreSQL Database (Profiles & Roles)**:
+   - Profile contact details (phone, city, address) and roles are stored in the PostgreSQL database in the `clients` and `tailors` tables.
+   - The primary key for these tables is the Firebase `uid`.
 
-3. **Role Enforcement (`require_role`)**:
+3. **Gateway Endpoint (`GET /api/v1/auth/me/role`)**:
+   - Accepts the Firebase Bearer token, verifies token validity, checks the user's role from the PostgreSQL database, and returns the appropriate client (`/client/home`) or tailor (`/tailor/dashboard`) route.
+
+4. **Role Enforcement (`require_role`)**:
    - Protected endpoints are guarded by the `require_role("role_name")` dependency in `app/core/security.py`.
-   - Token payload claims are checked first; if un-claimed, role authorization is verified against the Firestore `users` collection (`firebase_admin.firestore`).
 
 ---
 

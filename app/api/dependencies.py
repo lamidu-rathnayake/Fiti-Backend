@@ -98,11 +98,13 @@ def get_manage_profile_use_case(
     meas_repo: AbstractMeasurementProfileRepository = Depends(
         get_measurement_repository
     ),
+    rbac_repo: AbstractRBACRepository = Depends(get_rbac_repository),
 ) -> ManageProfileUseCase:
     return ManageProfileUseCase(
         client_repository=client_repo,
         tailor_repository=tailor_repo,
         measurement_repository=meas_repo,
+        rbac_repository=rbac_repo,
     )
 
 

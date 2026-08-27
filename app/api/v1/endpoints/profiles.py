@@ -6,12 +6,14 @@ from app.api.dependencies import get_manage_profile_use_case
 from app.api.schemas.user_schema import (
     ClientRegisterRequest,
     ClientResponse,
+    ClientUpdateRequest,
     MeasurementProfileRequest,
     MeasurementProfileResponse,
     TailorRegisterRequest,
     TailorResponse,
+    TailorUpdateRequest,
 )
-from app.core.security import get_current_user_uid, require_role
+from app.core.security import get_current_user, get_current_user_uid, require_role
 from app.domain.exceptions.user import (
     ClientNotFoundError,
     ProfileAlreadyExistsError,
@@ -19,8 +21,10 @@ from app.domain.exceptions.user import (
 )
 from app.use_cases.dtos.user_dto import (
     ClientRegisterDTO,
+    ClientUpdateDTO,
     MeasurementProfileDTO,
     TailorRegisterDTO,
+    TailorUpdateDTO,
 )
 from app.use_cases.user.manage_profile import ManageProfileUseCase
 
@@ -35,17 +39,26 @@ router = APIRouter(prefix="/profiles", tags=["Profiles"])
 )
 async def register_client(
     request: ClientRegisterRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_user: dict = Depends(get_current_user),
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """
     Register a client profile for an already authenticated Firebase user.
-    The Firebase UID is extracted automatically from the verified Bearer Token,
-    or read from request.id if explicitly provided.
+    The Firebase UID and profile info are extracted exclusively from the verified Bearer Token.
+    Accepts optional contact fields (phone, city, address) previously stored in Firestore.
     """
-    profile_id = request.id or authenticated_uid
     try:
-        dto = ClientRegisterDTO(id=profile_id)
+        dto = ClientRegisterDTO(
+            id=authenticated_user["uid"],  # always from JWT, never from body
+            display_name=authenticated_user.get("name"),
+            email=authenticated_user.get("email"),
+            photo_url=authenticated_user.get("picture"),
+            phone=request.phone,
+            city=request.city,
+            address=request.address,
+            latitude=request.latitude,
+            longitude=request.longitude,
+        )
         result = await use_case.register_client(dto)
         return result
     except ProfileAlreadyExistsError as exc:
@@ -65,6 +78,39 @@ async def get_client_profile(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
+@router.patch("/client/{client_id}", response_model=ClientResponse)
+async def update_client_profile(
+    client_id: str,
+    request: ClientUpdateRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
+    use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
+):
+    """
+    Partially update a client's contact profile (phone, city, address).
+    The authenticated user may only update their own profile.
+    """
+    if authenticated_uid != client_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own profile.",
+        )
+    try:
+        dto = ClientUpdateDTO(
+            id=client_id,
+            display_name=request.display_name,
+            email=request.email,
+            photo_url=request.photo_url,
+            phone=request.phone,
+            city=request.city,
+            address=request.address,
+            latitude=request.latitude,
+            longitude=request.longitude,
+        )
+        return await use_case.update_client_profile(dto)
+    except ClientNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
 # ── Tailor Registration ─────────────────────────────────────────────────
 
 
@@ -73,21 +119,28 @@ async def get_client_profile(
 )
 async def register_tailor(
     request: TailorRegisterRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_user: dict = Depends(get_current_user),
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """
     Register a tailor profile for an already authenticated Firebase user.
-    The Firebase UID is extracted automatically from the verified Bearer Token,
-    or read from request.id if explicitly provided.
+    The Firebase UID and profile info are extracted exclusively from the verified Bearer Token.
     NIC images must be uploaded to cloud storage first.
+    Accepts optional contact fields (phone, city, address) previously stored in Firestore.
     """
-    profile_id = request.id or authenticated_uid
     try:
         dto = TailorRegisterDTO(
-            id=profile_id,
+            id=authenticated_user["uid"],  # always from JWT, never from body
+            display_name=authenticated_user.get("name"),
+            email=authenticated_user.get("email"),
+            photo_url=authenticated_user.get("picture"),
             nic_front=request.nic_front,
             nic_rear=request.nic_rear,
+            phone=request.phone,
+            city=request.city,
+            address=request.address,
+            latitude=request.latitude,
+            longitude=request.longitude,
         )
         result = await use_case.register_tailor(dto)
         return result
@@ -103,6 +156,41 @@ async def get_tailor_profile(
     """Get a tailor's public profile. Accessible by any authenticated user (clients browsing tailors)."""
     try:
         return await use_case.get_tailor_profile(tailor_id)
+    except TailorNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.patch("/tailor/{tailor_id}", response_model=TailorResponse)
+async def update_tailor_profile(
+    tailor_id: str,
+    request: TailorUpdateRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
+    use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
+):
+    """
+    Partially update a tailor's contact profile (phone, city, address) and NIC images.
+    The authenticated user may only update their own profile.
+    """
+    if authenticated_uid != tailor_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own profile.",
+        )
+    try:
+        dto = TailorUpdateDTO(
+            id=tailor_id,
+            display_name=request.display_name,
+            email=request.email,
+            photo_url=request.photo_url,
+            phone=request.phone,
+            city=request.city,
+            address=request.address,
+            latitude=request.latitude,
+            longitude=request.longitude,
+            nic_front=request.nic_front,
+            nic_rear=request.nic_rear,
+        )
+        return await use_case.update_tailor_profile(dto)
     except TailorNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 

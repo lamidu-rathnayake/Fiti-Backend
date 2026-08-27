@@ -29,7 +29,7 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
         if not res.scalar_one_or_none():
             ur = UserRoleModel(firebase_uid=user_id, role_id=role_id)
             self.session.add(ur)
-            await self.session.commit()
+            await self.session.flush()
 
     async def get_user_roles(self, user_id: str) -> list[Role]:
         stmt = (
