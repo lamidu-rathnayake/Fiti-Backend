@@ -11,6 +11,7 @@ engine = create_async_engine(
     echo=settings.DEBUG,
     future=True,
     poolclass=NullPool,
+    connect_args={"statement_cache_size": 0},
 )
 
 # Async Session Factory
