@@ -95,6 +95,9 @@ async def create_clothing_request(
         voice_note_url=request.voice_note_url,
         service_type=request.service_type,
         request_location=request.request_location,
+        latitude=request.latitude,
+        longitude=request.longitude,
+        radius_km=request.radius_km,
         measurement=meas_dto,
         design_image_urls=request.design_image_urls,
     )
@@ -283,7 +286,7 @@ async def process_mock_payment(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
-# ── Ratings ────────────────────────────────────────────────────────────
+# ── Ratings ────────────────────────────────────────────────────
 
 
 @router.post(

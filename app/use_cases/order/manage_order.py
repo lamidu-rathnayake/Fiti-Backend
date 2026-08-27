@@ -86,11 +86,32 @@ class ManageOrderUseCase:
                 )  # type: ignore
                 await self.order_repository.add_design_image(img)
 
-        # Broadcast/Directly target shops by creating shop_requests
-        if target_shop_ids:
-            for shop_id in target_shop_ids:
-                shop_req = ShopRequest(request_id=saved_req.request_id, shop_id=shop_id)  # type: ignore
-                await self.order_repository.create_shop_request(shop_req)
+        # Resolve recipient shops:
+        # 1. Direct explicit target shops if provided
+        # 2. Nearby shops within radius if latitude/longitude are provided
+        shops_to_target: set[int] = set(target_shop_ids or [])
+
+        if (
+            not shops_to_target
+            and dto.latitude is not None
+            and dto.longitude is not None
+            and self.shop_repository is not None
+        ):
+            nearby_shops = await self.shop_repository.search_near_location(
+                lat=dto.latitude,
+                lng=dto.longitude,
+                radius_km=dto.radius_km or 10.0,
+            )
+            shops_to_target.update(
+                s.shop_id for s in nearby_shops if s.shop_id is not None
+            )
+
+        # Broadcast only to the resolved nearby / targeted shops
+        for shop_id in shops_to_target:
+            shop_req = ShopRequest(
+                request_id=saved_req.request_id, shop_id=shop_id
+            )  # type: ignore
+            await self.order_repository.create_shop_request(shop_req)
 
         refetched = await self.order_repository.get_clothing_request(
             saved_req.request_id
