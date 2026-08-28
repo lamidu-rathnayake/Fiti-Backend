@@ -41,7 +41,6 @@ class ClothingRequestCreateRequest(BaseModel):
         ServiceTypeEnum.ONLINE, description="Online or physical-visit workflow"
     )
     request_location: str | None = Field(None, min_length=2, max_length=255)
-    request_location: str | None = None
 
     latitude: float | None = Field(
         None, description="Client GPS latitude for nearby shop matching"
