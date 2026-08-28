@@ -50,10 +50,16 @@ class ClothingRequestCreateDTO:
     # NEW: Workflow preference — online or physical shop visit
     service_type: ServiceTypeEnum = ServiceTypeEnum.ONLINE
     request_location: str | None = None
+
+    # --- Added for Nearby Shop Filtering ---
+    latitude: float | None = None
+    longitude: float | None = None
+    radius_km: float = 10.0
+    # ---------------------------------------
+
     measurement: MeasurementDTO | None = None
     # NEW: Design inspiration image URLs (uploaded to cloud storage first)
     design_image_urls: list[str] = field(default_factory=list)
-
 
 @dataclass
 class BidDTO:

@@ -41,6 +41,18 @@ class ClothingRequestCreateRequest(BaseModel):
         ServiceTypeEnum.ONLINE, description="Online or physical-visit workflow"
     )
     request_location: str | None = Field(None, min_length=2, max_length=255)
+
+    latitude: float | None = Field(
+        None, description="Client GPS latitude for nearby shop matching"
+    )
+    longitude: float | None = Field(
+        None, description="Client GPS longitude for nearby shop matching"
+    )
+    radius_km: float = Field(
+        10.0, description="Broadcast radius in kilometers (defaults to 10 km)"
+    )
+    # ---------------------------------------
+
     measurement: MeasurementProfileRequest | None = None
     # NEW: Cloud-storage URLs for design inspiration screenshots
     design_image_urls: list[str] = Field(
