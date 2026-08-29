@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # Firebase Auth Settings
     FIREBASE_CREDENTIALS_PATH: str | None = None
 
+    # Cloudinary Settings
+    CLOUDINARY_CLOUD_NAME: str | None = None
+    CLOUDINARY_API_KEY: str | None = None
+    CLOUDINARY_API_SECRET: str | None = None
+
     model_config = SettingsConfigDict(
         env_file=ENV_FILE,
         env_file_encoding="utf-8",

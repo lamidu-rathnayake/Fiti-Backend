@@ -1,4 +1,11 @@
 from typing import Optional
+import time
+import hashlib
+import json
+import urllib.request
+import urllib.parse
+from pydantic import BaseModel
+from app.core.config import settings
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -29,6 +36,44 @@ from app.use_cases.dtos.user_dto import (
 from app.use_cases.user.manage_profile import ManageProfileUseCase
 
 router = APIRouter(prefix="/profiles", tags=["Profiles"])
+
+
+class CloudinaryDeleteRequest(BaseModel):
+    public_id: str
+
+@router.post("/cloudinary-image/delete", status_code=status.HTTP_200_OK)
+async def delete_cloudinary_image(
+    request: CloudinaryDeleteRequest,
+    authenticated_user: dict = Depends(get_current_user),
+):
+    """
+    Securely delete an image from Cloudinary using the backend credentials.
+    Requires an authenticated user.
+    """
+    if not settings.CLOUDINARY_API_SECRET or not settings.CLOUDINARY_API_KEY or not settings.CLOUDINARY_CLOUD_NAME:
+        raise HTTPException(status_code=500, detail="Cloudinary credentials not configured.")
+        
+    timestamp = str(int(time.time()))
+    public_id = request.public_id
+    
+    string_to_sign = f"public_id={public_id}&timestamp={timestamp}{settings.CLOUDINARY_API_SECRET}"
+    signature = hashlib.sha1(string_to_sign.encode("utf-8")).hexdigest()
+    
+    url = f"https://api.cloudinary.com/v1_1/{settings.CLOUDINARY_CLOUD_NAME}/image/destroy"
+    data = urllib.parse.urlencode({
+        "public_id": public_id,
+        "timestamp": timestamp,
+        "api_key": settings.CLOUDINARY_API_KEY,
+        "signature": signature
+    }).encode("utf-8")
+    
+    try:
+        req = urllib.request.Request(url, data=data, method="POST")
+        with urllib.request.urlopen(req) as response:
+            result = json.loads(response.read())
+            return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete image: {str(e)}")
 
 
 # ── Client Registration ─────────────────────────────────────────────────
