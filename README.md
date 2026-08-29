@@ -44,7 +44,6 @@ Create a `.env` file in the root directory with the following variables:
 | Variable | Description | Default |
 |---|---|---|
 | `CONNECTION_STRING` | PostgreSQL database connection URL | (Required) |
-| `MOCK_FIREBASE_AUTH` | Set to `True` for local testing to bypass real Firebase token verification. **MUST be `False` in production.** | `False` |
 | `FIREBASE_CREDENTIALS_PATH` | Path to the Firebase Admin SDK service account JSON file. | `None` |
 | `ADMIN_BACKEND_URL` | The URL of the separate Admin Backend project for redirection (e.g., `https://admin.fiti.com`). | `""` |
 | `FRONTEND_ORIGINS` | Comma-separated list of allowed origins for CORS. | `*` |

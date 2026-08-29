@@ -26,9 +26,6 @@ class Settings(BaseSettings):
         return value
 
     # Firebase Auth Settings
-    # IMPORTANT: Default is False — set MOCK_FIREBASE_AUTH=true in .env for local dev only.
-    # Never set this to True in production — all endpoints will bypass auth checks.
-    MOCK_FIREBASE_AUTH: bool = False
     FIREBASE_CREDENTIALS_PATH: str | None = None
 
     model_config = SettingsConfigDict(

@@ -59,17 +59,6 @@ async def get_current_user(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-    # Mock mode — ONLY when explicitly enabled in .env for local development
-    if settings.MOCK_FIREBASE_AUTH:
-        logger.warning("MOCK_FIREBASE_AUTH is enabled — bypassing token verification.")
-        return {
-            "uid": "mock_firebase_uid",
-            "email": "mock@example.com",
-            "role": "client",
-            "name": "Mock User",
-            "picture": None,
-        }
-
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Authentication token required in Authorization header (Bearer <token>).",
@@ -102,9 +91,6 @@ def require_role(role_name: str):
     ) -> str:
         uid = user_info["uid"]
         token_role = user_info.get("role")
-
-        if settings.MOCK_FIREBASE_AUTH:
-            return uid
 
         # 1. Verify role directly from JWT payload/claims if present
         if token_role:
