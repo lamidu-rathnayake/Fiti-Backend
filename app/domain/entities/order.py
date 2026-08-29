@@ -25,6 +25,11 @@ class ClothingRequestStatusEnum(str, Enum):
     CANCELLED = "cancelled"
 
 
+class ClothingRequestTypeEnum(str, Enum):
+    DIRECT = "direct"
+    BIDDING = "bidding"
+
+
 class ShopRequestStatusEnum(str, Enum):
     PENDING = "pending"
     QUOTED = "quoted"
@@ -118,6 +123,8 @@ class ClothingRequest:
     voice_note_url: str | None = None
     # NEW: Online processing vs. physical shop visit toggle
     service_type: ServiceTypeEnum = ServiceTypeEnum.ONLINE
+    # NEW: Request type (direct or bidding)
+    request_type: ClothingRequestTypeEnum = ClothingRequestTypeEnum.DIRECT
     request_location: str | None = None
     status: ClothingRequestStatusEnum = ClothingRequestStatusEnum.OPEN
     measurement: Measurement | None = None

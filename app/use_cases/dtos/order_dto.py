@@ -3,6 +3,7 @@ from datetime import date, datetime
 
 from app.domain.entities.order import (
     ClothingRequestStatusEnum,
+    ClothingRequestTypeEnum,
     FabricStatusEnum,
     OrderStatusEnum,
     PaymentMethodEnum,
@@ -49,6 +50,8 @@ class ClothingRequestCreateDTO:
     voice_note_url: str | None = None
     # NEW: Workflow preference — online or physical shop visit
     service_type: ServiceTypeEnum = ServiceTypeEnum.ONLINE
+    # NEW: Request type (direct or bidding)
+    request_type: ClothingRequestTypeEnum = ClothingRequestTypeEnum.DIRECT
     request_location: str | None = None
 
     # --- Added for Nearby Shop Filtering ---
@@ -91,6 +94,7 @@ class ClothingRequestOutputDTO:
     description: str | None = None
     voice_note_url: str | None = None
     service_type: ServiceTypeEnum = ServiceTypeEnum.ONLINE
+    request_type: ClothingRequestTypeEnum = ClothingRequestTypeEnum.DIRECT
     request_location: str | None = None
     status: ClothingRequestStatusEnum = ClothingRequestStatusEnum.OPEN
     measurement: MeasurementDTO | None = None

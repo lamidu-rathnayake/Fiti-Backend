@@ -19,6 +19,7 @@ from app.domain.entities.order import (
     ClothingRequest,
     ClothingRequestImage,
     ClothingRequestStatusEnum,
+    ClothingRequestTypeEnum,
     FabricStatusEnum,
     Measurement,
     Order,
@@ -62,6 +63,12 @@ class ClothingRequestModel(Base):
     service_type: Mapped[ServiceTypeEnum] = mapped_column(
         Enum(ServiceTypeEnum, native_enum=False),
         default=ServiceTypeEnum.ONLINE,
+        nullable=False,
+    )
+    # NEW: Direct vs Bidding distinction
+    request_type: Mapped[ClothingRequestTypeEnum] = mapped_column(
+        Enum(ClothingRequestTypeEnum, native_enum=False),
+        default=ClothingRequestTypeEnum.DIRECT,
         nullable=False,
     )
     request_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -122,6 +129,7 @@ class ClothingRequestModel(Base):
             description=self.description,
             voice_note_url=self.voice_note_url,
             service_type=self.service_type,
+            request_type=self.request_type,
             request_location=self.request_location,
             status=self.status,
             measurement=(

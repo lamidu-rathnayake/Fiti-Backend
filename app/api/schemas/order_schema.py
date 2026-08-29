@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from app.api.schemas.user_schema import MeasurementProfileRequest
 from app.domain.entities.order import (
     ClothingRequestStatusEnum,
+    ClothingRequestTypeEnum,
     FabricStatusEnum,
     OrderStatusEnum,
     PaymentMethodEnum,
@@ -39,6 +40,10 @@ class ClothingRequestCreateRequest(BaseModel):
     # NEW: Workflow toggle — 'online' or 'physical_visit'
     service_type: ServiceTypeEnum = Field(
         ServiceTypeEnum.ONLINE, description="Online or physical-visit workflow"
+    )
+    # NEW: Request type — 'direct' or 'bidding'
+    request_type: ClothingRequestTypeEnum = Field(
+        ClothingRequestTypeEnum.DIRECT, description="Direct request vs Bidding"
     )
     request_location: str | None = Field(None, min_length=2, max_length=255)
 
@@ -118,6 +123,7 @@ class ClothingRequestResponse(BaseModel):
     description: str | None = None
     voice_note_url: str | None = None
     service_type: ServiceTypeEnum = ServiceTypeEnum.ONLINE
+    request_type: ClothingRequestTypeEnum = ClothingRequestTypeEnum.DIRECT
     request_location: str | None = None
     status: ClothingRequestStatusEnum
     measurement: MeasurementProfileRequest | None = None

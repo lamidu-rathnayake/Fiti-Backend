@@ -26,6 +26,12 @@ EXCEPTION
 END $$;
 
 DO $$ BEGIN
+    CREATE TYPE clothing_request_type_enum AS ENUM ('direct', 'bidding');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
     CREATE TYPE shop_request_status_enum AS ENUM ('pending', 'quoted', 'accepted', 'rejected', 'withdrawn');
 EXCEPTION
     WHEN duplicate_object THEN null;
@@ -205,6 +211,8 @@ CREATE TABLE IF NOT EXISTS clothing_requests (
     voice_note_url      VARCHAR(2048),
     -- NEW: Operational toggle — client chooses online or physical shop visit
     service_type        service_type_enum NOT NULL DEFAULT 'online',
+    -- NEW: Direct vs Bidding distinction
+    request_type        clothing_request_type_enum NOT NULL DEFAULT 'direct',
     request_location    VARCHAR(255),
     status              clothing_request_status_enum NOT NULL DEFAULT 'open',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
