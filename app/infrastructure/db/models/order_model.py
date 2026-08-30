@@ -51,29 +51,51 @@ class ClothingRequestModel(Base):
     target_budget: Mapped[float | None] = mapped_column(Float, nullable=True)
     clothing_category: Mapped[str | None] = mapped_column(String(100), nullable=True)
     gender: Mapped[GenderEnum | None] = mapped_column(
-        Enum(GenderEnum, native_enum=False), nullable=True
+        Enum(
+            GenderEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
+        nullable=True,
     )
     fabric_status: Mapped[FabricStatusEnum | None] = mapped_column(
-        Enum(FabricStatusEnum, native_enum=False), nullable=True
+        Enum(
+            FabricStatusEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
+        nullable=True,
     )
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     # NEW: URL to audio file stored in Firebase Storage / Azure Blob
     voice_note_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     # NEW: Online vs. physical-visit workflow toggle
     service_type: Mapped[ServiceTypeEnum] = mapped_column(
-        Enum(ServiceTypeEnum, native_enum=False),
+        Enum(
+            ServiceTypeEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
         default=ServiceTypeEnum.ONLINE,
         nullable=False,
     )
     # NEW: Direct vs Bidding distinction
     request_type: Mapped[ClothingRequestTypeEnum] = mapped_column(
-        Enum(ClothingRequestTypeEnum, native_enum=False),
+        Enum(
+            ClothingRequestTypeEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
         default=ClothingRequestTypeEnum.DIRECT,
         nullable=False,
     )
     request_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
     status: Mapped[ClothingRequestStatusEnum] = mapped_column(
-        Enum(ClothingRequestStatusEnum, native_enum=False),
+        Enum(
+            ClothingRequestStatusEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
         default=ClothingRequestStatusEnum.OPEN,
         nullable=False,
     )
@@ -269,7 +291,11 @@ class ShopRequestModel(Base):
         Float, nullable=True
     )  # latest bid amount
     status: Mapped[ShopRequestStatusEnum] = mapped_column(
-        Enum(ShopRequestStatusEnum, native_enum=False),
+        Enum(
+            ShopRequestStatusEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
         default=ShopRequestStatusEnum.PENDING,
         nullable=False,
     )
@@ -346,7 +372,11 @@ class OrderModel(Base):
         nullable=False,
     )
     order_status: Mapped[OrderStatusEnum] = mapped_column(
-        Enum(OrderStatusEnum, native_enum=False),
+        Enum(
+            OrderStatusEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
         default=OrderStatusEnum.IN_PROGRESS,
         nullable=False,
     )
@@ -390,10 +420,19 @@ class PaymentModel(Base):
     )
     amount: Mapped[float] = mapped_column(Float, nullable=False)
     payment_method: Mapped[PaymentMethodEnum | None] = mapped_column(
-        Enum(PaymentMethodEnum, native_enum=False), nullable=True
+        Enum(
+            PaymentMethodEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
+        nullable=True,
     )
     payment_status: Mapped[PaymentStatusEnum] = mapped_column(
-        Enum(PaymentStatusEnum, native_enum=False),
+        Enum(
+            PaymentStatusEnum,
+            values_callable=lambda enum_class: [item.value for item in enum_class],
+            native_enum=False,
+        ),
         default=PaymentStatusEnum.PENDING,
         nullable=False,
     )
