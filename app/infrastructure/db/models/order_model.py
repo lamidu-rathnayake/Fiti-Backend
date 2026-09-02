@@ -138,8 +138,23 @@ class ClothingRequestModel(Base):
         back_populates="clothing_request",
         cascade="all, delete-orphan",
     )
+    client: Mapped[Optional["ClientModel"]] = relationship(
+        "ClientModel",
+        primaryjoin="ClientModel.id==ClothingRequestModel.client_id",
+        foreign_keys=[client_id],
+        viewonly=True,
+    )
 
     def to_domain(self) -> ClothingRequest:
+        client_dict = None
+        if self.client:
+            client_dict = {
+                "id": self.client.id,
+                "display_name": self.client.display_name,
+                "phone": self.client.phone,
+                "city": self.client.city,
+            }
+
         return ClothingRequest(
             request_id=self.request_id,
             client_id=self.client_id,
@@ -183,6 +198,7 @@ class ClothingRequestModel(Base):
             shop_requests=[sr.to_domain() for sr in self.shop_requests]
             if self.shop_requests
             else [],
+            client=client_dict,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -320,6 +336,11 @@ class ShopRequestModel(Base):
     )
 
     def to_domain(self) -> ShopRequest:
+        try:
+            cr_domain = self.clothing_request.to_domain() if self.clothing_request else None
+        except Exception:
+            cr_domain = None
+
         return ShopRequest(
             shop_request_id=self.shop_request_id,
             request_id=self.request_id,
@@ -327,6 +348,7 @@ class ShopRequestModel(Base):
             offered_price=self.offered_price,
             status=self.status,
             response_date=self.response_date,
+            clothing_request=cr_domain,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -393,6 +415,11 @@ class OrderModel(Base):
         nullable=False,
     )
 
+    shop_request: Mapped[Optional["ShopRequestModel"]] = relationship(
+        "ShopRequestModel",
+        viewonly=True,
+    )
+
     def to_domain(self) -> Order:
         return Order(
             order_id=self.order_id,
@@ -401,6 +428,7 @@ class OrderModel(Base):
             accepted_price=self.accepted_price,
             started_date=self.started_date,
             completed_date=self.completed_date,
+            clothing_request=self.shop_request.clothing_request.to_domain() if self.shop_request and self.shop_request.clothing_request else None,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )

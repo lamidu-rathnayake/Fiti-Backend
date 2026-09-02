@@ -108,10 +108,19 @@ class ShopRequestResponse(BaseModel):
     shop_id: int
     offered_price: float | None = None
     status: ShopRequestStatusEnum
+    clothing_request: "ClothingRequestResponse | None" = None
+
+
+class ClientBasicInfo(BaseModel):
+    id: str
+    display_name: str | None = None
+    phone: str | None = None
+    city: str | None = None
 
 
 class ClothingRequestResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
 
     request_id: int
     client_id: str
@@ -130,6 +139,7 @@ class ClothingRequestResponse(BaseModel):
     design_images: list[ClothingRequestImageResponse] = []
     shop_requests: list[ShopRequestResponse] = []
     bids: list[BidResponse] = []
+    client: ClientBasicInfo | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -143,6 +153,7 @@ class OrderResponse(BaseModel):
     accepted_price: float
     started_date: date | None = None
     completed_date: date | None = None
+    clothing_request: ClothingRequestResponse | None = None
     created_at: datetime | None = None
 
 

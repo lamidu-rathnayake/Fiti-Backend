@@ -88,6 +88,8 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             select(ClothingRequestModel)
             .options(
                 selectinload(ClothingRequestModel.measurement),
+                selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(ClothingRequestModel.client),
                 selectinload(ClothingRequestModel.design_images),
                 selectinload(ClothingRequestModel.shop_requests).selectinload(
                     ShopRequestModel.bids
@@ -106,6 +108,8 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             select(ClothingRequestModel)
             .options(
                 selectinload(ClothingRequestModel.measurement),
+                selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(ClothingRequestModel.client),
                 selectinload(ClothingRequestModel.design_images),
                 selectinload(ClothingRequestModel.shop_requests).selectinload(
                     ShopRequestModel.bids
@@ -124,6 +128,8 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             select(ClothingRequestModel)
             .options(
                 selectinload(ClothingRequestModel.measurement),
+                selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(ClothingRequestModel.client),
                 selectinload(ClothingRequestModel.design_images),
                 selectinload(ClothingRequestModel.shop_requests).selectinload(
                     ShopRequestModel.bids
@@ -179,7 +185,16 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         return model.to_domain() if model else None
 
     async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequest]:
-        stmt = select(ShopRequestModel).where(ShopRequestModel.shop_id == shop_id)
+        stmt = (
+            select(ShopRequestModel)
+            .options(
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+            )
+            .where(ShopRequestModel.shop_id == shop_id)
+        )
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [m.to_domain() for m in models]
@@ -238,7 +253,16 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         return model.to_domain()
 
     async def get_order(self, order_id: int) -> Order | None:
-        stmt = select(OrderModel).where(OrderModel.order_id == order_id)
+        stmt = (
+            select(OrderModel)
+            .options(
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+            )
+            .where(OrderModel.order_id == order_id)
+        )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
@@ -249,6 +273,12 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             .join(
                 ShopRequestModel,
                 ShopRequestModel.shop_request_id == OrderModel.shop_request_id,
+            )
+            .options(
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
             )
             .where(ShopRequestModel.shop_id == shop_id)
         )
@@ -266,6 +296,12 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             .join(
                 ClothingRequestModel,
                 ClothingRequestModel.request_id == ShopRequestModel.request_id,
+            )
+            .options(
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
             )
             .where(ClothingRequestModel.client_id == client_id)
         )

@@ -105,6 +105,7 @@ class ShopRequest:
     status: ShopRequestStatusEnum = ShopRequestStatusEnum.PENDING
     response_date: datetime | None = None
     bids: list[Bid] = field(default_factory=list)
+    clothing_request: "ClothingRequest | None" = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -131,6 +132,7 @@ class ClothingRequest:
     # NEW: Zero or more design-inspiration images
     design_images: list[ClothingRequestImage] = field(default_factory=list)
     shop_requests: list[ShopRequest] = field(default_factory=list)
+    client: dict | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -143,6 +145,7 @@ class Order:
     accepted_price: float = 0.0
     started_date: date | None = None
     completed_date: date | None = None
+    clothing_request: ClothingRequest | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
