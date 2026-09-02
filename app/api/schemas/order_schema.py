@@ -58,7 +58,9 @@ class ClothingRequestCreateRequest(BaseModel):
     )
     # ---------------------------------------
 
-    measurement: MeasurementProfileRequest | None = None
+    measurement_profile_id: int | None = Field(
+        None, description="ID of the client's saved measurement profile"
+    )
     # NEW: Cloud-storage URLs for design inspiration screenshots
     design_image_urls: list[str] = Field(
         default_factory=list,

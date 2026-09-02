@@ -49,18 +49,6 @@ class ManageOrderUseCase:
         self, dto: ClothingRequestCreateDTO, target_shop_ids: list[int] | None = None
     ) -> ClothingRequestOutputDTO:
         meas_entity = None
-        if dto.measurement:
-            meas_entity = Measurement(
-                chest=dto.measurement.chest,
-                waist=dto.measurement.waist,
-                shoulder=dto.measurement.shoulder,
-                sleeve=dto.measurement.sleeve,
-                neck=dto.measurement.neck,
-                hip=dto.measurement.hip,
-                inseam=dto.measurement.inseam,
-                length=dto.measurement.length,
-                notes=dto.measurement.notes,
-            )
 
         req_entity = ClothingRequest(
             client_id=dto.client_id,
@@ -74,6 +62,7 @@ class ManageOrderUseCase:
             service_type=dto.service_type,
             request_location=dto.request_location,
             measurement=meas_entity,
+            measurement_profile_id=dto.measurement_profile_id,
         )
 
         saved_req = await self.order_repository.create_clothing_request(req_entity)

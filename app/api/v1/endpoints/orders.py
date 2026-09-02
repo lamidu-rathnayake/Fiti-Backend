@@ -70,19 +70,6 @@ async def create_clothing_request(
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """Submit a new clothing request. Requires client role."""
-    meas_dto = None
-    if request.measurement:
-        meas_dto = MeasurementDTO(
-            chest=request.measurement.chest,
-            waist=request.measurement.waist,
-            shoulder=request.measurement.shoulder,
-            sleeve=request.measurement.sleeve,
-            neck=request.measurement.neck,
-            hip=request.measurement.hip,
-            inseam=request.measurement.inseam,
-            length=request.measurement.length,
-            notes=request.measurement.notes,
-        )
 
     dto = ClothingRequestCreateDTO(
         client_id=request.client_id,
@@ -98,7 +85,8 @@ async def create_clothing_request(
         latitude=request.latitude,
         longitude=request.longitude,
         radius_km=request.radius_km,
-        measurement=meas_dto,
+        measurement=None,
+        measurement_profile_id=request.measurement_profile_id,
         design_image_urls=request.design_image_urls,
     )
     return await use_case.create_clothing_request(

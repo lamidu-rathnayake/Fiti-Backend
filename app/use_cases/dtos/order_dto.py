@@ -61,6 +61,7 @@ class ClothingRequestCreateDTO:
     # ---------------------------------------
 
     measurement: MeasurementDTO | None = None
+    measurement_profile_id: int | None = None
     # NEW: Design inspiration image URLs (uploaded to cloud storage first)
     design_image_urls: list[str] = field(default_factory=list)
 

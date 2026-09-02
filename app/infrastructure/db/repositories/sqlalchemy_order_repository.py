@@ -47,6 +47,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             service_type=request.service_type,
             request_location=request.request_location,
             status=request.status,
+            measurement_profile_id=request.measurement_profile_id,
         )
         self.session.add(model)
         await self.session.commit()
@@ -67,7 +68,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
             )
             self.session.add(meas_model)
             await self.session.commit()
-        else:
+        elif not request.measurement_profile_id:
             # If no per-request measurements provided, reference client's saved profile if exists
             stmt = select(MeasurementProfileModel).where(
                 MeasurementProfileModel.client_id == request.client_id

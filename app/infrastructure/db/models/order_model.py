@@ -421,6 +421,15 @@ class OrderModel(Base):
     )
 
     def to_domain(self) -> Order:
+        try:
+            cr_domain = (
+                self.shop_request.clothing_request.to_domain()
+                if self.shop_request and self.shop_request.clothing_request
+                else None
+            )
+        except Exception:
+            cr_domain = None
+
         return Order(
             order_id=self.order_id,
             shop_request_id=self.shop_request_id,
@@ -428,7 +437,7 @@ class OrderModel(Base):
             accepted_price=self.accepted_price,
             started_date=self.started_date,
             completed_date=self.completed_date,
-            clothing_request=self.shop_request.clothing_request.to_domain() if self.shop_request and self.shop_request.clothing_request else None,
+            clothing_request=cr_domain,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )

@@ -129,6 +129,7 @@ class ClothingRequest:
     request_location: str | None = None
     status: ClothingRequestStatusEnum = ClothingRequestStatusEnum.OPEN
     measurement: Measurement | None = None
+    measurement_profile_id: int | None = None
     # NEW: Zero or more design-inspiration images
     design_images: list[ClothingRequestImage] = field(default_factory=list)
     shop_requests: list[ShopRequest] = field(default_factory=list)
