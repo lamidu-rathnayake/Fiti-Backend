@@ -53,10 +53,13 @@ async def list_open_clothing_requests(
 )
 async def list_clothing_requests_by_client(
     client_id: str,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all clothing requests for a specific client. Declared before /{request_id}."""
-    return await use_case.list_clothing_requests_by_client(client_id)
+    if client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own requests.")
+    return await use_case.list_clothing_requests_by_client(client_id, authenticated_uid)
 
 
 @router.post(
@@ -70,6 +73,8 @@ async def create_clothing_request(
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """Submit a new clothing request. Requires client role."""
+    if request.client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only create requests for yourself.")
 
     dto = ClothingRequestCreateDTO(
         client_id=request.client_id,
@@ -85,9 +90,14 @@ async def create_clothing_request(
         latitude=request.latitude,
         longitude=request.longitude,
         radius_km=request.radius_km,
-        measurement=None,
+        measurement=(
+            MeasurementDTO(**request.measurement.model_dump())
+            if request.measurement
+            else None
+        ),
         measurement_profile_id=request.measurement_profile_id,
         design_image_urls=request.design_image_urls,
+        request_type=request.request_type,
     )
     return await use_case.create_clothing_request(
         dto, target_shop_ids=request.target_shop_ids
@@ -129,10 +139,11 @@ async def cancel_clothing_request(
 @router.get("/shop-requests/shop/{shop_id}", response_model=list[ShopRequestResponse])
 async def list_shop_requests_by_shop(
     shop_id: int,
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all shop requests assigned to a specific shop."""
-    return await use_case.list_shop_requests_by_shop(shop_id)
+    return await use_case._list_shop_requests_by_shop(shop_id, authenticated_uid)
 
 
 @router.patch("/shop-requests/{shop_request_id}/reject", response_model=ShopRequestResponse)
@@ -143,7 +154,9 @@ async def reject_shop_request(
 ):
     """Reject a tailor's quote. Requires client role."""
     try:
-        return await use_case.reject_shop_request(shop_request_id)
+        return await use_case.reject_shop_request(shop_request_id, authenticated_uid)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
@@ -174,7 +187,9 @@ async def submit_bid(
             bid_amount=request.bid_amount,
             message=request.message,
         )
-        return await use_case.submit_bid(dto)
+        return await use_case.submit_bid(dto, authenticated_uid)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
@@ -186,19 +201,21 @@ async def submit_bid(
 @router.get("/shop/{shop_id}", response_model=list[OrderResponse])
 async def list_orders_by_shop(
     shop_id: int,
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all orders for a specific shop. Declared before /{order_id}."""
-    return await use_case.list_orders_by_shop(shop_id)
+    return await use_case.list_orders_by_shop(shop_id, authenticated_uid)
 
 
 @router.get("/client/{client_id}", response_model=list[OrderResponse])
 async def list_orders_by_client(
     client_id: str,
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all orders for a specific client. Declared before /{order_id}."""
-    return await use_case.list_orders_by_client(client_id)
+    return await use_case.list_orders_by_client(client_id, authenticated_uid)
 
 
 @router.post(
@@ -215,7 +232,9 @@ async def accept_bid_and_create_order(
             shop_request_id=request.shop_request_id,
             accepted_price=request.accepted_price,
         )
-        return await use_case.accept_bid_and_create_order(dto)
+        return await use_case.accept_bid_and_create_order(dto, authenticated_uid)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
     except Exception as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
@@ -228,9 +247,11 @@ async def get_order(
 ):
     """Get a specific order by ID."""
     try:
-        return await use_case.get_order(order_id)
+        return await use_case.get_order(order_id, authenticated_uid)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
 
 
 @router.patch("/{order_id}/status", response_model=OrderResponse)
@@ -242,11 +263,13 @@ async def update_order_status(
 ):
     """Update order status."""
     try:
-        return await use_case.update_order_status(order_id, order_status)
+        return await use_case.update_order_status(order_id, order_status, authenticated_uid)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
 
 
 # ── Payments ───────────────────────────────────────────────────────────
@@ -260,9 +283,11 @@ async def get_order_payment(
 ):
     """Get payment status for an order. Returns null if not yet paid."""
     try:
-        return await use_case.get_order_payment(order_id)
+        return await use_case.get_order_payment(order_id, authenticated_uid)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
 
 
 @router.post(
@@ -282,9 +307,11 @@ async def process_mock_payment(
             amount=request.amount,
             payment_method=request.payment_method,
         )
-        return await use_case.process_mock_payment(dto)
+        return await use_case.process_mock_payment(dto, authenticated_uid)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
 
 
 # ── Ratings ────────────────────────────────────────────────────
@@ -307,6 +334,8 @@ async def submit_rating(
             rating=request.rating,
             review=request.review,
         )
-        return await use_case.submit_rating(dto)
+        return await use_case.submit_rating(dto, authenticated_uid)
     except OrderNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))

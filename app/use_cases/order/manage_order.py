@@ -107,6 +107,24 @@ class ManageOrderUseCase:
         )  # type: ignore
         return self._to_clothing_request_dto(refetched or saved_req)
 
+    async def _assert_shop_request_owner(
+        self, shop_request_id: int, uid: str, owner_type: str
+    ) -> ShopRequest:
+        shop_request = await self.order_repository.get_shop_request(shop_request_id)
+        if not shop_request:
+            raise OrderNotFoundError(shop_request_id)
+
+        if owner_type == "client":
+            if not shop_request.clothing_request or shop_request.clothing_request.client_id != uid:
+                raise PermissionError("You do not own this shop request.")
+        elif owner_type == "tailor":
+            if not self.shop_repository:
+                raise PermissionError("Shop ownership could not be verified.")
+            shop = await self.shop_repository.get_by_id(shop_request.shop_id)
+            if not shop or shop.tailor_id != uid:
+                raise PermissionError("You do not own this shop request's shop.")
+        return shop_request
+
     async def get_clothing_request(self, request_id: int) -> ClothingRequestOutputDTO:
         req = await self.order_repository.get_clothing_request(request_id)
         if not req:
@@ -114,8 +132,10 @@ class ManageOrderUseCase:
         return self._to_clothing_request_dto(req)
 
     async def list_clothing_requests_by_client(
-        self, client_id: str
+        self, client_id: str, authenticated_uid: str | None = None
     ) -> list[ClothingRequestOutputDTO]:
+        if authenticated_uid and client_id != authenticated_uid:
+            raise PermissionError("You can only view your own requests.")
         requests = await self.order_repository.list_clothing_requests_by_client(
             client_id
         )
@@ -130,6 +150,17 @@ class ManageOrderUseCase:
         return [self._to_clothing_request_dto(r) for r in requests]
 
     async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequestDTO]:
+        return await self._list_shop_requests_by_shop(shop_id)
+
+    async def _list_shop_requests_by_shop(
+        self, shop_id: int, tailor_uid: str | None = None
+    ) -> list[ShopRequestDTO]:
+        if tailor_uid:
+            if not self.shop_repository:
+                raise PermissionError("Shop ownership could not be verified.")
+            shop = await self.shop_repository.get_by_id(shop_id)
+            if not shop or shop.tailor_id != tailor_uid:
+                raise PermissionError("You do not own this shop.")
         shop_requests = await self.order_repository.list_shop_requests_by_shop(shop_id)
         return [
             ShopRequestDTO(
@@ -142,7 +173,9 @@ class ManageOrderUseCase:
             for sr in shop_requests
         ]
 
-    async def reject_shop_request(self, shop_request_id: int) -> ShopRequestDTO:
+    async def reject_shop_request(self, shop_request_id: int, client_uid: str | None = None) -> ShopRequestDTO:
+        if client_uid:
+            await self._assert_shop_request_owner(shop_request_id, client_uid, "client")
         updated = await self.order_repository.update_shop_request_status(
             shop_request_id, ShopRequestStatusEnum.REJECTED
         )
@@ -157,7 +190,9 @@ class ManageOrderUseCase:
             status=updated.status,
         )
 
-    async def submit_bid(self, dto: BidCreateDTO) -> BidDTO:
+    async def submit_bid(self, dto: BidCreateDTO, tailor_uid: str | None = None) -> BidDTO:
+        if tailor_uid:
+            await self._assert_shop_request_owner(dto.shop_request_id, tailor_uid, "tailor")
         bid = Bid(
             shop_request_id=dto.shop_request_id,
             bid_amount=dto.bid_amount,
@@ -172,7 +207,9 @@ class ManageOrderUseCase:
             created_at=saved_bid.created_at,
         )
 
-    async def accept_bid_and_create_order(self, dto: OrderCreateDTO) -> OrderOutputDTO:
+    async def accept_bid_and_create_order(self, dto: OrderCreateDTO, client_uid: str | None = None) -> OrderOutputDTO:
+        if client_uid:
+            await self._assert_shop_request_owner(dto.shop_request_id, client_uid, "client")
         order = Order(
             shop_request_id=dto.shop_request_id,
             accepted_price=dto.accepted_price,
@@ -182,37 +219,62 @@ class ManageOrderUseCase:
         return self._to_order_dto(saved_order)
 
     async def update_order_status(
-        self, order_id: int, new_status: str
+        self, order_id: int, new_status: str, authenticated_uid: str | None = None
     ) -> OrderOutputDTO:
         order = await self.order_repository.get_order(order_id)
         if not order:
             raise OrderNotFoundError(order_id)
+        if authenticated_uid:
+            await self._assert_order_owner(order, authenticated_uid)
 
         updated = await self.order_repository.update_order_status(order_id, new_status)
         return self._to_order_dto(updated)
 
-    async def get_order(self, order_id: int) -> OrderOutputDTO:
+    async def get_order(self, order_id: int, authenticated_uid: str | None = None) -> OrderOutputDTO:
         order = await self.order_repository.get_order(order_id)
         if not order:
             raise OrderNotFoundError(order_id)
+        if authenticated_uid:
+            await self._assert_order_owner(order, authenticated_uid)
         return self._to_order_dto(order)
 
-    async def list_orders_by_shop(self, shop_id: int) -> list[OrderOutputDTO]:
+    async def _assert_order_owner(self, order: Order, uid: str) -> None:
+        if order.clothing_request and order.clothing_request.client_id == uid:
+            return
+        shop_request = await self.order_repository.get_shop_request(order.shop_request_id)
+        if shop_request and self.shop_repository:
+            shop = await self.shop_repository.get_by_id(shop_request.shop_id)
+            if shop and shop.tailor_id == uid:
+                return
+        raise PermissionError("You are not authorized to access this order.")
+
+    async def list_orders_by_shop(self, shop_id: int, tailor_uid: str | None = None) -> list[OrderOutputDTO]:
+        if tailor_uid:
+            if not self.shop_repository:
+                raise PermissionError("Shop ownership could not be verified.")
+            shop = await self.shop_repository.get_by_id(shop_id)
+            if not shop or shop.tailor_id != tailor_uid:
+                raise PermissionError("You do not own this shop.")
         orders = await self.order_repository.list_orders_by_shop(shop_id)
         return [self._to_order_dto(o) for o in orders]
 
-    async def list_orders_by_client(self, client_id: str) -> list[OrderOutputDTO]:
+    async def list_orders_by_client(self, client_id: str, authenticated_uid: str | None = None) -> list[OrderOutputDTO]:
+        if authenticated_uid and client_id != authenticated_uid:
+            raise PermissionError("You can only view your own orders.")
         orders = await self.order_repository.list_orders_by_client(client_id)
         return [self._to_order_dto(o) for o in orders]
 
-    async def process_mock_payment(self, dto: MockPaymentDTO) -> PaymentOutputDTO:
+    async def process_mock_payment(self, dto: MockPaymentDTO, client_uid: str | None = None) -> PaymentOutputDTO:
         order = await self.order_repository.get_order(dto.order_id)
         if not order:
             raise OrderNotFoundError(dto.order_id)
+        if client_uid:
+            if not order.clothing_request or order.clothing_request.client_id != client_uid:
+                raise PermissionError("You do not own this order.")
 
         payment = Payment(
             order_id=dto.order_id,
-            amount=dto.amount,
+            amount=dto.amount or order.accepted_price,
             payment_method=dto.payment_method,
             payment_status=PaymentStatusEnum.PAID,
             payment_date=datetime.now(UTC),
@@ -227,10 +289,14 @@ class ManageOrderUseCase:
             payment_date=saved_payment.payment_date,
         )
 
-    async def submit_rating(self, dto: RatingCreateDTO) -> RatingOutputDTO:
+    async def submit_rating(self, dto: RatingCreateDTO, client_uid: str | None = None) -> RatingOutputDTO:
+        if client_uid and dto.client_id != client_uid:
+            raise PermissionError("You can only submit ratings as yourself.")
         order = await self.order_repository.get_order(dto.order_id)
         if not order:
             raise OrderNotFoundError(dto.order_id)
+        if client_uid and (not order.clothing_request or order.clothing_request.client_id != client_uid):
+            raise PermissionError("You do not own this order.")
 
         rating = Rating(
             order_id=dto.order_id,
@@ -292,11 +358,13 @@ class ManageOrderUseCase:
             for b in bids
         ]
 
-    async def get_order_payment(self, order_id: int) -> PaymentOutputDTO | None:
+    async def get_order_payment(self, order_id: int, authenticated_uid: str | None = None) -> PaymentOutputDTO | None:
         """Return the payment record for an order, or None if not yet paid."""
         order = await self.order_repository.get_order(order_id)
         if not order:
             raise OrderNotFoundError(order_id)
+        if authenticated_uid:
+            await self._assert_order_owner(order, authenticated_uid)
         payment = await self.order_repository.get_payment_by_order(order_id)
         if not payment:
             return None

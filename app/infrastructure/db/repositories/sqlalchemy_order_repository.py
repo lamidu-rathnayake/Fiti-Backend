@@ -178,8 +178,13 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         )
 
     async def get_shop_request(self, shop_request_id: int) -> ShopRequest | None:
-        stmt = select(ShopRequestModel).where(
-            ShopRequestModel.shop_request_id == shop_request_id
+        stmt = (
+            select(ShopRequestModel)
+            .options(
+                selectinload(ShopRequestModel.clothing_request),
+                selectinload(ShopRequestModel.bids),
+            )
+            .where(ShopRequestModel.shop_request_id == shop_request_id)
         )
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()

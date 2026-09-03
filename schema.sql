@@ -8,7 +8,7 @@
 -- 1. ENUM TYPES
 -- ---------------------------------------------------------
 DO $$ BEGIN
-    CREATE TYPE gender_enum AS ENUM ('male', 'female', 'other');
+    CREATE TYPE gender_enum AS ENUM ('male', 'female', 'unisex');
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
@@ -130,7 +130,7 @@ CREATE TABLE IF NOT EXISTS measurement_profile (
 );
 
 -- ---------------------------------------------------------
--- 4. RBAC (roles, sections, sub-sections, grants)
+-- 4. RBAC (roles and user-role assignments)
 -- ---------------------------------------------------------
 CREATE TABLE IF NOT EXISTS roles (
     id    SERIAL PRIMARY KEY,
@@ -142,30 +142,6 @@ CREATE TABLE IF NOT EXISTS user_roles (
     firebase_uid  VARCHAR(128) NOT NULL,
     role_id       INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
     PRIMARY KEY (firebase_uid, role_id)
-);
-
-CREATE TABLE IF NOT EXISTS sections (
-    id          SERIAL PRIMARY KEY,
-    name        VARCHAR(100) NOT NULL UNIQUE,
-    route_name  VARCHAR(100) NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS role_section_grants (
-    role_id     INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
-    section_id  INT NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
-    PRIMARY KEY (role_id, section_id)
-);
-
-CREATE TABLE IF NOT EXISTS sub_sections (
-    id            SERIAL PRIMARY KEY,
-    name          VARCHAR(100) NOT NULL UNIQUE,
-    component_id  VARCHAR(100) NOT NULL UNIQUE
-);
-
-CREATE TABLE IF NOT EXISTS section_sub_sections (
-    section_id      INT NOT NULL REFERENCES sections(id) ON DELETE CASCADE,
-    sub_section_id  INT NOT NULL REFERENCES sub_sections(id) ON DELETE CASCADE,
-    PRIMARY KEY (section_id, sub_section_id)
 );
 
 -- ---------------------------------------------------------
@@ -215,6 +191,7 @@ CREATE TABLE IF NOT EXISTS clothing_requests (
     request_type        clothing_request_type_enum NOT NULL DEFAULT 'direct',
     request_location    VARCHAR(255),
     status              clothing_request_status_enum NOT NULL DEFAULT 'open',
+    measurement_profile_id INT REFERENCES measurement_profile(measurement_id) ON DELETE SET NULL,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -359,26 +336,9 @@ DROP TRIGGER IF EXISTS trg_orders_updated_at ON orders;
 CREATE TRIGGER trg_orders_updated_at BEFORE UPDATE ON orders FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ---------------------------------------------------------
--- 10. SEED DATA (Default Roles & Sections)
+-- 10. SEED DATA (Default Roles)
 -- ---------------------------------------------------------
 INSERT INTO roles (name) VALUES ('client'), ('tailor'), ('admin')
 ON CONFLICT (name) DO NOTHING;
 
-INSERT INTO sections (name, route_name) VALUES
-  ('Home', '/home'),
-  ('Client Dashboard', '/client/dashboard'),
-  ('Tailor Dashboard', '/tailor/dashboard'),
-  ('Admin Console', '/admin/console')
-ON CONFLICT (name) DO NOTHING;
-
--- Seed role_section_grants mapping
-INSERT INTO role_section_grants (role_id, section_id)
-SELECT r.id, s.id
-FROM roles r
-CROSS JOIN sections s
-WHERE (r.name = 'client' AND s.name IN ('Home', 'Client Dashboard'))
-   OR (r.name = 'tailor' AND s.name IN ('Home', 'Tailor Dashboard'))
-   OR (r.name = 'tailor' AND s.name IN ('Home', 'Tailor Dashboard'))
-   OR (r.name = 'admin' AND s.name IN ('Home', 'Admin Console'))
-ON CONFLICT (role_id, section_id) DO NOTHING;
 

@@ -8,7 +8,7 @@ from app.api.schemas.shop_schema import (
     ShopResponse,
     ShopUpdateRequest,
 )
-from app.core.security import get_current_user_uid
+from app.core.security import get_current_user_uid, require_role
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.use_cases.dtos.shop_dto import ShopCreateDTO, ShopUpdateDTO
 from app.use_cases.shop.manage_shop import ManageShopUseCase
@@ -71,7 +71,7 @@ async def get_shop(
 @router.post("/", response_model=ShopResponse, status_code=status.HTTP_201_CREATED)
 async def create_shop(
     request: ShopCreateRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Register a shop owned by the authenticated tailor."""
@@ -94,7 +94,7 @@ async def create_shop(
 async def update_shop(
     shop_id: int,
     request: ShopUpdateRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Update a shop owned by the authenticated tailor."""
@@ -125,7 +125,7 @@ async def update_shop(
 @router.delete("/{shop_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_shop(
     shop_id: int,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Delete a shop owned by the authenticated tailor."""
@@ -149,7 +149,7 @@ async def delete_shop(
 async def add_shop_image(
     shop_id: int,
     request: ShopImageCreateRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Add an image to a shop owned by the authenticated tailor."""

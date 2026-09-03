@@ -127,7 +127,7 @@ async def get_client_profile(
 async def update_client_profile(
     client_id: str,
     request: ClientUpdateRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_role("client")),
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """
@@ -209,7 +209,7 @@ async def get_tailor_profile(
 async def update_tailor_profile(
     tailor_id: str,
     request: TailorUpdateRequest,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """
@@ -266,6 +266,8 @@ async def upsert_measurements(
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """Save or update standard body measurements for a client profile. Requires client role."""
+    if client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only update your own measurements.")
     dto = MeasurementProfileDTO(
         client_id=client_id,
         chest=request.chest,
@@ -292,6 +294,8 @@ async def get_measurements(
     use_case: ManageProfileUseCase = Depends(get_manage_profile_use_case),
 ):
     """Fetch the saved body measurement profile for a client. Requires client role."""
+    if client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own measurements.")
     result = await use_case.get_measurement_profile(client_id)
     if not result:
         raise HTTPException(

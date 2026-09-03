@@ -5,8 +5,6 @@ from app.domain.entities.rbac import Role, Section
 from app.domain.repositories.rbac_repository import AbstractRBACRepository
 from app.infrastructure.db.models.rbac_model import (
     RoleModel,
-    RoleSectionGrantModel,
-    SectionModel,
     UserRoleModel,
 )
 
@@ -41,33 +39,3 @@ class SQLAlchemyRBACRepository(AbstractRBACRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def get_accessible_sections_for_user(self, user_id: str) -> list[Section]:
-        stmt = (
-            select(SectionModel)
-            .join(
-                RoleSectionGrantModel,
-                RoleSectionGrantModel.section_id == SectionModel.id,
-            )
-            .join(UserRoleModel, UserRoleModel.role_id == RoleSectionGrantModel.role_id)
-            .where(UserRoleModel.firebase_uid == user_id)
-            .distinct()
-        )
-        result = await self.session.execute(stmt)
-        models = result.scalars().all()
-        return [m.to_domain() for m in models]
-
-    async def check_user_access_to_route(self, user_id: str, route_name: str) -> bool:
-        stmt = (
-            select(SectionModel)
-            .join(
-                RoleSectionGrantModel,
-                RoleSectionGrantModel.section_id == SectionModel.id,
-            )
-            .join(UserRoleModel, UserRoleModel.role_id == RoleSectionGrantModel.role_id)
-            .where(
-                UserRoleModel.firebase_uid == user_id,
-                SectionModel.route_name == route_name,
-            )
-        )
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none() is not None

@@ -12,6 +12,7 @@ from app.use_cases.dtos.support_dto import (
     NotificationCreateDTO,
 )
 from app.use_cases.support.manage_support import ManageSupportUseCase
+from app.core.security import get_current_user_uid
 
 router = APIRouter(prefix="/support", tags=["Support"])
 
@@ -26,8 +27,11 @@ router = APIRouter(prefix="/support", tags=["Support"])
 )
 async def create_notification(
     request: NotificationCreateRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
 ):
+    if request.user_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only create notifications for yourself.")
     dto = NotificationCreateDTO(
         user_id=request.user_id,
         title=request.title,
@@ -39,9 +43,12 @@ async def create_notification(
 @router.get("/notifications/{user_id}", response_model=list[NotificationResponse])
 async def list_notifications(
     user_id: str,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
 ):
     """List all notifications for a user, newest first."""
+    if user_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own notifications.")
     return await use_case.list_notifications(user_id)
 
 
@@ -50,6 +57,7 @@ async def list_notifications(
 )
 async def mark_notification_read(
     notification_id: int,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
 ):
     success = await use_case.mark_notification_read(notification_id)
@@ -70,8 +78,11 @@ async def mark_notification_read(
 )
 async def add_favorite(
     request: FavoriteShopRequest,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
 ):
+    if request.client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only manage your own favorites.")
     dto = FavoriteShopCreateDTO(client_id=request.client_id, shop_id=request.shop_id)
     return await use_case.add_favorite(dto)
 
@@ -82,8 +93,11 @@ async def add_favorite(
 async def remove_favorite(
     client_id: str,
     shop_id: int,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
 ):
+    if client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only manage your own favorites.")
     success = await use_case.remove_favorite(client_id, shop_id)
     if not success:
         raise HTTPException(
@@ -95,6 +109,9 @@ async def remove_favorite(
 @router.get("/favorites/{client_id}", response_model=list[FavoriteShopResponse])
 async def list_favorites(
     client_id: str,
+    authenticated_uid: str = Depends(get_current_user_uid),
     use_case: ManageSupportUseCase = Depends(get_manage_support_use_case),
 ):
+    if client_id != authenticated_uid:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You can only view your own favorites.")
     return await use_case.list_favorites(client_id)

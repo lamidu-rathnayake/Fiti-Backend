@@ -46,6 +46,7 @@ class ClothingRequestCreateRequest(BaseModel):
         ClothingRequestTypeEnum.DIRECT, description="Direct request vs Bidding"
     )
     request_location: str | None = Field(None, min_length=2, max_length=255)
+    measurement: MeasurementProfileRequest | None = None
 
     latitude: float | None = Field(
         None, description="Client GPS latitude for nearby shop matching"
@@ -84,7 +85,7 @@ class OrderCreateRequest(BaseModel):
 
 class MockPaymentRequest(BaseModel):
     order_id: int
-    amount: float = Field(..., gt=0)
+    amount: float | None = Field(None, gt=0)
     payment_method: PaymentMethodEnum = PaymentMethodEnum.CARD
 
 

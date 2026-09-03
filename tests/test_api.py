@@ -16,7 +16,10 @@ from app.core.config import settings
 # Test Database Engine (Supabase PostgreSQL)
 test_engine = create_async_engine(
     settings.DATABASE_URL,
-    connect_args={"server_settings": {"search_path": "test"}},
+    connect_args={
+        "server_settings": {"search_path": "test"},
+        "statement_cache_size": 0,
+    },
     poolclass=NullPool,
 )
 TestingSessionLocal = async_sessionmaker(
@@ -59,15 +62,15 @@ app.dependency_overrides[get_current_user_uid] = lambda: current_mock_user["uid"
 @pytest_asyncio.fixture(autouse=True)
 async def prepare_database():
     """Create DB tables for API tests."""
-    from sqlalchemy import insert
+    from sqlalchemy.dialects.postgresql import insert
     from app.infrastructure.db.models.rbac_model import RoleModel, UserRoleModel
     async with test_engine.begin() as conn:
         await conn.execute(text("CREATE SCHEMA IF NOT EXISTS test"))
         await conn.run_sync(Base.metadata.create_all)
         # Seed mock roles for testing
-        await conn.execute(insert(RoleModel).values(id=1, name="client"))
-        await conn.execute(insert(RoleModel).values(id=2, name="tailor"))
-        await conn.execute(insert(RoleModel).values(id=3, name="admin"))
+        await conn.execute(insert(RoleModel).values(id=1, name="client").on_conflict_do_nothing(index_elements=[RoleModel.id]))
+        await conn.execute(insert(RoleModel).values(id=2, name="tailor").on_conflict_do_nothing(index_elements=[RoleModel.id]))
+        await conn.execute(insert(RoleModel).values(id=3, name="admin").on_conflict_do_nothing(index_elements=[RoleModel.id]))
     yield
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)

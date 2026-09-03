@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.domain.entities.rbac import Role, Section
+from app.domain.entities.rbac import Role
 
 
 class AbstractRBACRepository(ABC):
@@ -16,10 +16,3 @@ class AbstractRBACRepository(ABC):
     async def get_user_roles(self, user_id: str) -> list[Role]:
         pass
 
-    @abstractmethod
-    async def get_accessible_sections_for_user(self, user_id: str) -> list[Section]:
-        pass
-
-    @abstractmethod
-    async def check_user_access_to_route(self, user_id: str, route_name: str) -> bool:
-        pass
