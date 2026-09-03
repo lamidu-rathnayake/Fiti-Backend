@@ -114,8 +114,8 @@ async def update_shop(
             city=request.city,
             contact_number=request.contact_number,
             registration_number=request.registration_number,
-            latitude=request.latitude,
-            longitude=request.longitude,
+            latitude=request.latitude if request.latitude is not None else shop.latitude,
+            longitude=request.longitude if request.longitude is not None else shop.longitude,
         )
         return await use_case.update_shop(dto)
     except ShopNotFoundError as exc:

@@ -65,7 +65,8 @@ async def prepare_database():
     from sqlalchemy.dialects.postgresql import insert
     from app.infrastructure.db.models.rbac_model import RoleModel, UserRoleModel
     async with test_engine.begin() as conn:
-        await conn.execute(text("CREATE SCHEMA IF NOT EXISTS test"))
+        await conn.execute(text("DROP SCHEMA IF EXISTS test CASCADE"))
+        await conn.execute(text("CREATE SCHEMA test"))
         await conn.run_sync(Base.metadata.create_all)
         # Seed mock roles for testing
         await conn.execute(insert(RoleModel).values(id=1, name="client").on_conflict_do_nothing(index_elements=[RoleModel.id]))
@@ -73,10 +74,11 @@ async def prepare_database():
         await conn.execute(insert(RoleModel).values(id=3, name="admin").on_conflict_do_nothing(index_elements=[RoleModel.id]))
     yield
     async with test_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+        await conn.execute(text("DROP SCHEMA IF EXISTS test CASCADE"))
         
     # Reset mock user after each test
     set_mock_user("mock_firebase_uid", "client")
+
 
 
 @pytest.mark.asyncio
