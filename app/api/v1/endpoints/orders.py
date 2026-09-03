@@ -161,6 +161,21 @@ async def reject_shop_request(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
 
 
+@router.patch("/shop-requests/{shop_request_id}/withdraw", response_model=ShopRequestResponse)
+async def withdraw_shop_request(
+    shop_request_id: int,
+    authenticated_uid: str = Depends(require_role("tailor")),
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """Withdraw a pending shop request. Requires tailor role."""
+    try:
+        return await use_case.withdraw_shop_request(shop_request_id, authenticated_uid)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
 @router.get("/shop-requests/{shop_request_id}/bids", response_model=list[BidResponse])
 async def list_bids_by_shop_request(
     shop_request_id: int,

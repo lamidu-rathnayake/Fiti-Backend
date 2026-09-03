@@ -169,6 +169,11 @@ class ManageOrderUseCase:
                 shop_id=sr.shop_id,
                 offered_price=sr.offered_price,
                 status=sr.status,
+                clothing_request=(
+                    self._to_clothing_request_dto(sr.clothing_request)
+                    if sr.clothing_request
+                    else None
+                ),
             )
             for sr in shop_requests
         ]
@@ -182,6 +187,24 @@ class ManageOrderUseCase:
         if not updated:
             raise ValueError(f"ShopRequest {shop_request_id} not found")
             
+        return ShopRequestDTO(
+            shop_request_id=updated.shop_request_id,  # type: ignore
+            request_id=updated.request_id,
+            shop_id=updated.shop_id,
+            offered_price=updated.offered_price,
+            status=updated.status,
+        )
+
+    async def withdraw_shop_request(self, shop_request_id: int, tailor_uid: str) -> ShopRequestDTO:
+        shop_request = await self._assert_shop_request_owner(
+            shop_request_id, tailor_uid, "tailor"
+        )
+        updated = await self.order_repository.update_shop_request_status(
+            shop_request_id, ShopRequestStatusEnum.WITHDRAWN
+        )
+        if not updated:
+            raise ValueError(f"ShopRequest {shop_request_id} not found")
+
         return ShopRequestDTO(
             shop_request_id=updated.shop_request_id,  # type: ignore
             request_id=updated.request_id,
@@ -410,6 +433,7 @@ class ManageOrderUseCase:
             service_type=req.service_type,
             request_location=req.request_location,
             status=req.status,
+            measurement_profile_id=req.measurement_profile_id,
             measurement=meas_dto,
             design_images=[
                 ClothingRequestImageDTO(

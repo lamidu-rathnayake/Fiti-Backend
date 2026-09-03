@@ -138,6 +138,7 @@ class ClothingRequestResponse(BaseModel):
     request_type: ClothingRequestTypeEnum = ClothingRequestTypeEnum.DIRECT
     request_location: str | None = None
     status: ClothingRequestStatusEnum
+    measurement_profile_id: int | None = None
     measurement: MeasurementProfileRequest | None = None
     design_images: list[ClothingRequestImageResponse] = []
     shop_requests: list[ShopRequestResponse] = []

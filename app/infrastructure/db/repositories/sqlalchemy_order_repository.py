@@ -218,6 +218,9 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
                 selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
                 selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
                 selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+                selectinload(ShopRequestModel.clothing_request)
+                .selectinload(ClothingRequestModel.shop_requests)
+                .selectinload(ShopRequestModel.bids),
             )
             .where(ShopRequestModel.shop_id == shop_id)
         )

@@ -81,6 +81,7 @@ class ShopRequestDTO:
     shop_id: int
     offered_price: float | None = None
     status: ShopRequestStatusEnum = ShopRequestStatusEnum.PENDING
+    clothing_request: "ClothingRequestOutputDTO | None" = None
 
 
 @dataclass
@@ -98,6 +99,7 @@ class ClothingRequestOutputDTO:
     request_type: ClothingRequestTypeEnum = ClothingRequestTypeEnum.DIRECT
     request_location: str | None = None
     status: ClothingRequestStatusEnum = ClothingRequestStatusEnum.OPEN
+    measurement_profile_id: int | None = None
     measurement: MeasurementDTO | None = None
     design_images: list[ClothingRequestImageDTO] = field(default_factory=list)
     shop_requests: list[ShopRequestDTO] = field(default_factory=list)

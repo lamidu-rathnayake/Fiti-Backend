@@ -124,6 +124,7 @@ class ClothingRequestModel(Base):
     measurement_profile: Mapped[Optional["MeasurementProfileModel"]] = relationship(
         "MeasurementProfileModel",
         primaryjoin="MeasurementProfileModel.measurement_id==ClothingRequestModel.measurement_profile_id",
+        foreign_keys=[measurement_profile_id],
         viewonly=True,
         uselist=False,
     )
@@ -169,6 +170,7 @@ class ClothingRequestModel(Base):
             request_type=self.request_type,
             request_location=self.request_location,
             status=self.status,
+            measurement_profile_id=self.measurement_profile_id,
             measurement=(
                 self.measurement.to_domain()
                 if self.measurement
