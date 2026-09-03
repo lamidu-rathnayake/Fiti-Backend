@@ -73,6 +73,16 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         await self.session.refresh(model)
         return model.to_domain()
 
+    async def delete_image(self, image_id: int) -> bool:
+        stmt = select(ShopImageModel).where(ShopImageModel.image_id == image_id)
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
+
     async def update_average_rating(self, shop_id: int, new_rating: float) -> None:
         stmt = select(ShopModel).where(ShopModel.shop_id == shop_id)
         result = await self.session.execute(stmt)

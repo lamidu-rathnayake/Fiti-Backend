@@ -55,6 +55,15 @@ class ManageShopUseCase:
             image_id=saved.image_id, shop_id=saved.shop_id, image_url=saved.image_url
         )
 
+    async def delete_shop_image(self, shop_id: int, image_id: int) -> bool:
+        shop = await self.shop_repository.get_by_id(shop_id)
+        if not shop:
+            raise ShopNotFoundError(shop_id)
+        success = await self.shop_repository.delete_image(image_id)
+        if not success:
+            raise ValueError(f"Image {image_id} not found")
+        return True
+
     async def update_shop(self, dto: ShopUpdateDTO) -> ShopOutputDTO:
         existing = await self.shop_repository.get_by_id(dto.shop_id)
         if not existing:

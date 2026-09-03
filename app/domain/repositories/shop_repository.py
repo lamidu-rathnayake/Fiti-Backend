@@ -27,6 +27,11 @@ class AbstractShopRepository(ABC):
         pass
 
     @abstractmethod
+    async def delete_image(self, image_id: int) -> bool:
+        """Remove a shop image from database by image_id."""
+        pass
+
+    @abstractmethod
     async def update_average_rating(self, shop_id: int, new_rating: float) -> None:
         pass
 

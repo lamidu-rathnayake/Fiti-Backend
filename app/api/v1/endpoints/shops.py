@@ -166,3 +166,28 @@ async def add_shop_image(
         )
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.delete(
+    "/{shop_id}/images/{image_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_shop_image(
+    shop_id: int,
+    image_id: int,
+    authenticated_uid: str = Depends(require_role("tailor")),
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    """Delete a shop image owned by the authenticated tailor."""
+    try:
+        shop = await use_case.get_shop_by_id(shop_id)
+        if shop.tailor_id != authenticated_uid:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not own this shop.",
+            )
+        await use_case.delete_shop_image(shop_id=shop_id, image_id=image_id)
+    except ShopNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
