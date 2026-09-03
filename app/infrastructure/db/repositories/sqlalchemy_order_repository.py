@@ -181,7 +181,11 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         stmt = (
             select(ShopRequestModel)
             .options(
-                selectinload(ShopRequestModel.clothing_request),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+                selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
                 selectinload(ShopRequestModel.bids),
             )
             .where(ShopRequestModel.shop_request_id == shop_request_id)
@@ -282,6 +286,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
             )
             .where(OrderModel.order_id == order_id)
         )
@@ -301,6 +306,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
             )
             .where(ShopRequestModel.shop_id == shop_id)
         )
@@ -324,6 +330,7 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.measurement_profile),
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.client),
                 selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.design_images),
+                selectinload(OrderModel.shop_request).selectinload(ShopRequestModel.clothing_request).selectinload(ClothingRequestModel.shop_requests).selectinload(ShopRequestModel.bids),
             )
             .where(ClothingRequestModel.client_id == client_id)
         )
