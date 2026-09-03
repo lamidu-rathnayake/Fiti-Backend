@@ -358,6 +358,7 @@ class ManageOrderUseCase:
                 for sr in req.shop_requests
                 for b in sr.bids
             ],
+            client=req.client,
             created_at=req.created_at,
             updated_at=req.updated_at,
         )
@@ -370,5 +371,6 @@ class ManageOrderUseCase:
             accepted_price=order.accepted_price,
             started_date=order.started_date,
             completed_date=order.completed_date,
+            clothing_request=self._to_clothing_request_dto(order.clothing_request) if order.clothing_request else None,
             created_at=order.created_at,
         )

@@ -102,6 +102,7 @@ class ClothingRequestOutputDTO:
     design_images: list[ClothingRequestImageDTO] = field(default_factory=list)
     shop_requests: list[ShopRequestDTO] = field(default_factory=list)
     bids: list[BidDTO] = field(default_factory=list)
+    client: dict | None = None
     created_at: datetime | None = None
     updated_at: datetime | None = None
 
@@ -127,6 +128,7 @@ class OrderOutputDTO:
     accepted_price: float
     started_date: date | None = None
     completed_date: date | None = None
+    clothing_request: ClothingRequestOutputDTO | None = None
     created_at: datetime | None = None
 
 
