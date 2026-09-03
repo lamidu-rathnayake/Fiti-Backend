@@ -142,6 +142,21 @@ class ManageOrderUseCase:
             for sr in shop_requests
         ]
 
+    async def reject_shop_request(self, shop_request_id: int) -> ShopRequestDTO:
+        updated = await self.order_repository.update_shop_request_status(
+            shop_request_id, ShopRequestStatusEnum.REJECTED
+        )
+        if not updated:
+            raise ValueError(f"ShopRequest {shop_request_id} not found")
+            
+        return ShopRequestDTO(
+            shop_request_id=updated.shop_request_id,  # type: ignore
+            request_id=updated.request_id,
+            shop_id=updated.shop_id,
+            offered_price=updated.offered_price,
+            status=updated.status,
+        )
+
     async def submit_bid(self, dto: BidCreateDTO) -> BidDTO:
         bid = Bid(
             shop_request_id=dto.shop_request_id,

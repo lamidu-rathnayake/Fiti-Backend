@@ -135,6 +135,19 @@ async def list_shop_requests_by_shop(
     return await use_case.list_shop_requests_by_shop(shop_id)
 
 
+@router.patch("/shop-requests/{shop_request_id}/reject", response_model=ShopRequestResponse)
+async def reject_shop_request(
+    shop_request_id: int,
+    authenticated_uid: str = Depends(require_role("client")),
+    use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
+):
+    """Reject a tailor's quote. Requires client role."""
+    try:
+        return await use_case.reject_shop_request(shop_request_id)
+    except Exception as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
 @router.get("/shop-requests/{shop_request_id}/bids", response_model=list[BidResponse])
 async def list_bids_by_shop_request(
     shop_request_id: int,

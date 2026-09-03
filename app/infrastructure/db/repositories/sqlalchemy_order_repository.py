@@ -185,6 +185,22 @@ class SQLAlchemyOrderRepository(AbstractOrderRepository):
         model = result.scalar_one_or_none()
         return model.to_domain() if model else None
 
+    async def update_shop_request_status(
+        self, shop_request_id: int, status: str
+    ) -> ShopRequest | None:
+        stmt = select(ShopRequestModel).where(
+            ShopRequestModel.shop_request_id == shop_request_id
+        )
+        result = await self.session.execute(stmt)
+        model = result.scalar_one_or_none()
+        if not model:
+            return None
+            
+        model.status = status
+        await self.session.commit()
+        await self.session.refresh(model)
+        return model.to_domain()
+
     async def list_shop_requests_by_shop(self, shop_id: int) -> list[ShopRequest]:
         stmt = (
             select(ShopRequestModel)
