@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.domain.entities.shop import Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopImage
 
 
 class AbstractShopRepository(ABC):
@@ -42,6 +42,15 @@ class AbstractShopRepository(ABC):
     @abstractmethod
     async def delete_shop(self, shop_id: int) -> bool:
         """Soft-delete or remove a shop."""
+
+    async def create_gig(self, gig: Gig) -> Gig:
+        raise NotImplementedError
+
+    async def get_gig(self, gig_id: int) -> Gig | None:
+        raise NotImplementedError
+
+    async def delete_gig(self, gig_id: int) -> bool:
+        raise NotImplementedError
 
     @abstractmethod
     async def search_near_location(

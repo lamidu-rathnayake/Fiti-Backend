@@ -3,6 +3,20 @@ from datetime import datetime
 
 
 @dataclass
+class Gig:
+    shop_id: int
+    title: str
+    description: str
+    price: float
+    delivery_time: str | None = None
+    category: str | None = None
+    image_url: str | None = None
+    gig_id: int | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
 class ShopImage:
     shop_id: int
     image_url: str
@@ -25,5 +39,6 @@ class Shop:
     longitude: float | None = None
     average_rating: float = 0.0
     images: list[ShopImage] = field(default_factory=list)
+    gigs: list[Gig] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

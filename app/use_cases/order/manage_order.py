@@ -12,6 +12,7 @@ from app.domain.entities.order import (
     PaymentStatusEnum,
     Rating,
     ShopRequest,
+    ShopRequestStatusEnum,
 )
 from app.domain.exceptions.order import (
     ClothingRequestNotFoundError,

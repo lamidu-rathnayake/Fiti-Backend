@@ -13,6 +13,30 @@ class ShopImageCreateRequest(BaseModel):
     image_url: str = Field(..., pattern=r"^https?://", min_length=1, max_length=2048)
 
 
+class GigCreateRequest(BaseModel):
+    title: str = Field(..., min_length=2, max_length=150)
+    description: str = Field(..., min_length=5, max_length=2000)
+    price: float = Field(..., gt=0)
+    delivery_time: str | None = Field(None, max_length=100)
+    category: str | None = Field(None, max_length=100)
+    image_url: str | None = Field(None, pattern=r"^https?://", max_length=2048)
+
+
+class GigResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    gig_id: int
+    shop_id: int
+    title: str
+    description: str
+    price: float
+    delivery_time: str | None = None
+    category: str | None = None
+    image_url: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
 class ShopCreateRequest(BaseModel):
     shop_name: str = Field(..., min_length=2, max_length=150)
     specialty: str | None = Field(None, min_length=2, max_length=100)
@@ -53,5 +77,6 @@ class ShopResponse(BaseModel):
     longitude: float | None = None
     average_rating: float = 0.0
     images: list[ShopImageSchema] = Field(default_factory=list)
+    gigs: list[GigResponse] = Field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

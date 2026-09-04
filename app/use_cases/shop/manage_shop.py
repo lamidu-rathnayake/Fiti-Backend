@@ -1,8 +1,9 @@
-from app.domain.entities.shop import Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopImage
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.domain.repositories.shop_repository import AbstractShopRepository
 from app.use_cases.dtos.shop_dto import (
     ShopCreateDTO,
+    GigDTO,
     ShopImageDTO,
     ShopOutputDTO,
     ShopUpdateDTO,
@@ -92,6 +93,24 @@ class ManageShopUseCase:
             raise ShopNotFoundError(shop_id)
         return await self.shop_repository.delete_shop(shop_id)
 
+    async def create_gig(self, shop_id: int, tailor_id: str, **data) -> GigDTO:
+        shop = await self.shop_repository.get_by_id(shop_id)
+        if not shop:
+            raise ShopNotFoundError(shop_id)
+        if shop.tailor_id != tailor_id:
+            raise PermissionError("You do not own this shop.")
+        gig = await self.shop_repository.create_gig(Gig(shop_id=shop_id, **data))
+        return self._gig_to_dto(gig)
+
+    async def delete_gig(self, gig_id: int, tailor_id: str) -> bool:
+        gig = await self.shop_repository.get_gig(gig_id)
+        if not gig:
+            raise ValueError(f"Gig {gig_id} not found")
+        shop = await self.shop_repository.get_by_id(gig.shop_id)
+        if not shop or shop.tailor_id != tailor_id:
+            raise PermissionError("You do not own this shop.")
+        return await self.shop_repository.delete_gig(gig_id)
+
     async def search_near_location(
         self, lat: float, lng: float, radius_km: float = 10.0
     ) -> list[ShopOutputDTO]:
@@ -120,6 +139,21 @@ class ManageShopUseCase:
                 )
                 for img in shop.images
             ],
+            gigs=[self._gig_to_dto(gig) for gig in shop.gigs],
             created_at=shop.created_at,
             updated_at=shop.updated_at,
+        )
+
+    def _gig_to_dto(self, gig: Gig) -> GigDTO:
+        return GigDTO(
+            gig_id=gig.gig_id,
+            shop_id=gig.shop_id,
+            title=gig.title,
+            description=gig.description,
+            price=gig.price,
+            delivery_time=gig.delivery_time,
+            category=gig.category,
+            image_url=gig.image_url,
+            created_at=gig.created_at,
+            updated_at=gig.updated_at,
         )

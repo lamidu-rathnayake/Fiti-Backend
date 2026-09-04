@@ -2,6 +2,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.dependencies import get_manage_shop_use_case
 from app.api.schemas.shop_schema import (
+    GigCreateRequest,
+    GigResponse,
     ShopCreateRequest,
     ShopImageCreateRequest,
     ShopImageSchema,
@@ -189,5 +191,49 @@ async def delete_shop_image(
         await use_case.delete_shop_image(shop_id=shop_id, image_id=image_id)
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+
+
+@router.post(
+    "/{shop_id}/gigs",
+    response_model=GigResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_gig(
+    shop_id: int,
+    request: GigCreateRequest,
+    authenticated_uid: str = Depends(require_role("tailor")),
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    """Create a gig for a shop owned by the authenticated tailor."""
+    try:
+        return await use_case.create_gig(
+            shop_id=shop_id,
+            tailor_id=authenticated_uid,
+            title=request.title,
+            description=request.description,
+            price=request.price,
+            delivery_time=request.delivery_time,
+            category=request.category,
+            image_url=request.image_url,
+        )
+    except ShopNotFoundError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
+
+
+@router.delete("/gigs/{gig_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_gig(
+    gig_id: int,
+    authenticated_uid: str = Depends(require_role("tailor")),
+    use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
+):
+    """Delete a gig owned by the authenticated tailor."""
+    try:
+        await use_case.delete_gig(gig_id=gig_id, tailor_id=authenticated_uid)
+    except PermissionError as exc:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(exc))
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))

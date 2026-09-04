@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.domain.entities.shop import Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopImage
 from app.infrastructure.db.base import Base
 
 
@@ -42,6 +42,9 @@ class ShopModel(Base):
         cascade="all, delete-orphan",
         lazy="selectin",
     )
+    gigs: Mapped[list["GigModel"]] = relationship(
+        "GigModel", back_populates="shop", cascade="all, delete-orphan", lazy="selectin"
+    )
 
     def to_domain(self) -> Shop:
         return Shop(
@@ -58,6 +61,7 @@ class ShopModel(Base):
             longitude=self.longitude,
             average_rating=self.average_rating,
             images=[img.to_domain() for img in self.images] if self.images else [],
+            gigs=[gig.to_domain() for gig in self.gigs] if self.gigs else [],
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
@@ -83,4 +87,41 @@ class ShopImageModel(Base):
             shop_id=self.shop_id,
             image_url=self.image_url,
             created_at=self.created_at,
+        )
+
+
+class GigModel(Base):
+    __tablename__ = "gigs"
+
+    gig_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    shop_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(150), nullable=False)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    price: Mapped[float] = mapped_column(Float, nullable=False)
+    delivery_time: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    category: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), onupdate=lambda: datetime.now(UTC), nullable=False
+    )
+
+    shop: Mapped["ShopModel"] = relationship("ShopModel", back_populates="gigs")
+
+    def to_domain(self) -> Gig:
+        return Gig(
+            gig_id=self.gig_id,
+            shop_id=self.shop_id,
+            title=self.title,
+            description=self.description,
+            price=self.price,
+            delivery_time=self.delivery_time,
+            category=self.category,
+            image_url=self.image_url,
+            created_at=self.created_at,
+            updated_at=self.updated_at,
         )

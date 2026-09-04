@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.domain.entities.shop import Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopImage
 from app.domain.repositories.shop_repository import AbstractShopRepository
-from app.infrastructure.db.models.shop_model import ShopImageModel, ShopModel
+from app.infrastructure.db.models.shop_model import GigModel, ShopImageModel, ShopModel
 
 
 class SQLAlchemyShopRepository(AbstractShopRepository):
@@ -38,7 +38,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def get_by_id(self, shop_id: int) -> Shop | None:
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images))
+            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
             .where(ShopModel.shop_id == shop_id)
         )
         result = await self.session.execute(stmt)
@@ -48,7 +48,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def get_by_tailor_id(self, tailor_id: str) -> list[Shop]:
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images))
+            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
             .where(ShopModel.tailor_id == tailor_id)
         )
         result = await self.session.execute(stmt)
@@ -58,7 +58,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def list_all(
         self, skip: int = 0, limit: int = 100, city: str | None = None
     ) -> list[Shop]:
-        stmt = select(ShopModel).options(selectinload(ShopModel.images))
+        stmt = select(ShopModel).options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
         if city:
             stmt = stmt.where(ShopModel.city == city)
         stmt = stmt.offset(skip).limit(limit)
@@ -94,7 +94,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def update_shop(self, shop: Shop) -> Shop | None:
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images))
+            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
             .where(ShopModel.shop_id == shop.shop_id)
         )
         result = await self.session.execute(stmt)
@@ -136,7 +136,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         min_lng, max_lng = lng - lon_delta, lng + lon_delta
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images))
+            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
             .where(ShopModel.latitude >= min_lat)
             .where(ShopModel.latitude <= max_lat)
             .where(ShopModel.longitude >= min_lng)
@@ -145,3 +145,33 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         result = await self.session.execute(stmt)
         models = result.scalars().all()
         return [m.to_domain() for m in models]
+
+    async def create_gig(self, gig: Gig) -> Gig:
+        model = GigModel(
+            shop_id=gig.shop_id,
+            title=gig.title,
+            description=gig.description,
+            price=gig.price,
+            delivery_time=gig.delivery_time,
+            category=gig.category,
+            image_url=gig.image_url,
+        )
+        self.session.add(model)
+        await self.session.commit()
+        await self.session.refresh(model)
+        return model.to_domain()
+
+    async def get_gig(self, gig_id: int) -> Gig | None:
+        result = await self.session.execute(
+            select(GigModel).where(GigModel.gig_id == gig_id)
+        )
+        model = result.scalar_one_or_none()
+        return model.to_domain() if model else None
+
+    async def delete_gig(self, gig_id: int) -> bool:
+        model = await self.session.get(GigModel, gig_id)
+        if not model:
+            return False
+        await self.session.delete(model)
+        await self.session.commit()
+        return True
