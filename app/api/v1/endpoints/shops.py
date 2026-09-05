@@ -88,6 +88,7 @@ async def create_shop(
         registration_number=request.registration_number,
         latitude=request.latitude,
         longitude=request.longitude,
+        profile_image_url=request.profile_image_url,
     )
     return await use_case.create_shop(dto)
 
@@ -118,6 +119,7 @@ async def update_shop(
             registration_number=request.registration_number,
             latitude=request.latitude if request.latitude is not None else shop.latitude,
             longitude=request.longitude if request.longitude is not None else shop.longitude,
+            profile_image_url=request.profile_image_url,
         )
         return await use_case.update_shop(dto)
     except ShopNotFoundError as exc:

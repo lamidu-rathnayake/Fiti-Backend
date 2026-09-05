@@ -138,7 +138,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         min_lng, max_lng = lng - lon_delta, lng + lon_delta
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
+            .options(selectinload(ShopModel.works), selectinload(ShopModel.gigs))
             .where(ShopModel.latitude >= min_lat)
             .where(ShopModel.latitude <= max_lat)
             .where(ShopModel.longitude >= min_lng)
