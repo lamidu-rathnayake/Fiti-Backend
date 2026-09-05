@@ -1,0 +1,43 @@
+# Version control
+.git/
+.gitignore
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+.uv/
+
+# Environment files and secrets (CRITICAL: prevent leaking keys into Docker image)
+.env*
+*.json
+!pyproject.toml
+*.pem
+*.key
+
+# Python cache & tests
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Documentation and diagrams
+docs/
+*.png
+*.jpg
+*.md
+!README.md
+schema*.sql
+truncate_*.sql
+add_*.sql
+check_roles.py
+test_*.py
+
+# OS / Editor files
+.DS_Store
+.vscode/
+.idea/
+.gemini/
