@@ -1,0 +1,75 @@
+from dataclasses import dataclass
+from datetime import datetime
+from enum import Enum
+
+
+class GenderEnum(str, Enum):
+    MALE = "male"
+    FEMALE = "female"
+    UNISEX = "unisex"
+
+
+@dataclass
+class Client:
+    """
+    Firebase-backed client profile extension.
+    The Firebase UID is the primary key — full user identity lives in Firebase Auth.
+    Contact details (phone, city, address) migrated from the removed Firestore users collection.
+    """
+    id: str  # Firebase Auth UID (PK — no FK to users table)
+    display_name: str | None = None
+    email: str | None = None
+    photo_url: str | None = None
+    phone: str | None = None
+    city: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
+class Tailor:
+    """
+    Firebase-backed tailor profile extension.
+    The Firebase UID is the primary key — full user identity lives in Firebase Auth.
+    NIC images are stored as cloud storage URLs.
+    Contact details (phone, city, address) migrated from the removed Firestore users collection.
+    Maps to the 'tailors' PostgreSQL table (table name unchanged for DB compatibility).
+    """
+    id: str  # Firebase Auth UID (PK — no FK to users table)
+    display_name: str | None = None
+    email: str | None = None
+    photo_url: str | None = None
+    nic_front: str | None = None   # Cloud storage URL (Firebase Storage / Azure Blob)
+    nic_rear: str | None = None    # Cloud storage URL
+    is_verified: bool = False
+    phone: str | None = None
+    city: str | None = None
+    address: str | None = None
+    latitude: float | None = None
+    longitude: float | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+@dataclass
+class MeasurementProfile:
+    """
+    Reusable standard body measurements saved for a client.
+    References the client's Firebase UID directly.
+    """
+    client_id: str  # Firebase Auth UID referencing clients.id
+    measurement_id: int | None = None
+    chest: float | None = None
+    waist: float | None = None
+    shoulder: float | None = None
+    sleeve: float | None = None
+    neck: float | None = None
+    hip: float | None = None
+    inseam: float | None = None
+    length: float | None = None
+    notes: str | None = None
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
