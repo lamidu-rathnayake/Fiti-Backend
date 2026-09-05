@@ -5,8 +5,8 @@ from app.api.schemas.shop_schema import (
     GigCreateRequest,
     GigResponse,
     ShopCreateRequest,
-    ShopImageCreateRequest,
-    ShopImageSchema,
+    ShopWorkCreateRequest,
+    ShopWorkSchema,
     ShopResponse,
     ShopUpdateRequest,
 )
@@ -144,17 +144,17 @@ async def delete_shop(
 
 
 @router.post(
-    "/{shop_id}/images",
-    response_model=ShopImageSchema,
+    "/{shop_id}/works",
+    response_model=ShopWorkSchema,
     status_code=status.HTTP_201_CREATED,
 )
-async def add_shop_image(
+async def add_shop_work(
     shop_id: int,
-    request: ShopImageCreateRequest,
+    request: ShopWorkCreateRequest,
     authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
-    """Add an image to a shop owned by the authenticated tailor."""
+    """Add a work portfolio piece to a shop owned by the authenticated tailor."""
     try:
         shop = await use_case.get_shop_by_id(shop_id)
         if shop.tailor_id != authenticated_uid:
@@ -162,25 +162,26 @@ async def add_shop_image(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not own this shop.",
             )
-        return await use_case.add_shop_image(
+        return await use_case.add_shop_work(
             shop_id=shop_id,
             image_url=request.image_url,
+            description=request.description,
         )
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
 @router.delete(
-    "/{shop_id}/images/{image_id}",
+    "/{shop_id}/works/{work_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_shop_image(
+async def delete_shop_work(
     shop_id: int,
-    image_id: int,
+    work_id: int,
     authenticated_uid: str = Depends(require_role("tailor")),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
-    """Delete a shop image owned by the authenticated tailor."""
+    """Delete a shop work piece owned by the authenticated tailor."""
     try:
         shop = await use_case.get_shop_by_id(shop_id)
         if shop.tailor_id != authenticated_uid:
@@ -188,7 +189,7 @@ async def delete_shop_image(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You do not own this shop.",
             )
-        await use_case.delete_shop_image(shop_id=shop_id, image_id=image_id)
+        await use_case.delete_shop_work(shop_id=shop_id, work_id=work_id)
     except ShopNotFoundError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
     except ValueError as exc:

@@ -17,10 +17,11 @@ class GigDTO:
 
 
 @dataclass
-class ShopImageDTO:
-    image_id: int | None
+class ShopWorkDTO:
+    work_id: int | None
     shop_id: int
     image_url: str
+    description: str | None = None
 
 
 @dataclass
@@ -35,6 +36,7 @@ class ShopCreateDTO:
     registration_number: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    profile_image_url: str | None = None
 
 
 @dataclass
@@ -49,6 +51,7 @@ class ShopUpdateDTO:
     registration_number: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    profile_image_url: str | None = None
 
 
 @dataclass
@@ -64,8 +67,9 @@ class ShopOutputDTO:
     registration_number: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    profile_image_url: str | None = None
     average_rating: float = 0.0
-    images: list[ShopImageDTO] = field(default_factory=list)
+    works: list[ShopWorkDTO] = field(default_factory=list)
     gigs: list[GigDTO] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

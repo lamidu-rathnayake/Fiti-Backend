@@ -17,11 +17,13 @@ class Gig:
 
 
 @dataclass
-class ShopImage:
+class ShopWork:
     shop_id: int
     image_url: str
-    image_id: int | None = None
+    work_id: int | None = None
+    description: str | None = None
     created_at: datetime | None = None
+    updated_at: datetime | None = None
 
 
 @dataclass
@@ -37,8 +39,9 @@ class Shop:
     registration_number: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    profile_image_url: str | None = None
     average_rating: float = 0.0
-    images: list[ShopImage] = field(default_factory=list)
+    works: list[ShopWork] = field(default_factory=list)
     gigs: list[Gig] = field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

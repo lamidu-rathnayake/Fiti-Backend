@@ -3,14 +3,16 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class ShopImageSchema(BaseModel):
-    image_id: int | None = None
+class ShopWorkSchema(BaseModel):
+    work_id: int | None = None
     shop_id: int
     image_url: str
+    description: str | None = None
 
 
-class ShopImageCreateRequest(BaseModel):
+class ShopWorkCreateRequest(BaseModel):
     image_url: str = Field(..., pattern=r"^https?://", min_length=1, max_length=2048)
+    description: str | None = Field(None, max_length=2000)
 
 
 class GigCreateRequest(BaseModel):
@@ -47,6 +49,7 @@ class ShopCreateRequest(BaseModel):
     registration_number: str | None = Field(None, min_length=2, max_length=50)
     latitude: float | None = Field(None, ge=5.0, le=10.0)
     longitude: float | None = Field(None, ge=79.0, le=82.0)
+    profile_image_url: str | None = Field(None, pattern=r"^https?://", max_length=2048)
 
 
 class ShopUpdateRequest(BaseModel):
@@ -59,6 +62,7 @@ class ShopUpdateRequest(BaseModel):
     registration_number: str | None = Field(None, min_length=2, max_length=50)
     latitude: float | None = Field(None, ge=5.0, le=10.0)
     longitude: float | None = Field(None, ge=79.0, le=82.0)
+    profile_image_url: str | None = Field(None, pattern=r"^https?://", max_length=2048)
 
 
 class ShopResponse(BaseModel):
@@ -75,8 +79,9 @@ class ShopResponse(BaseModel):
     registration_number: str | None = None
     latitude: float | None = None
     longitude: float | None = None
+    profile_image_url: str | None = None
     average_rating: float = 0.0
-    images: list[ShopImageSchema] = Field(default_factory=list)
+    works: list[ShopWorkSchema] = Field(default_factory=list)
     gigs: list[GigResponse] = Field(default_factory=list)
     created_at: datetime | None = None
     updated_at: datetime | None = None

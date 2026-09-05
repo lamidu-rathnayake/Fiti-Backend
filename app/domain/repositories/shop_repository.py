@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from app.domain.entities.shop import Gig, Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopWork
 
 
 class AbstractShopRepository(ABC):
@@ -23,12 +23,12 @@ class AbstractShopRepository(ABC):
         pass
 
     @abstractmethod
-    async def add_image(self, image: ShopImage) -> ShopImage:
+    async def add_work(self, work: ShopWork) -> ShopWork:
         pass
 
     @abstractmethod
-    async def delete_image(self, image_id: int) -> bool:
-        """Remove a shop image from database by image_id."""
+    async def delete_work(self, work_id: int) -> bool:
+        """Remove a shop work from database by work_id."""
         pass
 
     @abstractmethod

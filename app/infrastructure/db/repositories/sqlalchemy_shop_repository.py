@@ -4,9 +4,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.domain.entities.shop import Gig, Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopWork
 from app.domain.repositories.shop_repository import AbstractShopRepository
-from app.infrastructure.db.models.shop_model import GigModel, ShopImageModel, ShopModel
+from app.infrastructure.db.models.shop_model import GigModel, ShopWorkModel, ShopModel
 
 
 class SQLAlchemyShopRepository(AbstractShopRepository):
@@ -25,6 +25,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
             registration_number=shop.registration_number,
             latitude=shop.latitude,
             longitude=shop.longitude,
+            profile_image_url=shop.profile_image_url,
             average_rating=shop.average_rating,
         )
         self.session.add(model)
@@ -38,7 +39,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def get_by_id(self, shop_id: int) -> Shop | None:
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
+            .options(selectinload(ShopModel.works), selectinload(ShopModel.gigs))
             .where(ShopModel.shop_id == shop_id)
         )
         result = await self.session.execute(stmt)
@@ -48,7 +49,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def get_by_tailor_id(self, tailor_id: str) -> list[Shop]:
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
+            .options(selectinload(ShopModel.works), selectinload(ShopModel.gigs))
             .where(ShopModel.tailor_id == tailor_id)
         )
         result = await self.session.execute(stmt)
@@ -58,7 +59,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def list_all(
         self, skip: int = 0, limit: int = 100, city: str | None = None
     ) -> list[Shop]:
-        stmt = select(ShopModel).options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
+        stmt = select(ShopModel).options(selectinload(ShopModel.works), selectinload(ShopModel.gigs))
         if city:
             stmt = stmt.where(ShopModel.city == city)
         stmt = stmt.offset(skip).limit(limit)
@@ -66,15 +67,15 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         models = result.scalars().all()
         return [m.to_domain() for m in models]
 
-    async def add_image(self, image: ShopImage) -> ShopImage:
-        model = ShopImageModel(shop_id=image.shop_id, image_url=image.image_url)
+    async def add_work(self, work: ShopWork) -> ShopWork:
+        model = ShopWorkModel(shop_id=work.shop_id, image_url=work.image_url, description=work.description)
         self.session.add(model)
         await self.session.commit()
         await self.session.refresh(model)
         return model.to_domain()
 
-    async def delete_image(self, image_id: int) -> bool:
-        stmt = select(ShopImageModel).where(ShopImageModel.image_id == image_id)
+    async def delete_work(self, work_id: int) -> bool:
+        stmt = select(ShopWorkModel).where(ShopWorkModel.work_id == work_id)
         result = await self.session.execute(stmt)
         model = result.scalar_one_or_none()
         if not model:
@@ -94,7 +95,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
     async def update_shop(self, shop: Shop) -> Shop | None:
         stmt = (
             select(ShopModel)
-            .options(selectinload(ShopModel.images), selectinload(ShopModel.gigs))
+            .options(selectinload(ShopModel.works), selectinload(ShopModel.gigs))
             .where(ShopModel.shop_id == shop.shop_id)
         )
         result = await self.session.execute(stmt)
@@ -111,6 +112,7 @@ class SQLAlchemyShopRepository(AbstractShopRepository):
         model.registration_number = shop.registration_number
         model.latitude = shop.latitude
         model.longitude = shop.longitude
+        model.profile_image_url = shop.profile_image_url
         await self.session.commit()
         await self.session.refresh(model)
         return model.to_domain()

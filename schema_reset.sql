@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS
     favorite_shops,
     notifications,
     shop_images,
+    shop_works,
     shops,
     measurement_profile,
     clients,
@@ -126,16 +127,19 @@ CREATE TABLE shops (
     registration_number  VARCHAR(100),
     latitude             NUMERIC(9,6),
     longitude            NUMERIC(9,6),
+    profile_image_url    VARCHAR(2048),
     average_rating       NUMERIC(3,2) NOT NULL DEFAULT 0,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE shop_images (
-    image_id   SERIAL PRIMARY KEY,
+CREATE TABLE shop_works (
+    work_id    SERIAL PRIMARY KEY,
     shop_id    INTEGER NOT NULL REFERENCES shops(shop_id) ON DELETE CASCADE,
     image_url  VARCHAR(2048) NOT NULL,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    description TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE clothing_requests (
@@ -251,7 +255,7 @@ CREATE TABLE notifications (
 
 -- Query indexes.
 CREATE INDEX idx_shops_tailor_id ON shops(tailor_id);
-CREATE INDEX idx_shop_images_shop_id ON shop_images(shop_id);
+CREATE INDEX idx_shop_works_shop_id ON shop_works(shop_id);
 CREATE INDEX idx_clothing_requests_client ON clothing_requests(client_id);
 CREATE INDEX idx_clothing_requests_status ON clothing_requests(status);
 CREATE INDEX idx_clothing_requests_measurement_profile ON clothing_requests(measurement_profile_id);

@@ -1,10 +1,10 @@
-from app.domain.entities.shop import Gig, Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopWork
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.domain.repositories.shop_repository import AbstractShopRepository
 from app.use_cases.dtos.shop_dto import (
     ShopCreateDTO,
     GigDTO,
-    ShopImageDTO,
+    ShopWorkDTO,
     ShopOutputDTO,
     ShopUpdateDTO,
 )
@@ -26,6 +26,7 @@ class ManageShopUseCase:
             registration_number=dto.registration_number,
             latitude=dto.latitude,
             longitude=dto.longitude,
+            profile_image_url=dto.profile_image_url,
         )
         saved = await self.shop_repository.create(shop_entity)
         return self._to_dto(saved)
@@ -46,23 +47,23 @@ class ManageShopUseCase:
         shops = await self.shop_repository.list_all(skip=skip, limit=limit, city=city)
         return [self._to_dto(s) for s in shops]
 
-    async def add_shop_image(self, shop_id: int, image_url: str) -> ShopImageDTO:
+    async def add_shop_work(self, shop_id: int, image_url: str, description: str | None) -> ShopWorkDTO:
         shop = await self.shop_repository.get_by_id(shop_id)
         if not shop:
             raise ShopNotFoundError(shop_id)
-        img = ShopImage(shop_id=shop_id, image_url=image_url)
-        saved = await self.shop_repository.add_image(img)
-        return ShopImageDTO(
-            image_id=saved.image_id, shop_id=saved.shop_id, image_url=saved.image_url
+        work = ShopWork(shop_id=shop_id, image_url=image_url, description=description)
+        saved = await self.shop_repository.add_work(work)
+        return ShopWorkDTO(
+            work_id=saved.work_id, shop_id=saved.shop_id, image_url=saved.image_url, description=saved.description
         )
 
-    async def delete_shop_image(self, shop_id: int, image_id: int) -> bool:
+    async def delete_shop_work(self, shop_id: int, work_id: int) -> bool:
         shop = await self.shop_repository.get_by_id(shop_id)
         if not shop:
             raise ShopNotFoundError(shop_id)
-        success = await self.shop_repository.delete_image(image_id)
+        success = await self.shop_repository.delete_work(work_id)
         if not success:
-            raise ValueError(f"Image {image_id} not found")
+            raise ValueError(f"Work {work_id} not found")
         return True
 
     async def update_shop(self, dto: ShopUpdateDTO) -> ShopOutputDTO:
@@ -81,6 +82,7 @@ class ManageShopUseCase:
             registration_number=dto.registration_number,
             latitude=dto.latitude,
             longitude=dto.longitude,
+            profile_image_url=dto.profile_image_url,
         )
         updated = await self.shop_repository.update_shop(shop_entity)
         if not updated:
@@ -132,12 +134,13 @@ class ManageShopUseCase:
             registration_number=shop.registration_number,
             latitude=shop.latitude,
             longitude=shop.longitude,
+            profile_image_url=shop.profile_image_url,
             average_rating=shop.average_rating,
-            images=[
-                ShopImageDTO(
-                    image_id=img.image_id, shop_id=img.shop_id, image_url=img.image_url
+            works=[
+                ShopWorkDTO(
+                    work_id=work.work_id, shop_id=work.shop_id, image_url=work.image_url, description=work.description
                 )
-                for img in shop.images
+                for work in shop.works
             ],
             gigs=[self._gig_to_dto(gig) for gig in shop.gigs],
             created_at=shop.created_at,

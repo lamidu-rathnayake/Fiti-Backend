@@ -159,16 +159,19 @@ CREATE TABLE IF NOT EXISTS shops (
     registration_number VARCHAR(100),
     latitude             NUMERIC(9,6),
     longitude            NUMERIC(9,6),
+    profile_image_url    VARCHAR(2048),
     average_rating       NUMERIC(3,2) NOT NULL DEFAULT 0,
     created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS shop_images (
-    image_id    SERIAL PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS shop_works (
+    work_id     SERIAL PRIMARY KEY,
     shop_id     INT NOT NULL REFERENCES shops(shop_id) ON DELETE CASCADE,
     image_url   VARCHAR(2048) NOT NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    description TEXT,
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- ---------------------------------------------------------

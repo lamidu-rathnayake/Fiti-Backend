@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.domain.entities.shop import Gig, Shop, ShopImage
+from app.domain.entities.shop import Gig, Shop, ShopWork
 from app.infrastructure.db.base import Base
 
 
@@ -25,6 +25,7 @@ class ShopModel(Base):
     registration_number: Mapped[str | None] = mapped_column(String(100), nullable=True)
     latitude: Mapped[float | None] = mapped_column(Float, nullable=True)
     longitude: Mapped[float | None] = mapped_column(Float, nullable=True)
+    profile_image_url: Mapped[str | None] = mapped_column(String(2048), nullable=True)
     average_rating: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
@@ -36,8 +37,8 @@ class ShopModel(Base):
         nullable=False,
     )
 
-    images: Mapped[list["ShopImageModel"]] = relationship(
-        "ShopImageModel",
+    works: Mapped[list["ShopWorkModel"]] = relationship(
+        "ShopWorkModel",
         back_populates="shop",
         cascade="all, delete-orphan",
         lazy="selectin",
@@ -59,34 +60,44 @@ class ShopModel(Base):
             registration_number=self.registration_number,
             latitude=self.latitude,
             longitude=self.longitude,
+            profile_image_url=self.profile_image_url,
             average_rating=self.average_rating,
-            images=[img.to_domain() for img in self.images] if self.images else [],
+            works=[work.to_domain() for work in self.works] if self.works else [],
             gigs=[gig.to_domain() for gig in self.gigs] if self.gigs else [],
             created_at=self.created_at,
             updated_at=self.updated_at,
         )
 
 
-class ShopImageModel(Base):
-    __tablename__ = "shop_images"
+class ShopWorkModel(Base):
+    __tablename__ = "shop_works"
 
-    image_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    work_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     shop_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("shops.shop_id", ondelete="CASCADE"), nullable=False
     )
     image_url: Mapped[str] = mapped_column(String(2048), nullable=False)
+    description: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
+        nullable=False,
+    )
 
-    shop: Mapped["ShopModel"] = relationship("ShopModel", back_populates="images")
+    shop: Mapped["ShopModel"] = relationship("ShopModel", back_populates="works")
 
-    def to_domain(self) -> ShopImage:
-        return ShopImage(
-            image_id=self.image_id,
+    def to_domain(self) -> ShopWork:
+        return ShopWork(
+            work_id=self.work_id,
             shop_id=self.shop_id,
             image_url=self.image_url,
+            description=self.description,
             created_at=self.created_at,
+            updated_at=self.updated_at,
         )
 
 
