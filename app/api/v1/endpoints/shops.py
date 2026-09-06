@@ -10,7 +10,7 @@ from app.api.schemas.shop_schema import (
     ShopResponse,
     ShopUpdateRequest,
 )
-from app.core.security import get_current_user_uid, require_role
+from app.core.security import require_verified_tailor
 from app.domain.exceptions.shop import ShopNotFoundError
 from app.use_cases.dtos.shop_dto import ShopCreateDTO, ShopUpdateDTO
 from app.use_cases.shop.manage_shop import ManageShopUseCase
@@ -73,7 +73,7 @@ async def get_shop(
 @router.post("/", response_model=ShopResponse, status_code=status.HTTP_201_CREATED)
 async def create_shop(
     request: ShopCreateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Register a shop owned by the authenticated tailor."""
@@ -97,7 +97,7 @@ async def create_shop(
 async def update_shop(
     shop_id: int,
     request: ShopUpdateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Update a shop owned by the authenticated tailor."""
@@ -129,7 +129,7 @@ async def update_shop(
 @router.delete("/{shop_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_shop(
     shop_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Delete a shop owned by the authenticated tailor."""
@@ -153,7 +153,7 @@ async def delete_shop(
 async def add_shop_work(
     shop_id: int,
     request: ShopWorkCreateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Add a work portfolio piece to a shop owned by the authenticated tailor."""
@@ -180,7 +180,7 @@ async def add_shop_work(
 async def delete_shop_work(
     shop_id: int,
     work_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Delete a shop work piece owned by the authenticated tailor."""
@@ -206,7 +206,7 @@ async def delete_shop_work(
 async def create_gig(
     shop_id: int,
     request: GigCreateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Create a gig for a shop owned by the authenticated tailor."""
@@ -230,7 +230,7 @@ async def create_gig(
 @router.delete("/gigs/{gig_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_gig(
     gig_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageShopUseCase = Depends(get_manage_shop_use_case),
 ):
     """Delete a gig owned by the authenticated tailor."""

@@ -14,7 +14,7 @@ from app.api.schemas.order_schema import (
     RatingResponse,
     ShopRequestResponse,
 )
-from app.core.security import get_current_user_uid, require_role
+from app.core.security import get_current_user_uid, require_role, require_verified_tailor
 from app.domain.exceptions.order import (
     ClothingRequestNotFoundError,
     OrderNotFoundError,
@@ -139,7 +139,7 @@ async def cancel_clothing_request(
 @router.get("/shop-requests/shop/{shop_id}", response_model=list[ShopRequestResponse])
 async def list_shop_requests_by_shop(
     shop_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all shop requests assigned to a specific shop."""
@@ -164,7 +164,7 @@ async def reject_shop_request(
 @router.patch("/shop-requests/{shop_request_id}/withdraw", response_model=ShopRequestResponse)
 async def withdraw_shop_request(
     shop_request_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """Withdraw a pending shop request. Requires tailor role."""
@@ -179,7 +179,7 @@ async def withdraw_shop_request(
 @router.get("/shop-requests/{shop_request_id}/bids", response_model=list[BidResponse])
 async def list_bids_by_shop_request(
     shop_request_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all bids on a specific shop request. Requires tailor role."""
@@ -192,7 +192,7 @@ async def list_bids_by_shop_request(
 @router.post("/bids", response_model=BidResponse, status_code=status.HTTP_201_CREATED)
 async def submit_bid(
     request: BidCreateRequest,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """Submit a bid on a shop request. Requires tailor role."""
@@ -216,7 +216,7 @@ async def submit_bid(
 @router.get("/shop/{shop_id}", response_model=list[OrderResponse])
 async def list_orders_by_shop(
     shop_id: int,
-    authenticated_uid: str = Depends(require_role("tailor")),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """List all orders for a specific shop. Declared before /{order_id}."""
@@ -273,7 +273,7 @@ async def get_order(
 async def update_order_status(
     order_id: int,
     order_status: str,
-    authenticated_uid: str = Depends(get_current_user_uid),
+    authenticated_uid: str = Depends(require_verified_tailor),
     use_case: ManageOrderUseCase = Depends(get_manage_order_use_case),
 ):
     """Update order status."""

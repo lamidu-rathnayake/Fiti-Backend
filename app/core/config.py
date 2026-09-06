@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
     # Firebase Auth Settings
     FIREBASE_CREDENTIALS_PATH: str | None = None
+    FIREBASE_CREDENTIALS_JSON: SecretStr | None = None
 
     # Cloudinary Settings
     CLOUDINARY_CLOUD_NAME: str | None = None
