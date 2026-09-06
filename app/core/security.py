@@ -1,3 +1,4 @@
+import json
 import logging
 
 import firebase_admin
@@ -14,25 +15,35 @@ logger = logging.getLogger(__name__)
 # HTTPBearer security scheme for Swagger UI and header parsing
 bearer_scheme = HTTPBearer(auto_error=False)
 
-_firebase_app_initialized = False
-
-
 def init_firebase_admin():
-    """Initializes the Firebase Admin SDK if not already initialized."""
-    global _firebase_app_initialized
-    if not _firebase_app_initialized and not firebase_admin._apps:
-        try:
-            if settings.FIREBASE_CREDENTIALS_PATH:
-                cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-                firebase_admin.initialize_app(cred)
-            else:
-                firebase_admin.initialize_app()
-            _firebase_app_initialized = True
-            logger.info("Firebase Admin SDK initialized successfully.")
-        except Exception as exc:
+    """Returns the default Firebase Admin app, initializing it when needed."""
+    try:
+        return firebase_admin.get_app()
+    except ValueError:
+        credentials_json = (
+            settings.FIREBASE_CREDENTIALS_JSON.get_secret_value()
+            if settings.FIREBASE_CREDENTIALS_JSON
+            else None
+        )
+        credentials_path = settings.FIREBASE_CREDENTIALS_PATH
+
+        if credentials_json:
+            cred = credentials.Certificate(json.loads(credentials_json))
+            app = firebase_admin.initialize_app(cred)
+        elif credentials_path and credentials_path.lstrip().startswith("{"):
             logger.warning(
-                f"Could not initialize Firebase Admin SDK automatically: {exc}"
+                "Firebase credential JSON was supplied through "
+                "FIREBASE_CREDENTIALS_PATH; use FIREBASE_CREDENTIALS_JSON instead."
             )
+            cred = credentials.Certificate(json.loads(credentials_path))
+            app = firebase_admin.initialize_app(cred)
+        elif credentials_path:
+            cred = credentials.Certificate(credentials_path)
+            app = firebase_admin.initialize_app(cred)
+        else:
+            app = firebase_admin.initialize_app()
+        logger.info("Firebase Admin SDK initialized successfully.")
+        return app
 
 
 async def get_current_user(
@@ -45,8 +56,19 @@ async def get_current_user(
     if auth_header and auth_header.credentials:
         token = auth_header.credentials
         try:
-            init_firebase_admin()
-            decoded_token = auth.verify_id_token(token)
+            firebase_app = init_firebase_admin()
+        except Exception as exc:
+            logger.error(
+                "Firebase Admin SDK initialization failed (%s).",
+                type(exc).__name__,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Firebase authentication service is not configured correctly.",
+            ) from exc
+
+        try:
+            decoded_token = auth.verify_id_token(token, app=firebase_app)
             return {
                 "uid": decoded_token["uid"],
                 "email": decoded_token.get("email"),

@@ -102,6 +102,10 @@ gcloud secrets create firebase-credentials \
 #    --set-env-vars "FIREBASE_CREDENTIALS_PATH=/secrets/firebase.json"
 ```
 
+`FIREBASE_CREDENTIALS_PATH` must contain the mounted filename, not the JSON
+document itself. If a secret must be exposed as an environment variable instead,
+bind it to `FIREBASE_CREDENTIALS_JSON`.
+
 ---
 
 ## 4. Deploying to Cloud Run
