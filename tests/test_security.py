@@ -33,6 +33,89 @@ def test_init_firebase_admin_accepts_json_credentials():
     assert result is firebase_app
 
 
+def test_init_firebase_admin_accepts_file_path(tmp_path):
+    firebase_app = object()
+    fake_key_file = tmp_path / "service-account.json"
+    fake_key_file.write_text('{"type": "service_account"}')
+
+    secret = SimpleNamespace(get_secret_value=lambda: str(fake_key_file))
+
+    with (
+        patch.object(security.settings, "FIREBASE_CREDENTIALS_JSON", secret),
+        patch.object(security.firebase_admin, "get_app", side_effect=ValueError),
+        patch.object(security.credentials, "Certificate") as certificate,
+        patch.object(
+            security.firebase_admin, "initialize_app", return_value=firebase_app
+        ) as initialize_app,
+    ):
+        result = init_firebase_admin()
+
+    certificate.assert_called_once_with(str(fake_key_file))
+    initialize_app.assert_called_once_with(certificate.return_value)
+    assert result is firebase_app
+
+
+def test_init_firebase_admin_falls_back_when_credentials_empty_or_whitespace():
+    firebase_app = object()
+    secret = SimpleNamespace(get_secret_value=lambda: "   \n  ")
+
+    with (
+        patch.object(security.settings, "FIREBASE_CREDENTIALS_JSON", secret),
+        patch.object(security.firebase_admin, "get_app", side_effect=ValueError),
+        patch.object(security.credentials, "Certificate") as certificate,
+        patch.object(
+            security.firebase_admin, "initialize_app", return_value=firebase_app
+        ) as initialize_app,
+    ):
+        result = init_firebase_admin()
+
+    certificate.assert_called_once_with(security.DEFAULT_FIREBASE_CREDENTIALS)
+    initialize_app.assert_called_once_with(certificate.return_value)
+    assert result is firebase_app
+
+
+def test_init_firebase_admin_strips_surrounding_quotes():
+    firebase_app = object()
+    secret = SimpleNamespace(
+        get_secret_value=lambda: '\'{"type": "service_account", "project_id": "quoted-fiti"}\''
+    )
+
+    with (
+        patch.object(security.settings, "FIREBASE_CREDENTIALS_JSON", secret),
+        patch.object(security.firebase_admin, "get_app", side_effect=ValueError),
+        patch.object(security.credentials, "Certificate") as certificate,
+        patch.object(
+            security.firebase_admin, "initialize_app", return_value=firebase_app
+        ) as initialize_app,
+    ):
+        result = init_firebase_admin()
+
+    certificate.assert_called_once_with(
+        {"type": "service_account", "project_id": "quoted-fiti"}
+    )
+    initialize_app.assert_called_once_with(certificate.return_value)
+    assert result is firebase_app
+
+
+def test_init_firebase_admin_falls_back_when_invalid_json():
+    firebase_app = object()
+    secret = SimpleNamespace(get_secret_value=lambda: "not-a-valid-json-nor-a-file")
+
+    with (
+        patch.object(security.settings, "FIREBASE_CREDENTIALS_JSON", secret),
+        patch.object(security.firebase_admin, "get_app", side_effect=ValueError),
+        patch.object(security.credentials, "Certificate") as certificate,
+        patch.object(
+            security.firebase_admin, "initialize_app", return_value=firebase_app
+        ) as initialize_app,
+    ):
+        result = init_firebase_admin()
+
+    certificate.assert_called_once_with(security.DEFAULT_FIREBASE_CREDENTIALS)
+    initialize_app.assert_called_once_with(certificate.return_value)
+    assert result is firebase_app
+
+
 @pytest.mark.asyncio
 async def test_get_current_user_uses_initialized_app():
     firebase_app = object()

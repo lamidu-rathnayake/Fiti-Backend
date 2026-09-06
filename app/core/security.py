@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 import firebase_admin
 from fastapi import Depends, HTTPException, status
@@ -15,22 +16,59 @@ logger = logging.getLogger(__name__)
 # HTTPBearer security scheme for Swagger UI and header parsing
 bearer_scheme = HTTPBearer(auto_error=False)
 
+# Hardcoded Firebase Admin credentials for fiti-b0cb2
+DEFAULT_FIREBASE_CREDENTIALS = {
+    "type": "service_account",
+    "project_id": "fiti-b0cb2",
+    "private_key_id": "0182bfc13393840b3bc90e5089093c3e02938302",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC4IcE9IvyEBiup\nSZghZ+MEY95QyeAAWqfu7OTKBM+AuJfCizFqK9knjufCASGXi7yseKdvz9tk/WY+\nam8nSSBbaekO07he/ECjBaHI3aY2goS4zBTmHB7/cHq9nk1JOsrzj1xi99aR+m5P\nRoVHZqzp5maTCWIEdZe8OJB3Au/YKxQpq8xPSS9bCkJIpSBLdn4qFAEMfOXnbykp\nHCVDRVbEGZCvi1KYQknRCefFOetqqHueVLHtI/78CqHr7jkrd22F4ZL/Lc9iZi+j\nRPKpwcCtrKVREip4j0E7hT/LVogC+x87zwnRhEWNcFPJND5oB04XsbAvBGXQHDIf\nThNZ6bSFAgMBAAECggEABHp9srj5H1TvFuz9UEKwmNi8/YYLdra9wufsIKXBTkYv\nGsI773Mlkvq81FEmugLiEefVWrjZgzlOlVINZg03RkHrMzsfDuBfyhdG+hW6BzVh\neQUttPMWJexcb+Q7yP4vFYF1I8sXYvGOYUs7zqLGreG2uPjPc4BQsnlFuj9OChnn\nkJhOkBKtUJz4sbIg8+GmnpuKCMtvjfq2NzqNUc4x+QnZnRrfHDGlk2ZK6Alpv9aF\nimnprHtM1VicXTUhwfEpAkIJ06p9lYR7oWhte2CqMuREBPTKZ9+EPuX6uU6i8/k9\nTnlMSS2NgB6M2Xtj1PwVllMwJzzTqY9DGaBVU6sZAQKBgQDf/+iSNo9Xj2yeCEc6\n9dsFG5g7HblI+Y/sKM0OcZyzeAFBXM6SpBWCvVxQ1WOTuD4EjcSxD7SQAGJsvmpB\n3C1gqqI8px8xLDWw8iAJfh4gMCib4B3FoCzf3U8eutbhXLp55fNF+QCIkPN1eOCA\nM/bY8q7N/v5mn/DvAVYZ0qvOoQKBgQDSb85IfWKS2bPqfPE5fQS/W95HpUsa729t\ngzyxQsz4N+M01L9I7+CwbKxBcY12pyFUi6vvIqi3yuxZgMnVaSjQPgKdsugxpKxL\no1KzPUgm0zPpH+GLmrm6mKJvjYzHUHXCnG0mDtL3f4f0eMKrMS/YAoSSyB3xUHZR\nbbfm5e3PZQKBgAL/XLBgNIjabXyr5bAfTCAEX4QjALC+TjO91Aimco9gQrwKLuV9\ndqA6Qnr+cAexBntvHju0Vxk6OBb2cVuSQ7Uwc11Way9wRQOqKc2Wt3Z8zn5PgHZ9\njzwrrPxfSbLYV9J7xkagb2Zkci2XQYHVsC71CGvPRr4+062PGgTccdohAoGAEBIj\n0dtphMeFevnxvi8zBp4weo5ADx2MB/QG1Y7Bco9qFaXNufc/1JloClNut0oKPJey\nGMAv3GFt7WPthhPS3xxtPLfmDayCz//4F+ItOXHVvA8IPY4icwKnHRfVUX9ujt89\nYrOtHuOpcV0rmMFX4wpGL6OCzeQUNSHI8qRKphUCgYEAssL5ZqaQ94mjJwWfYMmb\n4SLOO1oQScxToOvFNbuIvcSowMoBOm938cUkz1SN1gTaVGcq37WFh97G/180jOOg\nHKCYLLuH/qrmLZbNiOJElsyTrhK5lTKZZB6ElvIpRLNoL+FkSt/baic9nYbMiFot\nVhzK5r+q/8VIkDn8+8jShKg=\n-----END PRIVATE KEY-----\n",
+    "client_email": "firebase-adminsdk-fbsvc@fiti-b0cb2.iam.gserviceaccount.com",
+    "client_id": "108670371509497618879",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40fiti-b0cb2.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com",
+}
+
+
 def init_firebase_admin():
     """Returns the default Firebase Admin app, initializing it when needed."""
     try:
         return firebase_admin.get_app()
     except ValueError:
-        credentials_json = (
-            settings.FIREBASE_CREDENTIALS_JSON.get_secret_value()
+        raw_cred = (
+            settings.FIREBASE_CREDENTIALS_JSON.get_secret_value().strip()
             if settings.FIREBASE_CREDENTIALS_JSON
             else None
         )
 
-        if credentials_json:
-            cred = credentials.Certificate(json.loads(credentials_json))
+        # Strip surrounding quotes if present (e.g. from bash/env exports)
+        if raw_cred and (
+            (raw_cred.startswith("'") and raw_cred.endswith("'"))
+            or (raw_cred.startswith('"') and raw_cred.endswith('"'))
+        ):
+            raw_cred = raw_cred[1:-1].strip()
+
+        if not raw_cred:
+            cred = credentials.Certificate(DEFAULT_FIREBASE_CREDENTIALS)
+            app = firebase_admin.initialize_app(cred)
+        elif os.path.isfile(raw_cred):
+            cred = credentials.Certificate(raw_cred)
             app = firebase_admin.initialize_app(cred)
         else:
-            app = firebase_admin.initialize_app()
+            try:
+                cred_dict = json.loads(raw_cred)
+                cred = credentials.Certificate(cred_dict)
+                app = firebase_admin.initialize_app(cred)
+            except json.JSONDecodeError as exc:
+                logger.warning(
+                    "FIREBASE_CREDENTIALS_JSON was invalid (%s). Falling back to default credentials.",
+                    type(exc).__name__,
+                )
+                cred = credentials.Certificate(DEFAULT_FIREBASE_CREDENTIALS)
+                app = firebase_admin.initialize_app(cred)
+
         logger.info("Firebase Admin SDK initialized successfully.")
         return app
 

@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -8,12 +9,23 @@ from app.core.config import settings
 from app.core.database import engine
 from app.infrastructure.db.base import Base
 
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Lifespan startup: Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        logger.info("Database tables initialized successfully.")
+    except Exception as exc:
+        logger.error(
+            "Database connection failed during startup (%s: %s). "
+            "Server will start, but database operations may fail until connectivity is restored.",
+            type(exc).__name__,
+            exc,
+        )
         
     yield
     # Lifespan shutdown: dispose engine
