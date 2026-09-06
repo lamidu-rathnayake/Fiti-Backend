@@ -146,7 +146,7 @@ graph TD
 - **`Settings` Class**: Uses `pydantic-settings` to load and validate environment configuration from `.env`.
 - **Key Parameters**:
   - `DATABASE_URL`: Async PostgreSQL connection URI (`postgresql+asyncpg://...`).
-  - `FIREBASE_CREDENTIALS_PATH`: Path to Firebase Service Account JSON file.
+  - `FIREBASE_CREDENTIALS_JSON`: Firebase service account JSON supplied through a secret.
   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`: Credentials for managing image destruction/uploads.
   - `DEBUG`: Boolean flag controlling verbose logs and OpenAPI docs.
 

@@ -44,8 +44,7 @@ Create a `.env` file in the root directory with the following variables:
 | Variable | Description | Default |
 |---|---|---|
 | `CONNECTION_STRING` | PostgreSQL database connection URL | (Required) |
-| `FIREBASE_CREDENTIALS_PATH` | Path to a Firebase Admin service account JSON file, such as a mounted Cloud Run secret. | `None` |
-| `FIREBASE_CREDENTIALS_JSON` | Service account JSON content supplied through a secret environment variable. Prefer a mounted file in production. | `None` |
+| `FIREBASE_CREDENTIALS_JSON` | Service account JSON content supplied through a secret environment variable. | `None` |
 | `ADMIN_BACKEND_URL` | The URL of the separate Admin Backend project for redirection (e.g., `https://admin.fiti.com`). | `""` |
 | `FRONTEND_ORIGINS` | Comma-separated list of allowed origins for CORS. | `*` |
 

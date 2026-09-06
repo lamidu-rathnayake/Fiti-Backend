@@ -43,7 +43,7 @@ The Fiti application expects the following configuration parameters:
 - `ENVIRONMENT`: Set to `production`.
 - `DEBUG`: Set to `False`.
 - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`.
-- `FIREBASE_CREDENTIALS_PATH`: Optional when using file mounting.
+- `FIREBASE_CREDENTIALS_JSON`: Optional when not using ADC.
 
 ### Step 3.1: Enable Required GCP Services
 ```bash
@@ -87,24 +87,19 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:${PROJECT_NUM}-compute@developer.gserviceaccount.com" \
   --role="roles/firebaseauth.admin"
 ```
-*(No `FIREBASE_CREDENTIALS_PATH` needs to be defined).*
+*(No `FIREBASE_CREDENTIALS_JSON` needs to be defined).*
 
-#### Approach B: Mounting Firebase JSON as a Secret File
-If your Firebase project is under a separate GCP project, store the service account JSON in Secret Manager and mount it as a file:
+#### Approach B: Firebase JSON from Secret Manager
+If your Firebase project is under a separate GCP project, store the service account JSON in Secret Manager and expose it as an environment variable:
 
 ```bash
 # 1. Store the JSON file in Secret Manager
 gcloud secrets create firebase-credentials \
   --data-file="fiti-b0cb2-firebase-adminsdk-fbsvc-0182bfc133.json"
 
-# 2. Mount into Cloud Run via:
-#    --set-secrets "/secrets/firebase.json=firebase-credentials:latest"
-#    --set-env-vars "FIREBASE_CREDENTIALS_PATH=/secrets/firebase.json"
+# 2. Bind the secret to the service via:
+#    --set-secrets "FIREBASE_CREDENTIALS_JSON=firebase-credentials:latest"
 ```
-
-`FIREBASE_CREDENTIALS_PATH` must contain the mounted filename, not the JSON
-document itself. If a secret must be exposed as an environment variable instead,
-bind it to `FIREBASE_CREDENTIALS_JSON`.
 
 ---
 
@@ -122,11 +117,10 @@ gcloud run deploy fiti-backend \
   --set-secrets "CONNECTION_STRING=DB_CONNECTION_STRING:latest,CLOUDINARY_API_KEY=CLOUDINARY_API_KEY:latest,CLOUDINARY_API_SECRET=CLOUDINARY_API_SECRET:latest"
 ```
 
-> **If using Approach B for Firebase (Mounting JSON File):**
-> Append these two flags to the `gcloud run deploy` command:
+> **If using Approach B for Firebase:**
+> Include the Firebase secret in the `--set-secrets` flag:
 > ```bash
-> --set-secrets "/secrets/firebase.json=firebase-credentials:latest,CONNECTION_STRING=DB_CONNECTION_STRING:latest,..." \
-> --set-env-vars "FIREBASE_CREDENTIALS_PATH=/secrets/firebase.json,..."
+> --set-secrets "FIREBASE_CREDENTIALS_JSON=firebase-credentials:latest,CONNECTION_STRING=DB_CONNECTION_STRING:latest,..."
 > ```
 
 ---

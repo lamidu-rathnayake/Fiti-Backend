@@ -25,20 +25,9 @@ def init_firebase_admin():
             if settings.FIREBASE_CREDENTIALS_JSON
             else None
         )
-        credentials_path = settings.FIREBASE_CREDENTIALS_PATH
 
         if credentials_json:
             cred = credentials.Certificate(json.loads(credentials_json))
-            app = firebase_admin.initialize_app(cred)
-        elif credentials_path and credentials_path.lstrip().startswith("{"):
-            logger.warning(
-                "Firebase credential JSON was supplied through "
-                "FIREBASE_CREDENTIALS_PATH; use FIREBASE_CREDENTIALS_JSON instead."
-            )
-            cred = credentials.Certificate(json.loads(credentials_path))
-            app = firebase_admin.initialize_app(cred)
-        elif credentials_path:
-            cred = credentials.Certificate(credentials_path)
             app = firebase_admin.initialize_app(cred)
         else:
             app = firebase_admin.initialize_app()

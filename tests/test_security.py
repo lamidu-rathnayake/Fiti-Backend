@@ -18,7 +18,6 @@ def test_init_firebase_admin_accepts_json_credentials():
 
     with (
         patch.object(security.settings, "FIREBASE_CREDENTIALS_JSON", secret),
-        patch.object(security.settings, "FIREBASE_CREDENTIALS_PATH", None),
         patch.object(security.firebase_admin, "get_app", side_effect=ValueError),
         patch.object(security.credentials, "Certificate") as certificate,
         patch.object(

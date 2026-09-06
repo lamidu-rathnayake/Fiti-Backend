@@ -78,9 +78,6 @@ Expand the section labeled **Container, Networking, Security**:
    - Name: `ENVIRONMENT` | Value: `production`
    - Name: `DEBUG` | Value: `False`
    - Name: `CLOUDINARY_CLOUD_NAME` | Value: `your_cloud_name`
-   *(If you are mounting the Firebase JSON file as a secret volume in the next step, also add)*:
-   - Name: `FIREBASE_CREDENTIALS_PATH` | Value: `/secrets/firebase.json`
-
 3. Under **Secrets**, click **+ REFERENCE A SECRET**:
    - **Database Connection String**:
      - Secret: Select `DB_CONNECTION_STRING`
@@ -97,11 +94,10 @@ Expand the section labeled **Container, Networking, Security**:
      - Reference method: **Expose as environment variable**
      - Environment variable name: `CLOUDINARY_API_SECRET`
      - Version: `latest`
-   - *(Optional) Firebase JSON File (if not using native IAM/ADC)*:
+   - *(Optional) Firebase JSON (if not using native IAM/ADC)*:
      - Secret: Select `FIREBASE_CREDENTIALS_JSON`
-     - Reference method: Select **Mount as volume**
-     - Mount path: `/secrets`
-     - Path within mount: `firebase.json`
+     - Reference method: Select **Expose as environment variable**
+     - Environment variable name: `FIREBASE_CREDENTIALS_JSON`
      - Version: `latest`
 
 ---
