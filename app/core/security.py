@@ -5,7 +5,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from firebase_admin import auth, credentials
 
+from app.api.dependencies import get_tailor_repository
 from app.core.config import settings
+from app.domain.repositories.profile_repository import AbstractTailorRepository
 
 logger = logging.getLogger(__name__)
 
@@ -123,3 +125,19 @@ def require_role(role_name: str):
             )
 
     return _check_role
+
+
+async def require_verified_tailor(
+    authenticated_uid: str = Depends(require_role("tailor")),
+    tailor_repo: AbstractTailorRepository = Depends(get_tailor_repository),
+) -> str:
+    tailor = await tailor_repo.get_by_id(authenticated_uid)
+    if not tailor or not tailor.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Your account is not verified. Please contact the Fiti team "
+                "at support@fiti.lk."
+            ),
+        )
+    return authenticated_uid

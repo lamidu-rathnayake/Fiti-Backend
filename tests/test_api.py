@@ -10,8 +10,9 @@ from app.main import app
 from app.core.security import get_current_user_uid, get_current_user
 from app.core.database import get_db_session
 
-from sqlalchemy import text
+from sqlalchemy import text, update
 from app.core.config import settings
+from app.infrastructure.db.models.user_model import TailorModel
 
 # Test Database Engine (Supabase PostgreSQL)
 test_engine = create_async_engine(
@@ -54,6 +55,16 @@ def mock_get_current_user():
 def set_mock_user(uid: str, role: str):
     current_mock_user["uid"] = uid
     current_mock_user["role"] = role
+
+
+async def mark_tailor_verified(tailor_id: str):
+    async with TestingSessionLocal() as session:
+        await session.execute(
+            update(TailorModel)
+            .where(TailorModel.id == tailor_id)
+            .values(is_verified=True)
+        )
+        await session.commit()
 
 app.dependency_overrides[get_current_user] = mock_get_current_user
 app.dependency_overrides[get_current_user_uid] = lambda: current_mock_user["uid"]
@@ -128,6 +139,14 @@ async def test_full_marketplace_workflow_api():
             },
         )
         assert tailor_resp.status_code == 201
+
+        unverified_shop_resp = await ac.post(
+            "/api/v1/shops/",
+            json={"shop_name": "Blocked Shop", "city": "Colombo"},
+        )
+        assert unverified_shop_resp.status_code == 403
+        assert "support@fiti.lk" in unverified_shop_resp.json()["detail"]
+        await mark_tailor_verified("tailor_fb_001")
 
         # 3. Duplicate client profile registration should return 409
         set_mock_user("client_fb_001", "client")
@@ -244,6 +263,7 @@ async def test_support_endpoints():
         set_mock_user("tailor_fav", "tailor")
         tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_fav", "nic_front": "https://img.com/nic"})
         assert tailor_res.status_code == 201
+        await mark_tailor_verified("tailor_fav")
         
         shop_res = await ac.post("/api/v1/shops/", json={
             "shop_name": "Fav Shop", "city": "Kandy", "contact_number": "+94770001133"
@@ -281,6 +301,7 @@ async def test_shop_listing_and_update_endpoints():
         set_mock_user("tailor_search", "tailor")
         tailor_res = await ac.post("/api/v1/profiles/tailor", json={"id": "tailor_search", "nic_front": "https://img.com/nic"})
         assert tailor_res.status_code == 201
+        await mark_tailor_verified("tailor_search")
         
         shop_res = await ac.post("/api/v1/shops/", json={
             "shop_name": "Search Shop", "city": "Galle", "contact_number": "+94770001144"
