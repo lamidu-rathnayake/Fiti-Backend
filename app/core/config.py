@@ -26,7 +26,6 @@ class Settings(BaseSettings):
         return value
 
     # Firebase Auth Settings
-    FIREBASE_CREDENTIALS_PATH: str | None = None
     FIREBASE_CREDENTIALS_JSON: SecretStr | None = None
 
     # Cloudinary Settings
